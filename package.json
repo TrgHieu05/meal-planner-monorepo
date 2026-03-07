@@ -1,0 +1,30 @@
+{
+  "name": "meal-planner-monorepo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev:backend": "pnpm --filter main-backend start:dev",
+    "dev:mobile": "pnpm --filter mobile-app start",
+    "dev:web": "pnpm --filter mobile-app web",
+    "db:up": "docker-compose -p meal-planner-monorepo -f infrastructure/docker-compose.yml up -d",
+    "db:down": "docker-compose -p meal-planner-monorepo -f infrastructure/docker-compose.yml down",
+    "prisma:generate": "pnpm --filter @meal/database exec prisma generate",
+    "prisma:migrate": "pnpm --filter @meal/database exec prisma migrate dev",
+    "prisma:studio": "pnpm --filter @meal/database exec prisma studio",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.30.3",
+  "dependencies": {
+    "@types/node": "^25.3.5",
+    "typescript": "^5.9.3"
+  },
+  "pnpm": {
+    "overrides": {
+      "react-test-renderer": "19.2.0"
+    }
+  }
+}

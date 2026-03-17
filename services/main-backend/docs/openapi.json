@@ -1,0 +1,97 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "KitchenMind API",
+    "description": "Tài liệu hướng dẫn và kiểm thử API cho hệ thống Meal Planner",
+    "version": "1.0"
+  },
+  "tags": [
+    {
+      "name": "Authentication",
+      "description": "Các API liên quan đến xác thực người dùng"
+    }
+  ],
+  "paths": {
+    "/api/auth/google": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Bắt đầu quá trình đăng nhập bằng Google",
+        "description": "Chuyển hướng người dùng tới trang OAuth2 của Google",
+        "responses": {
+          "302": {
+            "description": "Chuyển hướng tới Google"
+          }
+        }
+      }
+    },
+    "/api/auth/google/callback": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Xử lý phản hồi từ Google sau khi đăng nhập",
+        "description": "Nhận callback từ Google, xác thực và trả về thông tin người dùng kèm token",
+        "responses": {
+          "200": {
+            "description": "Đăng nhập thành công",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoogleAuthResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Xác thực không thành công"
+          },
+          "500": {
+            "description": "Lỗi máy chủ nội bộ"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "user@example.com"
+          },
+          "userName": {
+            "type": "string",
+            "example": "John Doe"
+          }
+        }
+      },
+      "GoogleAuthResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Xác thực Google thành công"
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          },
+          "accessToken": {
+            "type": "string",
+            "description": "Google OAuth2 Access Token",
+            "example": "ya29.a0AfH6SMC..."
+          }
+        }
+      }
+    }
+  }
+}

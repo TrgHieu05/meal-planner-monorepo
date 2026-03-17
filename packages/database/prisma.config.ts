@@ -5,8 +5,9 @@ import * as dotenv from 'dotenv';
 import path from 'path';
 
 // Adjust the path to find your root .env if necessary
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
-
+dotenv.config({
+  path: path.resolve(__dirname, '../../.env')
+})
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {

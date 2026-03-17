@@ -10,13 +10,19 @@ export class AuthController {
 
   @Get('google')
   @ApiOperation({ summary: 'Bắt đầu quá trình đăng nhập bằng Google' })
-  @ApiResponse({ status: 302, description: 'Chuyển hướng người dùng tới trang đăng nhập của Google' })
+  @ApiResponse({
+    status: 302,
+    description: 'Chuyển hướng người dùng tới trang đăng nhập của Google',
+  })
   @UseGuards(AuthGuard('google'))
   async googleAuth(@Req() req) {}
 
   @Get('google/callback')
   @ApiOperation({ summary: 'Xử lý phản hồi từ Google sau khi đăng nhập' })
-  @ApiResponse({ status: 200, description: 'Đăng nhập thành công và trả về thông tin user' })
+  @ApiResponse({
+    status: 200,
+    description: 'Đăng nhập thành công và trả về thông tin user',
+  })
   @ApiResponse({ status: 401, description: 'Xác thực không thành công' })
   @UseGuards(AuthGuard('google'))
   googleAuthRedirect(@Req() req) {

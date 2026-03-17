@@ -18,6 +18,10 @@ COPY services/main-backend ./services/main-backend
 # Cài đặt dependencies
 RUN pnpm install --frozen-lockfile
 
+# Build shared package
+WORKDIR /app/packages/shared
+RUN pnpm --filter @meal/shared run build
+
 # Generate Prisma Client (nếu có dùng Prisma)
 WORKDIR /app/packages/database
 RUN pnpm prisma generate

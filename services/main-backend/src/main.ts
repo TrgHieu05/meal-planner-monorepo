@@ -11,14 +11,14 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  
+
   // Thiết lập prefix chung cho API
   app.setGlobalPrefix('api');
 
   // Cấu hình Swagger
   let document;
   const swaggerPath = path.resolve(__dirname, '../docs/openapi.json');
-  
+
   if (fs.existsSync(swaggerPath)) {
     // Nếu có file openapi.json trong thư mục docs, nạp từ đó
     const swaggerData = JSON.parse(fs.readFileSync(swaggerPath, 'utf8'));
@@ -27,7 +27,9 @@ async function bootstrap() {
     // Ngược lại, tự động tạo từ decorators trong code
     const config = new DocumentBuilder()
       .setTitle('KitchenMind API')
-      .setDescription('Tài liệu hướng dẫn và kiểm thử API cho hệ thống Meal Planner')
+      .setDescription(
+        'Tài liệu hướng dẫn và kiểm thử API cho hệ thống Meal Planner',
+      )
       .setVersion('1.0')
       .addTag('Meal Planner')
       .build();

@@ -15,6 +15,7 @@
     "db:stop": "docker-compose --env-file .env -p meal-planner-monorepo -f infrastructure/docker-compose.yml stop postgres",
     "prisma:generate": "pnpm --filter @meal/database exec prisma generate",
     "prisma:migrate": "pnpm --filter @meal/database exec prisma migrate dev",
+    "prisma:reset": "pnpm --filter @meal/database exec prisma migrate reset",
     "prisma:studio": "pnpm --filter @meal/database exec prisma studio",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

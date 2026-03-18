@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev:backend": "pnpm --filter main-backend start:dev",
+    "dev:backend": "pnpm run build:shared && pnpm --filter main-backend start:dev",
     "dev:mobile": "pnpm --filter mobile-app start",
     "dev:web": "pnpm --filter mobile-app web",
     "build:shared": "pnpm --filter @meal/shared run build",

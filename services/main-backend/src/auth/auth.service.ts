@@ -1,9 +1,7 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
-// Định nghĩa Enum ProviderEnum cục bộ nếu không import được từ @prisma/client
-// hoặc import trực tiếp từ @prisma/client
-import { ProviderEnum } from '@prisma/client';
+import { ProviderEnum } from '@meal/database';
 
 @Injectable()
 export class AuthService {

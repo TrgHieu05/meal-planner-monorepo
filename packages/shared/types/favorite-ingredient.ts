@@ -8,12 +8,12 @@ export const FavoriteIngredientSchema = z.object({
   createdAt: z.date(),
 });
 
-export const FavoriteIngredientCreateSchema = z.object({
+export const FavoriteIngredientUpdateSchema = z.object({
   ingredientIds: z.array(IntSchema),
 });
 
 export const FavoriteIngredientResponseSchema = z.object({
-  list: z.array(IngredientSchema),
+  list: z.array(IngredientSchema.pick({ name: true })),
 });
 
 export const FavoriteIngredientIdsResponseSchema = z.object({
@@ -21,6 +21,6 @@ export const FavoriteIngredientIdsResponseSchema = z.object({
 });
 
 export type FavoriteIngredient = z.infer<typeof FavoriteIngredientSchema>;
-export type FavoriteIngredientCreate = z.infer<typeof FavoriteIngredientCreateSchema>;
+export type FavoriteIngredientUpdate = z.infer<typeof FavoriteIngredientUpdateSchema>;
 export type FavoriteIngredientResponse = z.infer<typeof FavoriteIngredientResponseSchema>;
 export type FavoriteIngredientIdsResponse = z.infer<typeof FavoriteIngredientIdsResponseSchema>;

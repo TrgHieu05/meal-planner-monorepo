@@ -11,8 +11,8 @@ import { AllergyService } from './allergy.service';
 import { AllergyUpdateSchema } from '@meal/shared/types/allergy';
 import { UuidSchema } from '@meal/shared/types/common';
 
-@ApiTags('Profile')
-@Controller('v1/profile/me/allergies')
+@ApiTags('Allergy')
+@Controller('v1/allergies')
 export class AllergyController {
   constructor(private readonly allergyService: AllergyService) {}
 

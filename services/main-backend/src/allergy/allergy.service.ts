@@ -16,15 +16,26 @@ export class AllergyService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getAllergy(userId: Uuid) {
-    const allergy = await this.prisma.allergy.findMany({
+    const allergyList = await this.prisma.allergy.findMany({
       where: { userId },
+      select: {
+        ingredient: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        ingredientId: 'asc',
+      },
     });
 
-    if (!allergy) {
-      return null;
-    }
+    const response = {
+      list: allergyList.map((item) => item.ingredient),
+    };
 
-    const parsed = AllergyResponseSchema.safeParse(allergy);
+    const parsed = AllergyResponseSchema.safeParse(response);
     if (!parsed.success) {
       throw new InternalServerErrorException('Invalid allergy data');
     }
@@ -76,5 +87,7 @@ export class AllergyService {
         });
       }
     });
+
+    return await this.getAllergy(userId);
   }
 }

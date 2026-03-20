@@ -11,9 +11,14 @@ export const MetricSchema = z.object({
 });
 
 export const MetricCreateSchema = z.object({
-  heightCm: z.number().positive().optional(),
-  weightKg: z.number().positive().optional(),
+  heightCm: z.number().positive(),
+  weightKg: z.number().positive(),
 });
+
+export const MetricResponseSchema = MetricSchema.omit({ userId: true });
+export const MetricOverviewSchema = MetricSchema.omit({ userId: true, id: true });
 
 export type Metric = z.infer<typeof MetricSchema>;
 export type MetricCreate = z.infer<typeof MetricCreateSchema>;
+export type MetricResponse = z.infer<typeof MetricResponseSchema>;
+export type MetricOverview = z.infer<typeof MetricOverviewSchema>;

@@ -12,9 +12,4 @@ export const IngredientSchema = z.object({
   isVegetarian: z.boolean(),
 });
 
-export const IngredientResponseSchema = z.object({
-  list: z.array(IngredientSchema),
-});
-
 export type Ingredient = z.infer<typeof IngredientSchema>;
-export type IngredientResponse = z.infer<typeof IngredientResponseSchema>;

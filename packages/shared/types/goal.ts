@@ -7,11 +7,14 @@ export const GoalSchema = z.object({
   description: z.string().nullable(),
 });
 
+export const GoalListSchema = z.array(GoalSchema);
+
 export const GoalResponseSchema = z.object({
-  list: z.array(GoalSchema),
+  list: GoalListSchema,
 });
 
 export type Goal = z.infer<typeof GoalSchema>;
+export type GoalList = z.infer<typeof GoalListSchema>;
 export type GoalResponse = z.infer<typeof GoalResponseSchema>;
 
 

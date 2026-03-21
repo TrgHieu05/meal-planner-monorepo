@@ -9,6 +9,7 @@ import { FavoriteIngredientModule } from './favorite-ingredient/favorite-ingredi
 import { MetricModule } from './metric/metric.module';
 import { OptionsModule } from './options/options.module';
 import { ProfileModule } from './profile/profile.module';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { ProfileModule } from './profile/profile.module';
     AllergyModule,
     FavoriteIngredientModule,
     OptionsModule,
+    UserModule,
     MetricModule,
     ProfileModule,
   ],

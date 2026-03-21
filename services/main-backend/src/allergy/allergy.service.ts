@@ -1,11 +1,11 @@
 import {
-  BadRequestException,
+  ConflictException,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import {
-  AllergyUpdateSchema,
   AllergyResponseSchema,
   AllergyUpdate,
 } from '@meal/shared/types/allergy';
@@ -16,12 +16,13 @@ export class AllergyService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getAllergy(userId: Uuid) {
+    await this.assertUserExists(userId);
+
     const allergyList = await this.prisma.allergy.findMany({
       where: { userId },
       select: {
         ingredient: {
           select: {
-            id: true,
             name: true,
           },
         },
@@ -44,12 +45,12 @@ export class AllergyService {
   }
 
   async updateAllergy(userId: Uuid, payload: AllergyUpdate) {
-    const parsed = AllergyUpdateSchema.safeParse(payload);
-    if (!parsed.success) {
-      throw new BadRequestException(parsed.error);
-    }
+    await this.assertUserExists(userId);
 
-    const payloadIngredientIds = Array.from(new Set(parsed.data.ingredientIds));
+    const payloadIngredientIds = Array.from(new Set(payload.ingredientIds));
+    await this.assertIngredientsExist(payloadIngredientIds);
+    await this.assertNoFavoriteConflict(userId, payloadIngredientIds);
+
     const existingAllergies = await this.prisma.allergy.findMany({
       where: { userId },
       select: { ingredientId: true },
@@ -89,5 +90,56 @@ export class AllergyService {
     });
 
     return await this.getAllergy(userId);
+  }
+
+  private async assertUserExists(userId: Uuid) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true },
+    });
+    if (!user) {
+      throw new NotFoundException('User not found.');
+    }
+  }
+
+  private async assertIngredientsExist(ingredientIds: number[]) {
+    if (ingredientIds.length === 0) {
+      return;
+    }
+    const existingIngredients = await this.prisma.ingredient.findMany({
+      where: { id: { in: ingredientIds } },
+      select: { id: true },
+    });
+    const existingIdSet = new Set(existingIngredients.map((item) => item.id));
+    const missingIds = ingredientIds.filter((id) => !existingIdSet.has(id));
+    if (missingIds.length > 0) {
+      throw new NotFoundException(
+        `Ingredients not found: ${missingIds.join(', ')}.`,
+      );
+    }
+  }
+
+  private async assertNoFavoriteConflict(
+    userId: Uuid,
+    ingredientIds: number[],
+  ) {
+    if (ingredientIds.length === 0) {
+      return;
+    }
+    const conflicts = await this.prisma.favoriteIngredient.findMany({
+      where: {
+        userId,
+        ingredientId: { in: ingredientIds },
+      },
+      select: { ingredientId: true },
+    });
+    if (conflicts.length > 0) {
+      const conflictIds = conflicts
+        .map((item) => item.ingredientId)
+        .sort((a, b) => a - b);
+      throw new ConflictException(
+        `Allergy update conflicts with favorite ingredients: ${conflictIds.join(', ')}.`,
+      );
+    }
   }
 }

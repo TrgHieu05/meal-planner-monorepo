@@ -1,11 +1,10 @@
 import {
-  BadRequestException,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import {
-  MetricCreateSchema,
   MetricCreate,
   MetricSchema,
   MetricResponseSchema,
@@ -17,6 +16,8 @@ export class MetricService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getLatestMetric(userId: Uuid) {
+    await this.assertUserExists(userId);
+
     const metric = await this.prisma.metric.findFirst({
       where: { userId },
       orderBy: { recordedAt: 'desc' },
@@ -35,16 +36,9 @@ export class MetricService {
   }
 
   async createMetric(userId: Uuid, payload: MetricCreate) {
-    const parsedPayload = MetricCreateSchema.safeParse(payload);
-    if (!parsedPayload.success) {
-      throw new BadRequestException(parsedPayload.error);
-    }
+    await this.assertUserExists(userId);
 
-    const { heightCm, weightKg } = parsedPayload.data;
-    if (!heightCm || !weightKg) {
-      throw new BadRequestException('Height (Cm) and weight (Kg) are required');
-    }
-
+    const { heightCm, weightKg } = payload;
     const bmi = weightKg / Math.pow(heightCm / 100, 2);
 
     const metric = await this.prisma.metric.create({
@@ -63,5 +57,15 @@ export class MetricService {
     }
 
     return parsed.data;
+  }
+
+  private async assertUserExists(userId: Uuid) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true },
+    });
+    if (!user) {
+      throw new NotFoundException('User not found.');
+    }
   }
 }

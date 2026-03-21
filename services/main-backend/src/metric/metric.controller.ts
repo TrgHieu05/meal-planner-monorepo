@@ -1,10 +1,10 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Get,
   Headers,
   Post,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { MetricCreateSchema } from '@meal/shared/types/metric';
@@ -19,6 +19,9 @@ export class MetricController {
   @Get('latest')
   @ApiOperation({ summary: 'Lấy metric gần nhất của user hiện tại' })
   @ApiResponse({ status: 200, description: 'Trả về metric gần nhất hoặc null' })
+  @ApiResponse({ status: 404, description: 'User not found.' })
+  @ApiResponse({ status: 422, description: 'Invalid request header.' })
+  @ApiResponse({ status: 500, description: 'Internal server error.' })
   getLatestMetric(@Headers('x-user-id') userIdHeader: string) {
     const userId = this.parseUserId(userIdHeader);
     return this.metricService.getLatestMetric(userId);
@@ -27,7 +30,12 @@ export class MetricController {
   @Post()
   @ApiOperation({ summary: 'Tạo metric mới cho user hiện tại' })
   @ApiResponse({ status: 201, description: 'Tạo metric thành công' })
-  @ApiResponse({ status: 422, description: 'Payload không hợp lệ' })
+  @ApiResponse({ status: 404, description: 'User not found.' })
+  @ApiResponse({
+    status: 422,
+    description: 'Invalid request header or payload.',
+  })
+  @ApiResponse({ status: 500, description: 'Internal server error.' })
   createMetric(
     @Headers('x-user-id') userIdHeader: string,
     @Body() body: unknown,
@@ -40,7 +48,9 @@ export class MetricController {
   private parseUserId(userIdHeader?: string) {
     const parsed = UuidSchema.safeParse(userIdHeader);
     if (!parsed.success) {
-      throw new BadRequestException({ message: 'Invalid x-user-id' });
+      throw new UnprocessableEntityException({
+        message: 'Header "x-user-id" must be a valid UUID.',
+      });
     }
     return parsed.data;
   }
@@ -48,14 +58,11 @@ export class MetricController {
   private parseMetricCreate(body: unknown) {
     const parsed = MetricCreateSchema.safeParse(body);
     if (!parsed.success) {
-      throw new BadRequestException(parsed.error);
-    }
-    const { heightCm, weightKg } = parsed.data;
-    if (heightCm == null || weightKg == null) {
-      throw new BadRequestException({
-        message: 'Height (Cm) and weight (Kg) are required',
+      throw new UnprocessableEntityException({
+        message: 'Request body is invalid for metric creation.',
+        details: parsed.error.flatten(),
       });
     }
-    return { heightCm, weightKg };
+    return parsed.data;
   }
 }

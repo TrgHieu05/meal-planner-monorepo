@@ -8,6 +8,7 @@ import {
   MetricCreateSchema,
   MetricCreate,
   MetricSchema,
+  MetricResponseSchema,
 } from '@meal/shared/types/metric';
 import { Uuid } from '@meal/shared/types/common';
 
@@ -25,7 +26,7 @@ export class MetricService {
       return null;
     }
 
-    const parsed = MetricSchema.safeParse(metric);
+    const parsed = MetricResponseSchema.safeParse(metric);
     if (!parsed.success) {
       throw new InternalServerErrorException('Invalid metric data');
     }

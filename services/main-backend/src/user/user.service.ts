@@ -4,11 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
-import {
-  UserSchema,
-  UserUpdate,
-  UserResponseSchema,
-} from '@meal/shared/types/user';
+import { UserUpdate, UserResponseSchema } from '@meal/shared/types/user';
 import { Uuid } from '@meal/shared/types/common';
 
 @Injectable()
@@ -41,7 +37,7 @@ export class UserService {
       },
       data: payload,
     });
-    
+
     if (!user) {
       throw new InternalServerErrorException('Failed to update user');
     }

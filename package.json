@@ -17,7 +17,7 @@
     "prisma:migrate": "pnpm --filter @meal/database exec prisma migrate dev",
     "prisma:reset": "pnpm --filter @meal/database exec prisma migrate reset",
     "prisma:studio": "pnpm --filter @meal/database exec prisma studio",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test:backend": "pnpm --filter main-backend run test && pnpm --filter main-backend run test:e2e"
   },
   "keywords": [],
   "author": "",

@@ -1,6 +1,6 @@
 import * as dotenv from 'dotenv';
-import * as path from 'path';
-import * as fs from 'fs';
+import * as path from 'node:path';
+import * as fs from 'node:fs';
 
 // Nạp file .env từ thư mục gốc Monorepo ngay lập tức
 dotenv.config({ path: path.resolve(__dirname, '../../../../.env') });
@@ -20,10 +20,10 @@ async function bootstrap() {
     .setTitle('KitchenMind API')
     .setDescription(
       'Tài liệu hướng dẫn và kiểm thử API cho hệ thống Meal Planner\n\n' +
-      '## Xác thực\n' +
-      'Các endpoint được bảo vệ yêu cầu JWT Bearer token.\n' +
-      'Đăng nhập qua Google (`GET /api/auth/google`) để nhận `accessToken`,\n' +
-      'sau đó nhấn **Authorize** và nhập token vào ô `Bearer <token>`.',
+        '## Xác thực\n' +
+        'Các endpoint được bảo vệ yêu cầu JWT Bearer token.\n' +
+        'Đăng nhập qua Google (`GET /api/auth/google`) để nhận `accessToken`,\n' +
+        'sau đó nhấn **Authorize** và nhập token vào ô `Bearer <token>`.',
     )
     .setVersion('1.0')
     .addServer('http://localhost:3000', 'Local Development')
@@ -54,8 +54,8 @@ async function bootstrap() {
 
   SwaggerModule.setup('api/docs', app, document, {
     swaggerOptions: {
-      persistAuthorization: true,       // Giữ token sau khi refresh trang
-      tryItOutEnabled: true,            // Bật sẵn "Try it out"
+      persistAuthorization: true, // Giữ token sau khi refresh trang
+      tryItOutEnabled: true, // Bật sẵn "Try it out"
     },
   });
 

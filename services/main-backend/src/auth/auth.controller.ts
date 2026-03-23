@@ -1,7 +1,12 @@
 import { Controller, Get, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
-import { ApiOperation, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from './jwt-auth.guard';
 
 @ApiTags('Authentication')
@@ -12,16 +17,21 @@ export class AuthController {
   @Get('google')
   @ApiOperation({
     summary: 'Bắt đầu quá trình đăng nhập bằng Google',
-    description: 'Chuyển hướng trình duyệt tới trang OAuth2 của Google. Sau khi xác thực thành công, Google sẽ gọi lại callback `/api/auth/google/callback`.',
+    description:
+      'Chuyển hướng trình duyệt tới trang OAuth2 của Google. Sau khi xác thực thành công, Google sẽ gọi lại callback `/api/auth/google/callback`.',
   })
-  @ApiResponse({ status: 302, description: 'Chuyển hướng tới trang đăng nhập Google' })
+  @ApiResponse({
+    status: 302,
+    description: 'Chuyển hướng tới trang đăng nhập Google',
+  })
   @UseGuards(AuthGuard('google'))
   async googleAuth(@Req() req) {}
 
   @Get('google/callback')
   @ApiOperation({
     summary: 'Callback Google OAuth — nhận token',
-    description: 'Google gọi endpoint này sau khi xác thực. Hệ thống tìm/tạo user rồi phát hành JWT nội bộ (`accessToken`) dùng để gọi các API được bảo vệ.',
+    description:
+      'Google gọi endpoint này sau khi xác thực. Hệ thống tìm/tạo user rồi phát hành JWT nội bộ (`accessToken`) dùng để gọi các API được bảo vệ.',
   })
   @ApiResponse({
     status: 200,
@@ -50,7 +60,8 @@ export class AuthController {
   @ApiBearerAuth('JWT')
   @ApiOperation({
     summary: 'Lấy thông tin profile user hiện tại',
-    description: 'Yêu cầu JWT Bearer token hợp lệ trong header `Authorization`. Trả về thông tin user được giải mã từ token.',
+    description:
+      'Yêu cầu JWT Bearer token hợp lệ trong header `Authorization`. Trả về thông tin user được giải mã từ token.',
   })
   @ApiResponse({
     status: 200,
@@ -63,9 +74,11 @@ export class AuthController {
       },
     },
   })
-  @ApiResponse({ status: 401, description: 'Token không hợp lệ hoặc đã hết hạn' })
+  @ApiResponse({
+    status: 401,
+    description: 'Token không hợp lệ hoặc đã hết hạn',
+  })
   getProfile(@Req() req) {
     return req.user;
   }
 }
-

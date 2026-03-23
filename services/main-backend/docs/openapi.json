@@ -1,9 +1,114 @@
 {
   "openapi": "3.0.0",
+  "paths": {
+    "/api": {
+      "get": {
+        "operationId": "AppController_getHello",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "App"
+        ]
+      }
+    },
+    "/api/auth/google": {
+      "get": {
+        "description": "Chuyển hướng trình duyệt tới trang OAuth2 của Google. Sau khi xác thực thành công, Google sẽ gọi lại callback `/api/auth/google/callback`.",
+        "operationId": "AuthController_googleAuth",
+        "parameters": [],
+        "responses": {
+          "302": {
+            "description": "Chuyển hướng tới trang đăng nhập Google"
+          }
+        },
+        "summary": "Bắt đầu quá trình đăng nhập bằng Google",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/auth/google/callback": {
+      "get": {
+        "description": "Google gọi endpoint này sau khi xác thực. Hệ thống tìm/tạo user rồi phát hành JWT nội bộ (`accessToken`) dùng để gọi các API được bảo vệ.",
+        "operationId": "AuthController_googleAuthRedirect",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Đăng nhập thành công, trả về user và accessToken",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "message": "Xác thực Google thành công",
+                    "user": {
+                      "id": "63914c9d-3f89-4a60-a67d-be0d29b5e623",
+                      "email": "quytvo2626@gmail.com",
+                      "userName": "quý võ"
+                    },
+                    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Xác thực Google không thành công"
+          },
+          "500": {
+            "description": "Lỗi máy chủ nội bộ"
+          }
+        },
+        "summary": "Callback Google OAuth — nhận token",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/auth/profile": {
+      "get": {
+        "description": "Yêu cầu JWT Bearer token hợp lệ trong header `Authorization`. Trả về thông tin user được giải mã từ token.",
+        "operationId": "AuthController_getProfile",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Trả về thông tin user từ JWT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "id": "63914c9d-3f89-4a60-a67d-be0d29b5e623",
+                    "email": "quytvo2626@gmail.com",
+                    "userName": "quý võ"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Lấy thông tin profile user hiện tại",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    }
+  },
   "info": {
     "title": "KitchenMind API",
-    "description": "Tài liệu hướng dẫn và kiểm thử API cho hệ thống Meal Planner",
-    "version": "1.0"
+    "description": "Tài liệu hướng dẫn và kiểm thử API cho hệ thống Meal Planner\n\n## Xác thực\nCác endpoint được bảo vệ yêu cầu JWT Bearer token.\nĐăng nhập qua Google (`GET /api/auth/google`) để nhận `accessToken`,\nsau đó nhấn **Authorize** và nhập token vào ô `Bearer <token>`.",
+    "version": "1.0",
+    "contact": {}
   },
   "tags": [
     {
@@ -11,87 +116,23 @@
       "description": "Các API liên quan đến xác thực người dùng"
     }
   ],
-  "paths": {
-    "/api/auth/google": {
-      "get": {
-        "tags": [
-          "Authentication"
-        ],
-        "summary": "Bắt đầu quá trình đăng nhập bằng Google",
-        "description": "Chuyển hướng người dùng tới trang OAuth2 của Google",
-        "responses": {
-          "302": {
-            "description": "Chuyển hướng tới Google"
-          }
-        }
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Local Development"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "JWT": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http",
+        "name": "Authorization",
+        "description": "Nhập JWT token (không cần tiền tố Bearer)",
+        "in": "header"
       }
     },
-    "/api/auth/google/callback": {
-      "get": {
-        "tags": [
-          "Authentication"
-        ],
-        "summary": "Xử lý phản hồi từ Google sau khi đăng nhập",
-        "description": "Nhận callback từ Google, xác thực và trả về thông tin người dùng kèm token",
-        "responses": {
-          "200": {
-            "description": "Đăng nhập thành công",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GoogleAuthResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Xác thực không thành công"
-          },
-          "500": {
-            "description": "Lỗi máy chủ nội bộ"
-          }
-        }
-      }
-    }
-  },
-  "components": {
-    "schemas": {
-      "User": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "example": "550e8400-e29b-41d4-a716-446655440000"
-          },
-          "email": {
-            "type": "string",
-            "format": "email",
-            "example": "user@example.com"
-          },
-          "userName": {
-            "type": "string",
-            "example": "John Doe"
-          }
-        }
-      },
-      "GoogleAuthResponse": {
-        "type": "object",
-        "properties": {
-          "message": {
-            "type": "string",
-            "example": "Xác thực Google thành công"
-          },
-          "user": {
-            "$ref": "#/components/schemas/User"
-          },
-          "accessToken": {
-            "type": "string",
-            "description": "Google OAuth2 Access Token",
-            "example": "ya29.a0AfH6SMC..."
-          }
-        }
-      }
-    }
+    "schemas": {}
   }
 }

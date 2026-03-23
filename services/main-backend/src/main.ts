@@ -15,28 +15,49 @@ async function bootstrap() {
   // Thiết lập prefix chung cho API
   app.setGlobalPrefix('api');
 
-  // Cấu hình Swagger
-  let document;
-  const swaggerPath = path.resolve(__dirname, '../docs/openapi.json');
+  // ── Swagger / OpenAPI ────────────────────────────────────────────────────
+  const config = new DocumentBuilder()
+    .setTitle('KitchenMind API')
+    .setDescription(
+      'Tài liệu hướng dẫn và kiểm thử API cho hệ thống Meal Planner\n\n' +
+      '## Xác thực\n' +
+      'Các endpoint được bảo vệ yêu cầu JWT Bearer token.\n' +
+      'Đăng nhập qua Google (`GET /api/auth/google`) để nhận `accessToken`,\n' +
+      'sau đó nhấn **Authorize** và nhập token vào ô `Bearer <token>`.',
+    )
+    .setVersion('1.0')
+    .addServer('http://localhost:3000', 'Local Development')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'Authorization',
+        description: 'Nhập JWT token (không cần tiền tố Bearer)',
+        in: 'header',
+      },
+      'JWT',
+    )
+    .addTag('Authentication', 'Các API liên quan đến xác thực người dùng')
+    .build();
 
-  if (fs.existsSync(swaggerPath)) {
-    // Nếu có file openapi.json trong thư mục docs, nạp từ đó
-    const swaggerData = JSON.parse(fs.readFileSync(swaggerPath, 'utf8'));
-    document = swaggerData;
-  } else {
-    // Ngược lại, tự động tạo từ decorators trong code
-    const config = new DocumentBuilder()
-      .setTitle('KitchenMind API')
-      .setDescription(
-        'Tài liệu hướng dẫn và kiểm thử API cho hệ thống Meal Planner',
-      )
-      .setVersion('1.0')
-      .addTag('Meal Planner')
-      .build();
-    document = SwaggerModule.createDocument(app, config);
-  }
+  const document = SwaggerModule.createDocument(app, config);
 
-  SwaggerModule.setup('api/docs', app, document);
+  // Ghi lại openapi.json để giữ file static luôn đồng bộ
+  const docsDir = path.resolve(__dirname, '../docs');
+  if (!fs.existsSync(docsDir)) fs.mkdirSync(docsDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(docsDir, 'openapi.json'),
+    JSON.stringify(document, null, 2),
+    'utf8',
+  );
+
+  SwaggerModule.setup('api/docs', app, document, {
+    swaggerOptions: {
+      persistAuthorization: true,       // Giữ token sau khi refresh trang
+      tryItOutEnabled: true,            // Bật sẵn "Try it out"
+    },
+  });
 
   const port = process.env.PORT ?? 3000;
   await app.listen(port);

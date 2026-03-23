@@ -1,5 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UnprocessableEntityException } from '@nestjs/common';
+import {
+  UnauthorizedException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { MetricController } from './metric.controller';
 import { MetricService } from './metric.service';
 
@@ -32,17 +35,17 @@ describe('MetricController', () => {
   });
 
   describe('getLatestMetric', () => {
-    it('should parse header and call service', async () => {
+    it('should read user from request and call service', async () => {
       metricService.getLatestMetric.mockResolvedValue(null);
 
-      await controller.getLatestMetric(userId);
+      await controller.getLatestMetric({ user: { id: userId } });
 
       expect(metricService.getLatestMetric).toHaveBeenCalledWith(userId);
     });
 
-    it('should throw when x-user-id is invalid', () => {
-      expect(() => controller.getLatestMetric('invalid-uuid')).toThrow(
-        UnprocessableEntityException,
+    it('should throw when user is missing', () => {
+      expect(() => controller.getLatestMetric({})).toThrow(
+        UnauthorizedException,
       );
       expect(metricService.getLatestMetric).not.toHaveBeenCalled();
     });
@@ -59,15 +62,20 @@ describe('MetricController', () => {
         recordedAt: new Date(),
       });
 
-      await controller.createMetric(userId, payload);
+      await controller.createMetric({ user: { id: userId } }, payload);
 
       expect(metricService.createMetric).toHaveBeenCalledWith(userId, payload);
     });
 
     it('should throw when body is invalid', () => {
-      expect(() => controller.createMetric(userId, { heightCm: -1 })).toThrow(
-        UnprocessableEntityException,
-      );
+      expect(() =>
+        controller.createMetric(
+          { user: { id: userId } },
+          {
+            heightCm: -1,
+          },
+        ),
+      ).toThrow(UnprocessableEntityException);
       expect(metricService.createMetric).not.toHaveBeenCalled();
     });
   });

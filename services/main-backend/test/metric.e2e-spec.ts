@@ -5,6 +5,7 @@ import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
 import { MetricService } from './../src/metric/metric.service';
 import { PrismaService } from './../src/database/prisma.service';
+import { JwtService } from '@nestjs/jwt';
 
 describe('Metric API (e2e)', () => {
   let app: INestApplication<App>;
@@ -14,11 +15,22 @@ describe('Metric API (e2e)', () => {
   };
 
   const userId = '550e8400-e29b-41d4-a716-446655440000';
+  let token: string;
 
   beforeEach(async () => {
     metricService = {
       getLatestMetric: jest.fn(),
       createMetric: jest.fn(),
+    };
+
+    const mockPrisma = {
+      user: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: userId,
+          email: 'user@example.com',
+          userName: 'John',
+        }),
+      },
     };
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -27,8 +39,11 @@ describe('Metric API (e2e)', () => {
       .overrideProvider(MetricService)
       .useValue(metricService)
       .overrideProvider(PrismaService)
-      .useValue({})
+      .useValue(mockPrisma)
       .compile();
+
+    const jwtService = moduleFixture.get(JwtService);
+    token = jwtService.sign({ sub: userId, email: 'user@example.com' });
 
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix('api');
@@ -50,17 +65,16 @@ describe('Metric API (e2e)', () => {
 
     await request(app.getHttpServer())
       .get('/api/v1/metrics/latest')
-      .set('x-user-id', userId)
+      .set('Authorization', `Bearer ${token}`)
       .expect(200);
 
     expect(metricService.getLatestMetric).toHaveBeenCalledWith(userId);
   });
 
-  it('GET /api/v1/metrics/latest should return 422 for invalid header', async () => {
+  it('GET /api/v1/metrics/latest should return 401 when token is missing', async () => {
     await request(app.getHttpServer())
       .get('/api/v1/metrics/latest')
-      .set('x-user-id', 'invalid-uuid')
-      .expect(422);
+      .expect(401);
   });
 
   it('GET /api/v1/metrics/latest should return 404 when user is not found', async () => {
@@ -70,7 +84,7 @@ describe('Metric API (e2e)', () => {
 
     await request(app.getHttpServer())
       .get('/api/v1/metrics/latest')
-      .set('x-user-id', userId)
+      .set('Authorization', `Bearer ${token}`)
       .expect(404);
   });
 
@@ -86,7 +100,7 @@ describe('Metric API (e2e)', () => {
 
     await request(app.getHttpServer())
       .post('/api/v1/metrics')
-      .set('x-user-id', userId)
+      .set('Authorization', `Bearer ${token}`)
       .send({ heightCm: 170, weightKg: 65 })
       .expect(201);
 
@@ -99,7 +113,7 @@ describe('Metric API (e2e)', () => {
   it('POST /api/v1/metrics should return 422 for invalid payload', async () => {
     await request(app.getHttpServer())
       .post('/api/v1/metrics')
-      .set('x-user-id', userId)
+      .set('Authorization', `Bearer ${token}`)
       .send({ heightCm: -1, weightKg: 65 })
       .expect(422);
   });

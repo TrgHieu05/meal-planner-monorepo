@@ -1,5 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UnprocessableEntityException } from '@nestjs/common';
+import {
+  UnauthorizedException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { AllergyController } from './allergy.controller';
 import { AllergyService } from './allergy.service';
 
@@ -32,18 +35,18 @@ describe('AllergyController', () => {
   });
 
   describe('getAllergy', () => {
-    it('should parse header and call service', async () => {
+    it('should parse request user and call service', async () => {
       allergyService.getAllergy.mockResolvedValue({ list: [] });
 
-      await controller.getAllergy(userId);
+      await controller.getAllergy({ user: { id: userId } });
 
       expect(allergyService.getAllergy).toHaveBeenCalledWith(userId);
     });
 
-    it('should throw when x-user-id is invalid', () => {
-      expect(() => controller.getAllergy('invalid-uuid')).toThrow(
-        UnprocessableEntityException,
-      );
+    it('should throw when token user id is invalid', () => {
+      expect(() =>
+        controller.getAllergy({ user: { id: 'invalid-uuid' } }),
+      ).toThrow(UnauthorizedException);
       expect(allergyService.getAllergy).not.toHaveBeenCalled();
     });
   });
@@ -55,7 +58,7 @@ describe('AllergyController', () => {
         list: [{ name: 'Salt' }],
       });
 
-      await controller.updateAllergy(userId, payload);
+      await controller.updateAllergy({ user: { id: userId } }, payload);
 
       expect(allergyService.updateAllergy).toHaveBeenCalledWith(
         userId,
@@ -63,9 +66,24 @@ describe('AllergyController', () => {
       );
     });
 
+    it('should throw when token user id is invalid', () => {
+      expect(() =>
+        controller.updateAllergy(
+          { user: { id: 'invalid-uuid' } },
+          {
+            ingredientIds: [1],
+          },
+        ),
+      ).toThrow(UnauthorizedException);
+      expect(allergyService.updateAllergy).not.toHaveBeenCalled();
+    });
+
     it('should throw when body is invalid', () => {
       expect(() =>
-        controller.updateAllergy(userId, { ingredientIds: ['1'] }),
+        controller.updateAllergy(
+          { user: { id: userId } },
+          { ingredientIds: ['1'] },
+        ),
       ).toThrow(UnprocessableEntityException);
       expect(allergyService.updateAllergy).not.toHaveBeenCalled();
     });

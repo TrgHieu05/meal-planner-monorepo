@@ -9,6 +9,7 @@ import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
 import { AllergyService } from './../src/allergy/allergy.service';
 import { PrismaService } from './../src/database/prisma.service';
+import { JwtService } from '@nestjs/jwt';
 
 describe('Allergy API (e2e)', () => {
   let app: INestApplication<App>;
@@ -18,6 +19,7 @@ describe('Allergy API (e2e)', () => {
   };
 
   const userId = '550e8400-e29b-41d4-a716-446655440000';
+  let token: string;
 
   beforeEach(async () => {
     allergyService = {
@@ -31,8 +33,19 @@ describe('Allergy API (e2e)', () => {
       .overrideProvider(AllergyService)
       .useValue(allergyService)
       .overrideProvider(PrismaService)
-      .useValue({})
+      .useValue({
+        user: {
+          findUnique: jest.fn().mockResolvedValue({
+            id: userId,
+            email: 'user@example.com',
+            userName: 'John',
+          }),
+        },
+      })
       .compile();
+
+    const jwtService = moduleFixture.get(JwtService);
+    token = jwtService.sign({ sub: userId, email: 'user@example.com' });
 
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix('api');
@@ -43,24 +56,21 @@ describe('Allergy API (e2e)', () => {
     await app.close();
   });
 
-  it('GET /api/v1/allergies should return 200 for valid header', async () => {
+  it('GET /api/v1/allergies should return 200 for valid token', async () => {
     allergyService.getAllergy.mockResolvedValue({
       list: [{ name: 'Egg' }],
     });
 
     await request(app.getHttpServer())
       .get('/api/v1/allergies')
-      .set('x-user-id', userId)
+      .set('Authorization', `Bearer ${token}`)
       .expect(200);
 
     expect(allergyService.getAllergy).toHaveBeenCalledWith(userId);
   });
 
-  it('GET /api/v1/allergies should return 422 for invalid header', async () => {
-    await request(app.getHttpServer())
-      .get('/api/v1/allergies')
-      .set('x-user-id', 'invalid-uuid')
-      .expect(422);
+  it('GET /api/v1/allergies should return 401 when token is missing', async () => {
+    await request(app.getHttpServer()).get('/api/v1/allergies').expect(401);
   });
 
   it('GET /api/v1/allergies should return 404 when user is not found', async () => {
@@ -70,7 +80,7 @@ describe('Allergy API (e2e)', () => {
 
     await request(app.getHttpServer())
       .get('/api/v1/allergies')
-      .set('x-user-id', userId)
+      .set('Authorization', `Bearer ${token}`)
       .expect(404);
   });
 
@@ -81,7 +91,7 @@ describe('Allergy API (e2e)', () => {
 
     await request(app.getHttpServer())
       .patch('/api/v1/allergies')
-      .set('x-user-id', userId)
+      .set('Authorization', `Bearer ${token}`)
       .send({ ingredientIds: [1, 2] })
       .expect(200);
 
@@ -90,18 +100,17 @@ describe('Allergy API (e2e)', () => {
     });
   });
 
-  it('PATCH /api/v1/allergies should return 422 for invalid header', async () => {
+  it('PATCH /api/v1/allergies should return 401 when token is missing', async () => {
     await request(app.getHttpServer())
       .patch('/api/v1/allergies')
-      .set('x-user-id', 'invalid-uuid')
       .send({ ingredientIds: [1] })
-      .expect(422);
+      .expect(401);
   });
 
   it('PATCH /api/v1/allergies should return 422 for invalid payload', async () => {
     await request(app.getHttpServer())
       .patch('/api/v1/allergies')
-      .set('x-user-id', userId)
+      .set('Authorization', `Bearer ${token}`)
       .send({ ingredientIds: ['1'] })
       .expect(422);
   });
@@ -115,7 +124,7 @@ describe('Allergy API (e2e)', () => {
 
     await request(app.getHttpServer())
       .patch('/api/v1/allergies')
-      .set('x-user-id', userId)
+      .set('Authorization', `Bearer ${token}`)
       .send({ ingredientIds: [2] })
       .expect(409);
   });
@@ -127,7 +136,7 @@ describe('Allergy API (e2e)', () => {
 
     await request(app.getHttpServer())
       .patch('/api/v1/allergies')
-      .set('x-user-id', userId)
+      .set('Authorization', `Bearer ${token}`)
       .send({ ingredientIds: [99] })
       .expect(404);
   });

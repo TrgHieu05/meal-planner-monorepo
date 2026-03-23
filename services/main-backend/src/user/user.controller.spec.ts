@@ -1,5 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UnprocessableEntityException } from '@nestjs/common';
+import {
+  UnauthorizedException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
 
@@ -32,7 +35,7 @@ describe('UserController', () => {
   });
 
   describe('getCurrentUser', () => {
-    it('should parse header and call service', async () => {
+    it('should parse request user and call service', async () => {
       userService.getUser.mockResolvedValue({
         email: 'user@example.com',
         userName: 'John',
@@ -40,15 +43,15 @@ describe('UserController', () => {
         dateOfBirth: null,
       });
 
-      await controller.getCurrentUser(userId);
+      await controller.getCurrentUser({ user: { id: userId } });
 
       expect(userService.getUser).toHaveBeenCalledWith(userId);
     });
 
-    it('should throw when x-user-id is invalid', async () => {
-      await expect(controller.getCurrentUser('invalid-uuid')).rejects.toThrow(
-        UnprocessableEntityException,
-      );
+    it('should throw when token user id is invalid', async () => {
+      await expect(
+        controller.getCurrentUser({ user: { id: 'invalid-uuid' } }),
+      ).rejects.toThrow(UnauthorizedException);
       expect(userService.getUser).not.toHaveBeenCalled();
     });
   });
@@ -66,7 +69,7 @@ describe('UserController', () => {
         dateOfBirth: null,
       });
 
-      await controller.updateCurrentUser(userId, payload);
+      await controller.updateCurrentUser({ user: { id: userId } }, payload);
 
       expect(userService.updateUser).toHaveBeenCalledWith(userId, payload);
     });
@@ -79,30 +82,49 @@ describe('UserController', () => {
         dateOfBirth: new Date('2000-01-01T00:00:00.000Z'),
       });
 
-      await controller.updateCurrentUser(userId, { dateOfBirth: '2000-01-01' });
+      await controller.updateCurrentUser(
+        { user: { id: userId } },
+        { dateOfBirth: '2000-01-01' },
+      );
 
       expect(userService.updateUser).toHaveBeenCalledWith(userId, {
         dateOfBirth: new Date('2000-01-01T00:00:00.000Z'),
       });
     });
 
+    it('should throw when token user id is invalid', async () => {
+      await expect(
+        controller.updateCurrentUser(
+          { user: { id: 'invalid-uuid' } },
+          { userName: 'John Doe' },
+        ),
+      ).rejects.toThrow(UnauthorizedException);
+      expect(userService.updateUser).not.toHaveBeenCalled();
+    });
+
     it('should throw when body schema is invalid', async () => {
       await expect(
-        controller.updateCurrentUser(userId, { gender: 'X' }),
+        controller.updateCurrentUser({ user: { id: userId } }, { gender: 'X' }),
       ).rejects.toThrow(UnprocessableEntityException);
       expect(userService.updateUser).not.toHaveBeenCalled();
     });
 
     it('should throw when dateOfBirth format is invalid', async () => {
       await expect(
-        controller.updateCurrentUser(userId, { dateOfBirth: '2000/01/01' }),
+        controller.updateCurrentUser(
+          { user: { id: userId } },
+          { dateOfBirth: '2000/01/01' },
+        ),
       ).rejects.toThrow(UnprocessableEntityException);
       expect(userService.updateUser).not.toHaveBeenCalled();
     });
 
     it('should throw when dateOfBirth is invalid calendar date', async () => {
       await expect(
-        controller.updateCurrentUser(userId, { dateOfBirth: '2000-02-30' }),
+        controller.updateCurrentUser(
+          { user: { id: userId } },
+          { dateOfBirth: '2000-02-30' },
+        ),
       ).rejects.toThrow(UnprocessableEntityException);
       expect(userService.updateUser).not.toHaveBeenCalled();
     });

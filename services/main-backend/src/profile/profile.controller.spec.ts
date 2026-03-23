@@ -1,5 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UnprocessableEntityException } from '@nestjs/common';
+import {
+  UnauthorizedException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { ProfileController } from './profile.controller';
 import { ProfileService } from './profile.service';
 
@@ -34,35 +37,35 @@ describe('ProfileController', () => {
   });
 
   describe('getFullProfile', () => {
-    it('should parse header and call service', async () => {
+    it('should parse request user and call service', async () => {
       profileService.getFullProfile.mockResolvedValue({});
 
-      await controller.getFullProfile(userId);
+      await controller.getFullProfile({ user: { id: userId } });
 
       expect(profileService.getFullProfile).toHaveBeenCalledWith(userId);
     });
 
-    it('should throw when user-id is invalid', () => {
-      expect(() => controller.getFullProfile('invalid-uuid')).toThrow(
-        UnprocessableEntityException,
-      );
+    it('should throw when token user id is invalid', () => {
+      expect(() =>
+        controller.getFullProfile({ user: { id: 'invalid-uuid' } }),
+      ).toThrow(UnauthorizedException);
       expect(profileService.getFullProfile).not.toHaveBeenCalled();
     });
   });
 
   describe('getProfile', () => {
-    it('should parse header and call service', async () => {
+    it('should parse request user and call service', async () => {
       profileService.getProfile.mockResolvedValue({});
 
-      await controller.getProfile(userId);
+      await controller.getProfile({ user: { id: userId } });
 
       expect(profileService.getProfile).toHaveBeenCalledWith(userId);
     });
 
-    it('should throw when user-id is invalid', async () => {
-      await expect(controller.getProfile('invalid-uuid')).rejects.toThrow(
-        UnprocessableEntityException,
-      );
+    it('should throw when token user id is invalid', async () => {
+      await expect(
+        controller.getProfile({ user: { id: 'invalid-uuid' } }),
+      ).rejects.toThrow(UnauthorizedException);
       expect(profileService.getProfile).not.toHaveBeenCalled();
     });
   });
@@ -75,7 +78,7 @@ describe('ProfileController', () => {
       };
       profileService.updateProfile.mockResolvedValue(payload);
 
-      await controller.updateProfile(userId, payload);
+      await controller.updateProfile({ user: { id: userId } }, payload);
 
       expect(profileService.updateProfile).toHaveBeenCalledWith(
         userId,
@@ -83,16 +86,22 @@ describe('ProfileController', () => {
       );
     });
 
-    it('should throw when header is invalid', async () => {
+    it('should throw when token user id is invalid', async () => {
       await expect(
-        controller.updateProfile('invalid-uuid', { dietTypeId: 1 }),
-      ).rejects.toThrow(UnprocessableEntityException);
+        controller.updateProfile(
+          { user: { id: 'invalid-uuid' } },
+          { dietTypeId: 1 },
+        ),
+      ).rejects.toThrow(UnauthorizedException);
       expect(profileService.updateProfile).not.toHaveBeenCalled();
     });
 
     it('should throw when body is invalid', async () => {
       await expect(
-        controller.updateProfile(userId, { activityLevel: 'INVALID' }),
+        controller.updateProfile(
+          { user: { id: userId } },
+          { activityLevel: 'INVALID' },
+        ),
       ).rejects.toThrow(UnprocessableEntityException);
       expect(profileService.updateProfile).not.toHaveBeenCalled();
     });

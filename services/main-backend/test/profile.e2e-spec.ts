@@ -5,6 +5,7 @@ import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
 import { ProfileService } from './../src/profile/profile.service';
 import { PrismaService } from './../src/database/prisma.service';
+import { JwtService } from '@nestjs/jwt';
 
 describe('Profile API (e2e)', () => {
   let app: INestApplication<App>;
@@ -15,6 +16,7 @@ describe('Profile API (e2e)', () => {
   };
 
   const userId = '550e8400-e29b-41d4-a716-446655440000';
+  let token: string;
 
   beforeEach(async () => {
     profileService = {
@@ -29,8 +31,19 @@ describe('Profile API (e2e)', () => {
       .overrideProvider(ProfileService)
       .useValue(profileService)
       .overrideProvider(PrismaService)
-      .useValue({})
+      .useValue({
+        user: {
+          findUnique: jest.fn().mockResolvedValue({
+            id: userId,
+            email: 'user@example.com',
+            userName: 'John',
+          }),
+        },
+      })
       .compile();
+
+    const jwtService = moduleFixture.get(JwtService);
+    token = jwtService.sign({ sub: userId, email: 'user@example.com' });
 
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix('api');
@@ -41,22 +54,21 @@ describe('Profile API (e2e)', () => {
     await app.close();
   });
 
-  it('GET /api/v1/profile/overview should return 200 for valid header', async () => {
+  it('GET /api/v1/profile/overview should return 200 for valid token', async () => {
     profileService.getFullProfile.mockResolvedValue({});
 
     await request(app.getHttpServer())
       .get('/api/v1/profile/overview')
-      .set('user-id', userId)
+      .set('Authorization', `Bearer ${token}`)
       .expect(200);
 
     expect(profileService.getFullProfile).toHaveBeenCalledWith(userId);
   });
 
-  it('GET /api/v1/profile/overview should return 422 for invalid header', async () => {
+  it('GET /api/v1/profile/overview should return 401 when token is missing', async () => {
     await request(app.getHttpServer())
       .get('/api/v1/profile/overview')
-      .set('user-id', 'invalid-uuid')
-      .expect(422);
+      .expect(401);
   });
 
   it('GET /api/v1/profile/overview should return 404 when not found', async () => {
@@ -66,11 +78,11 @@ describe('Profile API (e2e)', () => {
 
     await request(app.getHttpServer())
       .get('/api/v1/profile/overview')
-      .set('user-id', userId)
+      .set('Authorization', `Bearer ${token}`)
       .expect(404);
   });
 
-  it('GET /api/v1/profile should return 200 for valid header', async () => {
+  it('GET /api/v1/profile should return 200 for valid token', async () => {
     profileService.getProfile.mockResolvedValue({
       dietTypeId: 1,
       goalId: 2,
@@ -81,17 +93,14 @@ describe('Profile API (e2e)', () => {
 
     await request(app.getHttpServer())
       .get('/api/v1/profile')
-      .set('user-id', userId)
+      .set('Authorization', `Bearer ${token}`)
       .expect(200);
 
     expect(profileService.getProfile).toHaveBeenCalledWith(userId);
   });
 
-  it('GET /api/v1/profile should return 422 for invalid header', async () => {
-    await request(app.getHttpServer())
-      .get('/api/v1/profile')
-      .set('user-id', 'invalid-uuid')
-      .expect(422);
+  it('GET /api/v1/profile should return 401 when token is missing', async () => {
+    await request(app.getHttpServer()).get('/api/v1/profile').expect(401);
   });
 
   it('GET /api/v1/profile should return 404 when not found', async () => {
@@ -101,7 +110,7 @@ describe('Profile API (e2e)', () => {
 
     await request(app.getHttpServer())
       .get('/api/v1/profile')
-      .set('user-id', userId)
+      .set('Authorization', `Bearer ${token}`)
       .expect(404);
   });
 
@@ -116,7 +125,7 @@ describe('Profile API (e2e)', () => {
 
     await request(app.getHttpServer())
       .patch('/api/v1/profile')
-      .set('user-id', userId)
+      .set('Authorization', `Bearer ${token}`)
       .send({ dietTypeId: 1, goalId: 2, cuisineTypeId: 3 })
       .expect(200);
 
@@ -127,18 +136,17 @@ describe('Profile API (e2e)', () => {
     });
   });
 
-  it('PATCH /api/v1/profile should return 422 for invalid header', async () => {
+  it('PATCH /api/v1/profile should return 401 when token is missing', async () => {
     await request(app.getHttpServer())
       .patch('/api/v1/profile')
-      .set('user-id', 'invalid-uuid')
       .send({ dietTypeId: 1 })
-      .expect(422);
+      .expect(401);
   });
 
   it('PATCH /api/v1/profile should return 422 for invalid payload', async () => {
     await request(app.getHttpServer())
       .patch('/api/v1/profile')
-      .set('user-id', userId)
+      .set('Authorization', `Bearer ${token}`)
       .send({ activityLevel: 'INVALID' })
       .expect(422);
   });
@@ -150,7 +158,7 @@ describe('Profile API (e2e)', () => {
 
     await request(app.getHttpServer())
       .patch('/api/v1/profile')
-      .set('user-id', userId)
+      .set('Authorization', `Bearer ${token}`)
       .send({ goalId: 999 })
       .expect(404);
   });

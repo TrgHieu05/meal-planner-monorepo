@@ -2,16 +2,24 @@ import {
   Body,
   Controller,
   Get,
-  Headers,
   Patch,
+  Req,
   UnprocessableEntityException,
+  UnauthorizedException,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { FavoriteIngredientService } from './favorite-ingredient.service';
 import { FavoriteIngredientUpdateSchema } from '@meal/shared/types/favorite-ingredient';
 import { UuidSchema } from '@meal/shared/types/common';
+import { RequireAuth } from '../auth/jwt-auth.guard';
 
 @ApiTags('Favorite Ingredient')
+@ApiBearerAuth('JWT')
 @Controller('v1/favorite-ingredients')
 export class FavoriteIngredientController {
   constructor(
@@ -19,6 +27,7 @@ export class FavoriteIngredientController {
   ) {}
 
   @Get()
+  @RequireAuth()
   @ApiOperation({
     summary: 'Lấy danh sách favorite ingredient của user hiện tại',
   })
@@ -26,21 +35,29 @@ export class FavoriteIngredientController {
     status: 200,
     description: 'Trả về danh sách favorite ingredient',
   })
+  @ApiResponse({
+    status: 401,
+    description: 'Token không hợp lệ hoặc đã hết hạn',
+  })
   @ApiResponse({ status: 404, description: 'User not found.' })
-  @ApiResponse({ status: 422, description: 'Invalid request header.' })
   @ApiResponse({ status: 500, description: 'Internal server error.' })
-  getFavoriteIngredient(@Headers('x-user-id') userIdHeader: string) {
-    const userId = this.parseUserId(userIdHeader);
+  getFavoriteIngredient(@Req() request: AuthenticatedRequest) {
+    const userId = this.getUserIdFromRequest(request);
     return this.favoriteIngredientService.getFavoriteIngredient(userId);
   }
 
   @Patch()
+  @RequireAuth()
   @ApiOperation({
     summary: 'Cập nhật danh sách favorite ingredient của user hiện tại',
   })
   @ApiResponse({
     status: 200,
     description: 'Cập nhật favorite ingredient thành công',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Token không hợp lệ hoặc đã hết hạn',
   })
   @ApiResponse({ status: 404, description: 'User or ingredient not found.' })
   @ApiResponse({
@@ -49,14 +66,14 @@ export class FavoriteIngredientController {
   })
   @ApiResponse({
     status: 422,
-    description: 'Invalid request header or payload.',
+    description: 'Invalid request payload.',
   })
   @ApiResponse({ status: 500, description: 'Internal server error.' })
   updateFavoriteIngredient(
-    @Headers('x-user-id') userIdHeader: string,
+    @Req() request: AuthenticatedRequest,
     @Body() body: unknown,
   ) {
-    const userId = this.parseUserId(userIdHeader);
+    const userId = this.getUserIdFromRequest(request);
     const payload = this.parseFavoriteIngredientUpdate(body);
     return this.favoriteIngredientService.updateFavoriteIngredient(
       userId,
@@ -64,12 +81,10 @@ export class FavoriteIngredientController {
     );
   }
 
-  private parseUserId(userIdHeader?: string) {
-    const parsed = UuidSchema.safeParse(userIdHeader);
+  private getUserIdFromRequest(request: AuthenticatedRequest) {
+    const parsed = UuidSchema.safeParse(request.user?.id);
     if (!parsed.success) {
-      throw new UnprocessableEntityException({
-        message: 'Header "x-user-id" must be a valid UUID.',
-      });
+      throw new UnauthorizedException('Token không hợp lệ hoặc đã hết hạn');
     }
     return parsed.data;
   }
@@ -85,3 +100,9 @@ export class FavoriteIngredientController {
     return parsed.data;
   }
 }
+
+type AuthenticatedRequest = {
+  user?: {
+    id?: string;
+  };
+};

@@ -2,54 +2,68 @@ import {
   Body,
   Controller,
   Get,
-  Headers,
   Patch,
+  Req,
   UnprocessableEntityException,
+  UnauthorizedException,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { UserUpdateSchema } from '@meal/shared/types/user';
 import { UuidSchema } from '@meal/shared/types/common';
 import { UserService } from './user.service';
+import { RequireAuth } from '../auth/jwt-auth.guard';
 
 @ApiTags('User')
+@ApiBearerAuth('JWT')
 @Controller('v1/users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get('me')
+  @RequireAuth()
   @ApiOperation({ summary: 'Get current user information' })
   @ApiResponse({
     status: 200,
     description: 'Return current user information successfully',
   })
-  @ApiResponse({ status: 404, description: 'User not found' })
   @ApiResponse({
-    status: 422,
-    description: 'Unprocessable request header or body',
+    status: 401,
+    description: 'Token không hợp lệ hoặc đã hết hạn',
   })
+  @ApiResponse({ status: 404, description: 'User not found' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
-  async getCurrentUser(@Headers('x-user-id') userIdHeader: string) {
-    const userId = this.parseUserId(userIdHeader);
+  async getCurrentUser(@Req() request: AuthenticatedRequest) {
+    const userId = this.getUserIdFromRequest(request);
     return this.userService.getUser(userId);
   }
 
   @Patch()
+  @RequireAuth()
   @ApiOperation({ summary: 'Update current user information' })
   @ApiResponse({
     status: 200,
     description: 'Return updated user information successfully',
   })
+  @ApiResponse({
+    status: 401,
+    description: 'Token không hợp lệ hoặc đã hết hạn',
+  })
   @ApiResponse({ status: 404, description: 'User not found' })
   @ApiResponse({
     status: 422,
-    description: 'Unprocessable request header or body',
+    description: 'Unprocessable request body',
   })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   async updateCurrentUser(
-    @Headers('x-user-id') userIdHeader: string,
+    @Req() request: AuthenticatedRequest,
     @Body() body: unknown,
   ) {
-    const userId = this.parseUserId(userIdHeader);
+    const userId = this.getUserIdFromRequest(request);
     const payload = this.parseUserUpdate(body);
     return this.userService.updateUser(userId, payload);
   }
@@ -104,13 +118,17 @@ export class UserController {
     return date;
   }
 
-  private parseUserId(userIdHeader?: string) {
-    const parsed = UuidSchema.safeParse(userIdHeader);
+  private getUserIdFromRequest(request: AuthenticatedRequest) {
+    const parsed = UuidSchema.safeParse(request.user?.id);
     if (!parsed.success) {
-      throw new UnprocessableEntityException({
-        message: 'Header "x-user-id" must be a valid UUID.',
-      });
+      throw new UnauthorizedException('Token không hợp lệ hoặc đã hết hạn');
     }
     return parsed.data;
   }
 }
+
+type AuthenticatedRequest = {
+  user?: {
+    id?: string;
+  };
+};

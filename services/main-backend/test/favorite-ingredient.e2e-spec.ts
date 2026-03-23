@@ -9,6 +9,7 @@ import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
 import { FavoriteIngredientService } from './../src/favorite-ingredient/favorite-ingredient.service';
 import { PrismaService } from './../src/database/prisma.service';
+import { JwtService } from '@nestjs/jwt';
 
 describe('Favorite Ingredient API (e2e)', () => {
   let app: INestApplication<App>;
@@ -18,6 +19,7 @@ describe('Favorite Ingredient API (e2e)', () => {
   };
 
   const userId = '550e8400-e29b-41d4-a716-446655440000';
+  let token: string;
 
   beforeEach(async () => {
     favoriteIngredientService = {
@@ -31,8 +33,19 @@ describe('Favorite Ingredient API (e2e)', () => {
       .overrideProvider(FavoriteIngredientService)
       .useValue(favoriteIngredientService)
       .overrideProvider(PrismaService)
-      .useValue({})
+      .useValue({
+        user: {
+          findUnique: jest.fn().mockResolvedValue({
+            id: userId,
+            email: 'user@example.com',
+            userName: 'John',
+          }),
+        },
+      })
       .compile();
+
+    const jwtService = moduleFixture.get(JwtService);
+    token = jwtService.sign({ sub: userId, email: 'user@example.com' });
 
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix('api');
@@ -43,14 +56,14 @@ describe('Favorite Ingredient API (e2e)', () => {
     await app.close();
   });
 
-  it('GET /api/v1/favorite-ingredients should return 200 for valid header', async () => {
+  it('GET /api/v1/favorite-ingredients should return 200 for valid token', async () => {
     favoriteIngredientService.getFavoriteIngredient.mockResolvedValue({
       list: [{ name: 'Egg' }],
     });
 
     await request(app.getHttpServer())
       .get('/api/v1/favorite-ingredients')
-      .set('x-user-id', userId)
+      .set('Authorization', `Bearer ${token}`)
       .expect(200);
 
     expect(
@@ -58,11 +71,10 @@ describe('Favorite Ingredient API (e2e)', () => {
     ).toHaveBeenCalledWith(userId);
   });
 
-  it('GET /api/v1/favorite-ingredients should return 422 for invalid header', async () => {
+  it('GET /api/v1/favorite-ingredients should return 401 when token is missing', async () => {
     await request(app.getHttpServer())
       .get('/api/v1/favorite-ingredients')
-      .set('x-user-id', 'invalid-uuid')
-      .expect(422);
+      .expect(401);
   });
 
   it('GET /api/v1/favorite-ingredients should return 404 when user is not found', async () => {
@@ -72,7 +84,7 @@ describe('Favorite Ingredient API (e2e)', () => {
 
     await request(app.getHttpServer())
       .get('/api/v1/favorite-ingredients')
-      .set('x-user-id', userId)
+      .set('Authorization', `Bearer ${token}`)
       .expect(404);
   });
 
@@ -83,7 +95,7 @@ describe('Favorite Ingredient API (e2e)', () => {
 
     await request(app.getHttpServer())
       .patch('/api/v1/favorite-ingredients')
-      .set('x-user-id', userId)
+      .set('Authorization', `Bearer ${token}`)
       .send({ ingredientIds: [1, 2] })
       .expect(200);
 
@@ -94,18 +106,17 @@ describe('Favorite Ingredient API (e2e)', () => {
     });
   });
 
-  it('PATCH /api/v1/favorite-ingredients should return 422 for invalid header', async () => {
+  it('PATCH /api/v1/favorite-ingredients should return 401 when token is missing', async () => {
     await request(app.getHttpServer())
       .patch('/api/v1/favorite-ingredients')
-      .set('x-user-id', 'invalid-uuid')
       .send({ ingredientIds: [1] })
-      .expect(422);
+      .expect(401);
   });
 
   it('PATCH /api/v1/favorite-ingredients should return 422 for invalid payload', async () => {
     await request(app.getHttpServer())
       .patch('/api/v1/favorite-ingredients')
-      .set('x-user-id', userId)
+      .set('Authorization', `Bearer ${token}`)
       .send({ ingredientIds: ['1'] })
       .expect(422);
   });
@@ -119,7 +130,7 @@ describe('Favorite Ingredient API (e2e)', () => {
 
     await request(app.getHttpServer())
       .patch('/api/v1/favorite-ingredients')
-      .set('x-user-id', userId)
+      .set('Authorization', `Bearer ${token}`)
       .send({ ingredientIds: [2] })
       .expect(409);
   });
@@ -131,7 +142,7 @@ describe('Favorite Ingredient API (e2e)', () => {
 
     await request(app.getHttpServer())
       .patch('/api/v1/favorite-ingredients')
-      .set('x-user-id', userId)
+      .set('Authorization', `Bearer ${token}`)
       .send({ ingredientIds: [99] })
       .expect(404);
   });

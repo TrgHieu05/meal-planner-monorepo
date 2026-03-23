@@ -2,34 +2,51 @@ import {
   Body,
   Controller,
   Get,
-  Headers,
   Patch,
+  Req,
   UnprocessableEntityException,
+  UnauthorizedException,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { AllergyService } from './allergy.service';
 import { AllergyUpdateSchema } from '@meal/shared/types/allergy';
 import { UuidSchema } from '@meal/shared/types/common';
+import { RequireAuth } from '../auth/jwt-auth.guard';
 
 @ApiTags('Allergy')
+@ApiBearerAuth('JWT')
 @Controller('v1/allergies')
 export class AllergyController {
   constructor(private readonly allergyService: AllergyService) {}
 
   @Get()
+  @RequireAuth()
   @ApiOperation({ summary: 'Lấy danh sách allergy của user hiện tại' })
   @ApiResponse({ status: 200, description: 'Trả về danh sách allergy' })
+  @ApiResponse({
+    status: 401,
+    description: 'Token không hợp lệ hoặc đã hết hạn',
+  })
   @ApiResponse({ status: 404, description: 'User not found.' })
-  @ApiResponse({ status: 422, description: 'Invalid request header.' })
   @ApiResponse({ status: 500, description: 'Internal server error.' })
-  getAllergy(@Headers('x-user-id') userIdHeader: string) {
-    const userId = this.parseUserId(userIdHeader);
+  getAllergy(@Req() request: AuthenticatedRequest) {
+    const userId = this.getUserIdFromRequest(request);
     return this.allergyService.getAllergy(userId);
   }
 
   @Patch()
+  @RequireAuth()
   @ApiOperation({ summary: 'Cập nhật danh sách allergy của user hiện tại' })
   @ApiResponse({ status: 200, description: 'Cập nhật allergy thành công' })
+  @ApiResponse({
+    status: 401,
+    description: 'Token không hợp lệ hoặc đã hết hạn',
+  })
   @ApiResponse({ status: 404, description: 'User or ingredient not found.' })
   @ApiResponse({
     status: 409,
@@ -37,24 +54,19 @@ export class AllergyController {
   })
   @ApiResponse({
     status: 422,
-    description: 'Invalid request header or payload.',
+    description: 'Invalid request payload.',
   })
   @ApiResponse({ status: 500, description: 'Internal server error.' })
-  updateAllergy(
-    @Headers('x-user-id') userIdHeader: string,
-    @Body() body: unknown,
-  ) {
-    const userId = this.parseUserId(userIdHeader);
+  updateAllergy(@Req() request: AuthenticatedRequest, @Body() body: unknown) {
+    const userId = this.getUserIdFromRequest(request);
     const payload = this.parseAllergyUpdate(body);
     return this.allergyService.updateAllergy(userId, payload);
   }
 
-  private parseUserId(userIdHeader?: string) {
-    const parsed = UuidSchema.safeParse(userIdHeader);
+  private getUserIdFromRequest(request: AuthenticatedRequest) {
+    const parsed = UuidSchema.safeParse(request.user?.id);
     if (!parsed.success) {
-      throw new UnprocessableEntityException({
-        message: 'Header "x-user-id" must be a valid UUID.',
-      });
+      throw new UnauthorizedException('Token không hợp lệ hoặc đã hết hạn');
     }
     return parsed.data;
   }
@@ -70,3 +82,9 @@ export class AllergyController {
     return parsed.data;
   }
 }
+
+type AuthenticatedRequest = {
+  user?: {
+    id?: string;
+  };
+};

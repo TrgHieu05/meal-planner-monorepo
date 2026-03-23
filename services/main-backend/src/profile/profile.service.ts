@@ -56,6 +56,7 @@ export class ProfileService {
       select: {
         ingredient: {
           select: {
+            id: true,
             name: true,
           },
         },
@@ -73,6 +74,7 @@ export class ProfileService {
       select: {
         ingredient: {
           select: {
+            id: true,
             name: true,
           },
         },

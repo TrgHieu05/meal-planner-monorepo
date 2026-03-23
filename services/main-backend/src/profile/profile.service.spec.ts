@@ -76,10 +76,10 @@ describe('ProfileService', () => {
         activityLevel: null,
       });
       prisma.allergy.findMany.mockResolvedValue([
-        { ingredient: { name: 'Milk' } },
+        { ingredient: { id: 2, name: 'Milk' } },
       ]);
       prisma.favoriteIngredient.findMany.mockResolvedValue([
-        { ingredient: { name: 'Egg' } },
+        { ingredient: { id: 1, name: 'Egg' } },
       ]);
       prisma.metric.findFirst.mockResolvedValue({
         id: 1,
@@ -98,8 +98,8 @@ describe('ProfileService', () => {
         throw new Error('Expected preferences to be present');
       }
       expect(result.preferences.dietTypeId).toBe(1);
-      expect(result.allergies.list).toEqual([{ name: 'Milk' }]);
-      expect(result.favoriteIngredients.list).toEqual([{ name: 'Egg' }]);
+      expect(result.allergies.list).toEqual([{ id: 2, name: 'Milk' }]);
+      expect(result.favoriteIngredients.list).toEqual([{ id: 1, name: 'Egg' }]);
     });
 
     it('should throw InternalServerErrorException when user mapping is invalid', async () => {
@@ -158,7 +158,7 @@ describe('ProfileService', () => {
         activityLevel: null,
       });
       prisma.allergy.findMany.mockResolvedValue([
-        { ingredient: { name: 123 } },
+        { ingredient: { id: 1, name: 123 } },
       ]);
 
       await expect(service.getFullProfile(userId)).rejects.toThrow(
@@ -186,7 +186,7 @@ describe('ProfileService', () => {
       });
       prisma.allergy.findMany.mockResolvedValue([]);
       prisma.favoriteIngredient.findMany.mockResolvedValue([
-        { ingredient: { name: 123 } },
+        { ingredient: { id: 1, name: 123 } },
       ]);
 
       await expect(service.getFullProfile(userId)).rejects.toThrow(

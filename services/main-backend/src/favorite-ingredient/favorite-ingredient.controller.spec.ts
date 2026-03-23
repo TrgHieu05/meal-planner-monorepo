@@ -63,7 +63,7 @@ describe('FavoriteIngredientController', () => {
     it('should parse input and call service', async () => {
       const payload = { ingredientIds: [1, 2] };
       favoriteIngredientService.updateFavoriteIngredient.mockResolvedValue({
-        list: [{ name: 'Egg' }],
+        list: [{ id: 1, name: 'Egg' }],
       });
 
       await controller.updateFavoriteIngredient(

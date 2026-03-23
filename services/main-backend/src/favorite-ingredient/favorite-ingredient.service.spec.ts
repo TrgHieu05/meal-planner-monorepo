@@ -42,21 +42,24 @@ describe('FavoriteIngredientService', () => {
     it('should return favorite ingredient list response for valid data', async () => {
       prisma.user.findUnique.mockResolvedValue({ id: userId });
       prisma.favoriteIngredient.findMany.mockResolvedValue([
-        { ingredient: { name: 'Egg' } },
-        { ingredient: { name: 'Milk' } },
+        { ingredient: { id: 1, name: 'Egg' } },
+        { ingredient: { id: 2, name: 'Milk' } },
       ]);
 
       const result = await service.getFavoriteIngredient(userId);
 
       expect(result).toEqual({
-        list: [{ name: 'Egg' }, { name: 'Milk' }],
+        list: [
+          { id: 1, name: 'Egg' },
+          { id: 2, name: 'Milk' },
+        ],
       });
     });
 
     it('should throw InternalServerErrorException when response shape is invalid', async () => {
       prisma.user.findUnique.mockResolvedValue({ id: userId });
       prisma.favoriteIngredient.findMany.mockResolvedValue([
-        { ingredient: { name: 123 } },
+        { ingredient: { id: 1, name: 123 } },
       ]);
 
       await expect(service.getFavoriteIngredient(userId)).rejects.toThrow(
@@ -121,8 +124,8 @@ describe('FavoriteIngredientService', () => {
       prisma.favoriteIngredient.findMany
         .mockResolvedValueOnce([{ ingredientId: 2 }, { ingredientId: 4 }])
         .mockResolvedValueOnce([
-          { ingredient: { name: 'Egg' } },
-          { ingredient: { name: 'Milk' } },
+          { ingredient: { id: 1, name: 'Egg' } },
+          { ingredient: { id: 2, name: 'Milk' } },
         ]);
 
       const result = await service.updateFavoriteIngredient(userId, {
@@ -143,7 +146,10 @@ describe('FavoriteIngredientService', () => {
         },
       });
       expect(result).toEqual({
-        list: [{ name: 'Egg' }, { name: 'Milk' }],
+        list: [
+          { id: 1, name: 'Egg' },
+          { id: 2, name: 'Milk' },
+        ],
       });
     });
 

@@ -24,6 +24,7 @@ export class FavoriteIngredientService {
         select: {
           ingredient: {
             select: {
+              id: true,
               name: true,
             },
           },

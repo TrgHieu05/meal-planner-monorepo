@@ -13,7 +13,7 @@ export const AllergyUpdateSchema = z.object({
 });
 
 export const AllergyResponseSchema = z.object({
-  list: z.array(IngredientSchema.pick({ name: true })),
+  list: z.array(IngredientSchema.pick({ id: true, name: true })),
 });
 
 export const AllergyIdsResponseSchema = z.object({

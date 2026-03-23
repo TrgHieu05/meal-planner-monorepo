@@ -13,7 +13,7 @@ export const FavoriteIngredientUpdateSchema = z.object({
 });
 
 export const FavoriteIngredientResponseSchema = z.object({
-  list: z.array(IngredientSchema.pick({ name: true })),
+  list: z.array(IngredientSchema.pick({ id: true, name: true })),
 });
 
 export const FavoriteIngredientIdsResponseSchema = z.object({

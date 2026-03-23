@@ -58,7 +58,7 @@ describe('Allergy API (e2e)', () => {
 
   it('GET /api/v1/allergies should return 200 for valid token', async () => {
     allergyService.getAllergy.mockResolvedValue({
-      list: [{ name: 'Egg' }],
+      list: [{ id: 1, name: 'Egg' }],
     });
 
     await request(app.getHttpServer())
@@ -86,7 +86,10 @@ describe('Allergy API (e2e)', () => {
 
   it('PATCH /api/v1/allergies should return 200 for valid payload', async () => {
     allergyService.updateAllergy.mockResolvedValue({
-      list: [{ name: 'Egg' }, { name: 'Milk' }],
+      list: [
+        { id: 1, name: 'Egg' },
+        { id: 2, name: 'Milk' },
+      ],
     });
 
     await request(app.getHttpServer())

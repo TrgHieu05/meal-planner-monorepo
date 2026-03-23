@@ -55,7 +55,7 @@ describe('AllergyController', () => {
     it('should parse input and call service', async () => {
       const payload = { ingredientIds: [1, 2] };
       allergyService.updateAllergy.mockResolvedValue({
-        list: [{ name: 'Salt' }],
+        list: [{ id: 1, name: 'Salt' }],
       });
 
       await controller.updateAllergy({ user: { id: userId } }, payload);

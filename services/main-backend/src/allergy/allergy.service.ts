@@ -23,6 +23,7 @@ export class AllergyService {
       select: {
         ingredient: {
           select: {
+            id: true,
             name: true,
           },
         },

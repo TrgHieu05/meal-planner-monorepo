@@ -1,20 +1,23 @@
-import { InternalServerErrorException } from '@nestjs/common';
+import {
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { OptionsService } from './options.service';
 
 describe('OptionsService', () => {
   let service: OptionsService;
   let prisma: {
-    dietType: { findMany: jest.Mock };
-    goal: { findMany: jest.Mock };
-    cuisineType: { findMany: jest.Mock };
+    dietType: { findMany: jest.Mock; findUnique: jest.Mock };
+    goal: { findMany: jest.Mock; findUnique: jest.Mock };
+    cuisineType: { findMany: jest.Mock; findUnique: jest.Mock };
   };
 
   beforeEach(() => {
     prisma = {
-      dietType: { findMany: jest.fn() },
-      goal: { findMany: jest.fn() },
-      cuisineType: { findMany: jest.fn() },
+      dietType: { findMany: jest.fn(), findUnique: jest.fn() },
+      goal: { findMany: jest.fn(), findUnique: jest.fn() },
+      cuisineType: { findMany: jest.fn(), findUnique: jest.fn() },
     };
     service = new OptionsService(prisma as unknown as PrismaService);
   });
@@ -95,6 +98,82 @@ describe('OptionsService', () => {
 
       await expect(service.getCuisineTypes()).rejects.toThrow(
         InternalServerErrorException,
+      );
+    });
+  });
+
+  describe('getDietTypeById', () => {
+    it('should return diet type for valid data', async () => {
+      prisma.dietType.findUnique.mockResolvedValue({
+        id: 1,
+        name: 'Keto',
+        description: null,
+      });
+
+      const result = await service.getDietTypeById(1);
+
+      expect(prisma.dietType.findUnique).toHaveBeenCalledWith({
+        where: { id: 1 },
+        select: { id: true, name: true, description: true },
+      });
+      expect(result).toEqual({ id: 1, name: 'Keto', description: null });
+    });
+
+    it('should throw NotFoundException when diet type does not exist', async () => {
+      prisma.dietType.findUnique.mockResolvedValue(null);
+
+      await expect(service.getDietTypeById(999)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  describe('getGoalById', () => {
+    it('should return goal for valid data', async () => {
+      prisma.goal.findUnique.mockResolvedValue({
+        id: 1,
+        name: 'Lose Weight',
+        description: null,
+      });
+
+      const result = await service.getGoalById(1);
+
+      expect(prisma.goal.findUnique).toHaveBeenCalledWith({
+        where: { id: 1 },
+        select: { id: true, name: true, description: true },
+      });
+      expect(result).toEqual({ id: 1, name: 'Lose Weight', description: null });
+    });
+
+    it('should throw NotFoundException when goal does not exist', async () => {
+      prisma.goal.findUnique.mockResolvedValue(null);
+
+      await expect(service.getGoalById(999)).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('getCuisineTypeById', () => {
+    it('should return cuisine type for valid data', async () => {
+      prisma.cuisineType.findUnique.mockResolvedValue({
+        id: 1,
+        name: 'Asian',
+        description: null,
+      });
+
+      const result = await service.getCuisineTypeById(1);
+
+      expect(prisma.cuisineType.findUnique).toHaveBeenCalledWith({
+        where: { id: 1 },
+        select: { id: true, name: true, description: true },
+      });
+      expect(result).toEqual({ id: 1, name: 'Asian', description: null });
+    });
+
+    it('should throw NotFoundException when cuisine type does not exist', async () => {
+      prisma.cuisineType.findUnique.mockResolvedValue(null);
+
+      await expect(service.getCuisineTypeById(999)).rejects.toThrow(
+        NotFoundException,
       );
     });
   });

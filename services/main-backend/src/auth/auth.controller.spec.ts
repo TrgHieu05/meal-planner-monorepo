@@ -14,9 +14,7 @@ describe('AuthController', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
-      providers: [
-        { provide: AuthService, useValue: mockAuthService },
-      ],
+      providers: [{ provide: AuthService, useValue: mockAuthService }],
     }).compile();
 
     controller = module.get<AuthController>(AuthController);
@@ -32,7 +30,11 @@ describe('AuthController', () => {
       const mockReq = { user: { email: 'quytvo2626@gmail.com' } };
       const mockResult = {
         message: 'Xác thực Google thành công',
-        user: { id: 'uuid-123', email: 'quytvo2626@gmail.com', userName: 'quý võ' },
+        user: {
+          id: 'uuid-123',
+          email: 'quytvo2626@gmail.com',
+          userName: 'quý võ',
+        },
         accessToken: 'jwt-token-here',
       };
       mockAuthService.googleLogin.mockResolvedValueOnce(mockResult);

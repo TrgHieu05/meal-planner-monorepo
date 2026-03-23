@@ -69,7 +69,11 @@ describe('AuthService', () => {
       mockPrisma.user.findUnique.mockResolvedValueOnce(mockUser);
 
       const req = {
-        user: { email: 'quytvo2626@gmail.com', firstName: 'quý', lastName: 'võ' },
+        user: {
+          email: 'quytvo2626@gmail.com',
+          firstName: 'quý',
+          lastName: 'võ',
+        },
       };
       const result = await service.googleLogin(req);
 
@@ -110,10 +114,16 @@ describe('AuthService', () => {
 
     // ── DB error ─────────────────────────────────────────────────────────
     it('should throw InternalServerErrorException when DB throws', async () => {
-      mockPrisma.user.findUnique.mockRejectedValueOnce(new Error('DB connection failed'));
+      mockPrisma.user.findUnique.mockRejectedValueOnce(
+        new Error('DB connection failed'),
+      );
 
       const req = {
-        user: { email: 'quytvo2626@gmail.com', firstName: 'quý', lastName: 'võ' },
+        user: {
+          email: 'quytvo2626@gmail.com',
+          firstName: 'quý',
+          lastName: 'võ',
+        },
       };
 
       await expect(service.googleLogin(req)).rejects.toThrow(

@@ -9,7 +9,7 @@
     "dev:web": "pnpm --filter mobile-app web",
     "build:shared": "pnpm --filter @meal/shared run build",
     "build:backend": "pnpm run build:shared && pnpm --filter main-backend run build",
-    "infra:up": "docker-compose --env-file .env -p meal-planner-monorepo -f infrastructure/docker-compose.yml up -d",
+    "infra:up": "docker-compose --env-file .env -p meal-planner-monorepo -f infrastructure/docker-compose.yml up -d --build",
     "infra:down": "docker-compose --env-file .env -p meal-planner-monorepo -f infrastructure/docker-compose.yml down",
     "db:up": "docker-compose --env-file .env -p meal-planner-monorepo -f infrastructure/docker-compose.yml up -d postgres",
     "db:stop": "docker-compose --env-file .env -p meal-planner-monorepo -f infrastructure/docker-compose.yml stop postgres",
@@ -17,7 +17,7 @@
     "prisma:migrate": "pnpm --filter @meal/database exec prisma migrate dev",
     "prisma:reset": "pnpm --filter @meal/database exec prisma migrate reset",
     "prisma:studio": "pnpm --filter @meal/database exec prisma studio",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test:backend": "pnpm --filter main-backend run test && pnpm --filter main-backend run test:e2e"
   },
   "keywords": [],
   "author": "",

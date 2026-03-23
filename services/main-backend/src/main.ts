@@ -26,7 +26,8 @@ async function bootstrap() {
         'sau đó nhấn **Authorize** và nhập token vào ô `Bearer <token>`.',
     )
     .setVersion('1.0')
-    .addServer('http://localhost:3000', 'Local Development')
+    .addServer('http://localhost:8080', 'Nginx Gateway Local')
+    .addServer('http://localhost:3000', 'Direct Main-Backend Port')
     .addBearerAuth(
       {
         type: 'http',

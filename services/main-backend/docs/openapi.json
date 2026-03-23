@@ -605,8 +605,12 @@
   ],
   "servers": [
     {
+      "url": "http://localhost:8080",
+      "description": "Nginx Gateway Local"
+    },
+    {
       "url": "http://localhost:3000",
-      "description": "Local Development"
+      "description": "Direct Main-Backend Port"
     }
   ],
   "components": {

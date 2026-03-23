@@ -1,18 +1,22 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { JwtService } from '@nestjs/jwt';
 
 import { ProviderEnum } from '@meal/database';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jwtService: JwtService,
+  ) {}
 
   async googleLogin(req) {
     if (!req.user) {
-      return 'No user from google';
+      return { message: 'Không có dữ liệu từ Google' };
     }
 
-    const { email, firstName, lastName, accessToken } = req.user;
+    const { email, firstName, lastName } = req.user;
 
     try {
       // Tìm user theo email
@@ -31,29 +35,16 @@ export class AuthService {
             providers: {
               create: {
                 provider: ProviderEnum.GOOGLE,
-                providerId: email, // Dùng email làm providerId tạm thời
+                providerId: email,
               },
             },
           },
           include: { providers: true },
         });
-      } else {
-        // Nếu user đã tồn tại, kiểm tra xem đã có provider GOOGLE chưa
-        const googleProvider = user.providers.find(
-          (p) => p.provider === ProviderEnum.GOOGLE,
-        );
-
-        if (!googleProvider) {
-          // Thêm provider GOOGLE nếu chưa có
-          await this.prisma.userProvider.create({
-            data: {
-              userId: user.id,
-              provider: ProviderEnum.GOOGLE,
-              providerId: email,
-            },
-          });
-        }
       }
+
+      // Tạo Internal JWT
+      const token = await this.login(user);
 
       return {
         message: 'Xác thực Google thành công',
@@ -62,11 +53,23 @@ export class AuthService {
           email: user.email,
           userName: user.userName,
         },
-        accessToken,
+        ...token,
       };
     } catch (error) {
       console.error('Lỗi khi xử lý Google Login:', error);
       throw new InternalServerErrorException('Lỗi máy chủ khi xử lý đăng nhập');
     }
   }
+
+  async login(user: any) {
+    const payload = {
+      email: user.email,
+      sub: user.id,
+    };
+
+    return {
+      accessToken: this.jwtService.sign(payload),
+    };
+  }
 }
+

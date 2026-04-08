@@ -12,6 +12,7 @@ import { OptionsModule } from './options/options.module';
 import { ProfileModule } from './profile/profile.module';
 import { UserModule } from './user/user.module';
 import { JwtAuthOptInGuard } from './auth/jwt-auth.guard';
+import { MenuModule } from './menu/menu.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { JwtAuthOptInGuard } from './auth/jwt-auth.guard';
     UserModule,
     MetricModule,
     ProfileModule,
+    MenuModule,
   ],
   controllers: [AppController],
   providers: [

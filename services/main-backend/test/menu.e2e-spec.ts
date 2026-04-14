@@ -83,6 +83,45 @@ describe('Menu API (e2e)', () => {
     expect(menuService.getMenuByDay).toHaveBeenCalledWith(userId, '2026-03-24');
   });
 
+  it('GET /api/v1/menus/day/:date should return mealName and menuItemId fields', async () => {
+    menuService.getMenuByDay.mockResolvedValue({
+      date: '2026-03-24',
+      hasMenu: true,
+      nutritionTotal: {
+        calories: 1450,
+        protein: 92,
+        fat: 45,
+        fiber: 26,
+      },
+      meals: {
+        BREAKFAST: [
+          {
+            menuItemId: 101,
+            mealId: 12,
+            mealName: 'Overnight Oats',
+            portionSize: 1,
+            eated: false,
+          },
+        ],
+        LUNCH: [],
+        DINNER: [],
+      },
+    });
+
+    const response = await request(app.getHttpServer())
+      .get('/api/v1/menus/day/2026-03-24')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+
+    expect(response.body.meals.BREAKFAST[0]).toMatchObject({
+      menuItemId: 101,
+      mealId: 12,
+      mealName: 'Overnight Oats',
+      portionSize: 1,
+      eated: false,
+    });
+  });
+
   it('GET /api/v1/menus/day/:date should return 401 when token is missing', async () => {
     await request(app.getHttpServer()).get('/api/v1/menus/day/2026-03-24').expect(401);
   });
@@ -158,6 +197,26 @@ describe('Menu API (e2e)', () => {
         portionSize: -1,
       })
       .expect(422);
+  });
+
+  it('POST /api/v1/menu-items should return 422 for invalid calendar date in body', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/menu-items')
+      .set('x-request-id', 'req-test-post-invalid-calendar')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        date: '2026-02-30',
+        mealId: 12,
+        mealTime: 'BREAKFAST',
+        portionSize: 1,
+      })
+      .expect(422);
+
+    expect(response.body).toMatchObject({
+      requestId: 'req-test-post-invalid-calendar',
+      code: 'MENU_VALIDATION_ERROR',
+      message: 'Body field "date" must be a valid calendar date in YYYY-MM-DD format.',
+    });
   });
 
   it('POST /api/v1/menu-items should return 404 when meal is not found', async () => {
@@ -291,6 +350,14 @@ describe('Menu API (e2e)', () => {
       .patch('/api/v1/menu-items/abc')
       .set('Authorization', `Bearer ${token}`)
       .send({ portionSize: 1.5 })
+      .expect(422);
+  });
+
+  it('PATCH /api/v1/menu-items/:id should return 422 for empty payload', async () => {
+    await request(app.getHttpServer())
+      .patch('/api/v1/menu-items/1')
+      .set('Authorization', `Bearer ${token}`)
+      .send({})
       .expect(422);
   });
 

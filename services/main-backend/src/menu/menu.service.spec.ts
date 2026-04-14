@@ -13,9 +13,11 @@ describe('MenuService', () => {
   let prisma: {
     menu: {
       findFirst: jest.Mock;
+      findMany: jest.Mock;
       create: jest.Mock;
       update: jest.Mock;
       delete: jest.Mock;
+      deleteMany: jest.Mock;
     };
     meal: { findUnique: jest.Mock };
     menuItem: {
@@ -36,9 +38,11 @@ describe('MenuService', () => {
     prisma = {
       menu: {
         findFirst: jest.fn(),
+        findMany: jest.fn(),
         create: jest.fn(),
         update: jest.fn(),
         delete: jest.fn(),
+        deleteMany: jest.fn(),
       },
       meal: {
         findUnique: jest.fn(),
@@ -74,6 +78,57 @@ describe('MenuService', () => {
         },
         meals: {
           BREAKFAST: [],
+          LUNCH: [],
+          DINNER: [],
+        },
+      });
+    });
+
+    it('should map menu items to day response contract with menuItemId and mealName', async () => {
+      prisma.menu.findFirst.mockResolvedValue({
+        id: 1,
+        userId,
+        date: new Date('2026-03-24T00:00:00.000Z'),
+        totalCalories: 1450,
+        totalProtein: 92,
+        totalFat: 45,
+        totalFiber: 26,
+        items: [
+          {
+            id: 101,
+            menuId: 1,
+            mealId: 12,
+            mealTime: 'BREAKFAST',
+            eated: false,
+            portionSize: 1,
+            meal: {
+              name: 'Overnight Oats',
+            },
+          },
+        ],
+      });
+
+      const result = await service.getMenuByDay(userId, '2026-03-24');
+
+      expect(result).toEqual({
+        date: '2026-03-24',
+        hasMenu: true,
+        nutritionTotal: {
+          calories: 1450,
+          protein: 92,
+          fat: 45,
+          fiber: 26,
+        },
+        meals: {
+          BREAKFAST: [
+            {
+              menuItemId: 101,
+              mealId: 12,
+              mealName: 'Overnight Oats',
+              portionSize: 1,
+              eated: false,
+            },
+          ],
           LUNCH: [],
           DINNER: [],
         },
@@ -119,7 +174,6 @@ describe('MenuService', () => {
           update: jest.fn().mockResolvedValue({ id: 100 }),
         },
         menuItem: {
-          findFirst: jest.fn().mockResolvedValue(null),
           create: jest.fn().mockResolvedValue({
             id: 11,
             menuId: 100,
@@ -158,7 +212,6 @@ describe('MenuService', () => {
           update: jest.fn().mockResolvedValue({ id: 100 }),
         },
         menuItem: {
-          findFirst: jest.fn().mockResolvedValue(null),
           create: jest.fn().mockResolvedValue({
             id: 11,
             menuId: 100,
@@ -203,6 +256,9 @@ describe('MenuService', () => {
           totalFat: 0,
           totalFiber: 0,
         },
+        select: {
+          id: true,
+        },
       });
 
       expect(tx.menu.update).toHaveBeenCalledWith({
@@ -222,6 +278,53 @@ describe('MenuService', () => {
         mealTime: 'BREAKFAST',
         eated: false,
         portionSize: 1.5,
+      });
+    });
+
+    it('should recover from concurrent menu creation conflict and continue creating menu item', async () => {
+      const tx = {
+        meal: {
+          findUnique: jest.fn().mockResolvedValue({ id: 10 }),
+        },
+        menu: {
+          findFirst: jest
+            .fn()
+            .mockResolvedValueOnce(null)
+            .mockResolvedValueOnce({ id: 100 }),
+          create: jest.fn().mockRejectedValue({ code: 'P2002' }),
+          update: jest.fn().mockResolvedValue({ id: 100 }),
+        },
+        menuItem: {
+          create: jest.fn().mockResolvedValue({
+            id: 11,
+            menuId: 100,
+            mealId: 10,
+            mealTime: 'BREAKFAST',
+            eated: false,
+            portionSize: 1,
+          }),
+          findMany: jest.fn().mockResolvedValue([]),
+        },
+      };
+
+      prisma.$transaction.mockImplementation(async (handler) => handler(tx));
+
+      const result = await service.createMenuItem(userId, {
+        date: '2026-03-24',
+        mealId: 10,
+        mealTime: 'BREAKFAST',
+        portionSize: 1,
+      });
+
+      expect(tx.menu.create).toHaveBeenCalledTimes(1);
+      expect(tx.menu.findFirst).toHaveBeenCalledTimes(2);
+      expect(result).toEqual({
+        id: 11,
+        menuId: 100,
+        mealId: 10,
+        mealTime: 'BREAKFAST',
+        eated: false,
+        portionSize: 1,
       });
     });
 
@@ -253,7 +356,7 @@ describe('MenuService', () => {
           findFirst: jest.fn().mockResolvedValue({ id: 100 }),
         },
         menuItem: {
-          findFirst: jest.fn().mockResolvedValue({ id: 99 }),
+          create: jest.fn().mockRejectedValue({ code: 'P2002' }),
         },
       };
 
@@ -274,8 +377,8 @@ describe('MenuService', () => {
     it('should be idempotent when no menu exists for the day', async () => {
       const tx = {
         menu: {
-          findFirst: jest.fn().mockResolvedValue(null),
-          delete: jest.fn(),
+          findMany: jest.fn().mockResolvedValue([]),
+          deleteMany: jest.fn(),
         },
         menuItem: {
           deleteMany: jest.fn(),
@@ -285,7 +388,7 @@ describe('MenuService', () => {
 
       await service.deleteMenuByDay(userId, '2026-03-24');
 
-      expect(tx.menu.findFirst).toHaveBeenCalledWith({
+      expect(tx.menu.findMany).toHaveBeenCalledWith({
         where: {
           userId,
           date: new Date('2026-03-23T17:00:00.000Z'),
@@ -293,14 +396,14 @@ describe('MenuService', () => {
         select: { id: true },
       });
       expect(tx.menuItem.deleteMany).not.toHaveBeenCalled();
-      expect(tx.menu.delete).not.toHaveBeenCalled();
+      expect(tx.menu.deleteMany).not.toHaveBeenCalled();
     });
 
     it('should delete all menu items and then delete menu when menu exists', async () => {
       const tx = {
         menu: {
-          findFirst: jest.fn().mockResolvedValue({ id: 100 }),
-          delete: jest.fn().mockResolvedValue({ id: 100 }),
+          findMany: jest.fn().mockResolvedValue([{ id: 100 }]),
+          deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
         },
         menuItem: {
           deleteMany: jest.fn().mockResolvedValue({ count: 2 }),
@@ -311,10 +414,18 @@ describe('MenuService', () => {
       await service.deleteMenuByDay(userId, '2026-03-24');
 
       expect(tx.menuItem.deleteMany).toHaveBeenCalledWith({
-        where: { menuId: 100 },
+        where: {
+          menuId: {
+            in: [100],
+          },
+        },
       });
-      expect(tx.menu.delete).toHaveBeenCalledWith({
-        where: { id: 100 },
+      expect(tx.menu.deleteMany).toHaveBeenCalledWith({
+        where: {
+          id: {
+            in: [100],
+          },
+        },
       });
     });
   });

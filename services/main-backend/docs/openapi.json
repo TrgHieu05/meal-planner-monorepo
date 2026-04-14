@@ -785,7 +785,7 @@
             "JWT": []
           }
         ],
-        "summary": "Lấy thực đơn theo ngày của user hiện tại",
+        "summary": "Get daily menu for the current user",
         "tags": [
           "Menu"
         ]
@@ -821,7 +821,7 @@
             "JWT": []
           }
         ],
-        "summary": "Xóa toàn bộ item của menu theo ngày",
+        "summary": "Delete all menu items for a specific day",
         "tags": [
           "Menu"
         ]
@@ -900,7 +900,7 @@
             "JWT": []
           }
         ],
-        "summary": "Thêm menu item cho một ngày và bữa ăn",
+        "summary": "Create a menu item for a day and meal time",
         "tags": [
           "Menu"
         ]
@@ -971,7 +971,7 @@
             "JWT": []
           }
         ],
-        "summary": "Cập nhật menu item theo id",
+        "summary": "Update a menu item by id",
         "tags": [
           "Menu"
         ]
@@ -1010,7 +1010,7 @@
             "JWT": []
           }
         ],
-        "summary": "Xóa menu item theo id",
+        "summary": "Delete a menu item by id",
         "tags": [
           "Menu"
         ]

@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import { DateStringSchema, IntSchema, UuidSchema } from './common';
-import { MenuItemListSchema } from './menu-item';
 
 export const MenuSchema = z.object({
   id: IntSchema,
@@ -20,10 +19,20 @@ export const MenuNutritionTotalSchema = z.object({
   fiber: z.number().nonnegative(),
 });
 
+export const MenuDayMealItemSchema = z.object({
+  menuItemId: IntSchema,
+  mealId: IntSchema,
+  mealName: z.string().min(1),
+  portionSize: z.number().positive(),
+  eated: z.boolean(),
+});
+
+export const MenuDayMealItemListSchema = z.array(MenuDayMealItemSchema);
+
 export const MenuMealsByTimeSchema = z.object({
-  BREAKFAST: MenuItemListSchema,
-  LUNCH: MenuItemListSchema,
-  DINNER: MenuItemListSchema,
+  BREAKFAST: MenuDayMealItemListSchema,
+  LUNCH: MenuDayMealItemListSchema,
+  DINNER: MenuDayMealItemListSchema,
 });
 
 export const MenuResponseSchema = z.object({
@@ -35,5 +44,6 @@ export const MenuResponseSchema = z.object({
 
 export type Menu = z.infer<typeof MenuSchema>;
 export type MenuNutritionTotal = z.infer<typeof MenuNutritionTotalSchema>;
+export type MenuDayMealItem = z.infer<typeof MenuDayMealItemSchema>;
 export type MenuMealsByTime = z.infer<typeof MenuMealsByTimeSchema>;
 export type MenuResponse = z.infer<typeof MenuResponseSchema>;

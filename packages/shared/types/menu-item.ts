@@ -17,12 +17,17 @@ export const MenuItemCreateSchema = z.object({
   mealId: IntSchema,
   mealTime: MealTimeSchema,
   portionSize: z.number().positive(),
-});
+}).strict();
 
 export const MenuItemUpdateSchema = z.object({
   portionSize: z.number().positive().optional(),
   eated: z.boolean().optional(),
-})
+}).strict().refine(
+  (value) => value.portionSize !== undefined || value.eated !== undefined,
+  {
+    message: 'At least one updatable field is required.',
+  },
+);
 
 export const MenuItemResponseSchema = MenuItemSchema.omit({ menuId: true });
 

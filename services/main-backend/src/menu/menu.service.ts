@@ -7,8 +7,10 @@ import {
 import {
   MenuItemCreate,
   MenuItemUpdate,
-  MenuResponse,
   MenuItem,
+  MenuResponse,
+  MenuDayMealItem,
+  MenuDayMealItemSchema,
   MenuItemSchema,
   MenuResponseSchema,
 } from '@meal/shared';
@@ -27,6 +29,13 @@ export class MenuService {
       include: {
         items: {
           orderBy: { id: 'asc' },
+          include: {
+            meal: {
+              select: {
+                name: true,
+              },
+            },
+          },
         },
       },
     });
@@ -52,17 +61,23 @@ export class MenuService {
     }
 
     const meals = {
-      BREAKFAST: [] as MenuItem[],
-      LUNCH: [] as MenuItem[],
-      DINNER: [] as MenuItem[],
+      BREAKFAST: [] as MenuDayMealItem[],
+      LUNCH: [] as MenuDayMealItem[],
+      DINNER: [] as MenuDayMealItem[],
     };
 
     for (const item of menu.items) {
-      const parsedItem = MenuItemSchema.safeParse(item);
+      const parsedItem = MenuDayMealItemSchema.safeParse({
+        menuItemId: item.id,
+        mealId: item.mealId,
+        mealName: item.meal?.name,
+        portionSize: item.portionSize,
+        eated: item.eated,
+      });
       if (!parsedItem.success) {
         throw new InternalServerErrorException('Invalid menu item data.');
       }
-      meals[parsedItem.data.mealTime].push(parsedItem.data);
+      meals[item.mealTime].push(parsedItem.data);
     }
 
     const response: MenuResponse = {
@@ -87,7 +102,7 @@ export class MenuService {
 
   async deleteMenuByDay(userId: Uuid, date: string): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
-      const menu = await tx.menu.findFirst({
+      const menus = await tx.menu.findMany({
         where: {
           userId,
           date: this.toBusinessDayStartUtc(date),
@@ -95,16 +110,26 @@ export class MenuService {
         select: { id: true },
       });
 
-      if (!menu) {
+      if (menus.length === 0) {
         return;
       }
 
+      const menuIds = menus.map((menu) => menu.id);
+
       await tx.menuItem.deleteMany({
-        where: { menuId: menu.id },
+        where: {
+          menuId: {
+            in: menuIds,
+          },
+        },
       });
 
-      await tx.menu.delete({
-        where: { id: menu.id },
+      await tx.menu.deleteMany({
+        where: {
+          id: {
+            in: menuIds,
+          },
+        },
       });
     });
   }
@@ -128,80 +153,70 @@ export class MenuService {
           userId,
           date: menuDate,
         },
+        select: {
+          id: true,
+        },
       });
 
       if (!menu) {
-        menu = await tx.menu.create({
+        try {
+          menu = await tx.menu.create({
+            data: {
+              userId,
+              date: menuDate,
+              totalCalories: 0,
+              totalProtein: 0,
+              totalFat: 0,
+              totalFiber: 0,
+            },
+            select: {
+              id: true,
+            },
+          });
+        } catch (error) {
+          if (!this.isUniqueConstraintError(error)) {
+            throw error;
+          }
+
+          menu = await tx.menu.findFirst({
+            where: {
+              userId,
+              date: menuDate,
+            },
+            select: {
+              id: true,
+            },
+          });
+
+          if (!menu) {
+            throw new InternalServerErrorException(
+              'Unable to resolve menu for the selected date.',
+            );
+          }
+        }
+      }
+
+      let createdItem;
+      try {
+        createdItem = await tx.menuItem.create({
           data: {
-            userId,
-            date: menuDate,
-            totalCalories: 0,
-            totalProtein: 0,
-            totalFat: 0,
-            totalFiber: 0,
+            menuId: menu.id,
+            mealId: payload.mealId,
+            mealTime: payload.mealTime,
+            portionSize: payload.portionSize,
+            eated: false,
           },
         });
+      } catch (error) {
+        if (this.isUniqueConstraintError(error)) {
+          throw new ConflictException(
+            'Menu item already exists for the selected meal and meal time.',
+          );
+        }
+        throw error;
       }
 
-      const existingItem = await tx.menuItem.findFirst({
-        where: {
-          menuId: menu.id,
-          mealId: payload.mealId,
-          mealTime: payload.mealTime,
-        },
-        select: { id: true },
-      });
-
-      if (existingItem) {
-        throw new ConflictException(
-          'Menu item already exists for the selected meal and meal time.',
-        );
-      }
-
-      const createdItem = await tx.menuItem.create({
-        data: {
-          menuId: menu.id,
-          mealId: payload.mealId,
-          mealTime: payload.mealTime,
-          portionSize: payload.portionSize,
-          eated: false,
-        },
-      });
-
-      const items = await tx.menuItem.findMany({
-        where: { menuId: menu.id },
-        include: {
-          meal: {
-            select: {
-              totalCalories: true,
-              totalProtein: true,
-              totalFat: true,
-              totalFiber: true,
-            },
-          },
-        },
-      });
-
-      const totals = items.reduce(
-        (acc, item) => {
-          acc.calories += item.meal.totalCalories * item.portionSize;
-          acc.protein += item.meal.totalProtein * item.portionSize;
-          acc.fat += item.meal.totalFat * item.portionSize;
-          acc.fiber += item.meal.totalFiber * item.portionSize;
-          return acc;
-        },
-        { calories: 0, protein: 0, fat: 0, fiber: 0 },
-      );
-
-      await tx.menu.update({
-        where: { id: menu.id },
-        data: {
-          totalCalories: this.roundTo2(totals.calories),
-          totalProtein: this.roundTo2(totals.protein),
-          totalFat: this.roundTo2(totals.fat),
-          totalFiber: this.roundTo2(totals.fiber),
-        },
-      });
+      await this.recalculateAndPersistMenuTotals(tx, menu.id);
 
       return createdItem;
     });
@@ -295,6 +310,15 @@ export class MenuService {
 
   private roundTo2(value: number) {
     return Math.round(value * 100) / 100;
+  }
+
+  private isUniqueConstraintError(error: unknown) {
+    if (!error || typeof error !== 'object') {
+      return false;
+    }
+
+    const value = error as { code?: unknown };
+    return value.code === 'P2002';
   }
 
   // Normalizes a date-only string to the business-day start instant in Asia/Ho_Chi_Minh.

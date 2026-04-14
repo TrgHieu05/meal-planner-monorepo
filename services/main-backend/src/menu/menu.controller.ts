@@ -37,7 +37,7 @@ export class MenuController {
 
   @Get('menus/day/:date')
   @RequireAuth()
-  @ApiOperation({ summary: 'Lấy thực đơn theo ngày của user hiện tại' })
+  @ApiOperation({ summary: 'Get daily menu for the current user' })
   @ApiResponse({ status: 200, description: 'Returns menu data for the given day.' })
   @ApiResponse({ status: 401, description: 'Invalid or expired token.' })
   @ApiResponse({ status: 422, description: 'Invalid date format.' })
@@ -56,7 +56,7 @@ export class MenuController {
   @Delete('menus/day/:date')
   @RequireAuth()
   @HttpCode(204)
-  @ApiOperation({ summary: 'Xóa toàn bộ item của menu theo ngày' })
+  @ApiOperation({ summary: 'Delete all menu items for a specific day' })
   @ApiResponse({ status: 204, description: 'Deleted successfully, or the day was already empty.' })
   @ApiResponse({ status: 401, description: 'Invalid or expired token.' })
   @ApiResponse({ status: 422, description: 'Invalid date format.' })
@@ -74,7 +74,7 @@ export class MenuController {
 
   @Post('menu-items')
   @RequireAuth()
-  @ApiOperation({ summary: 'Thêm menu item cho một ngày và bữa ăn' })
+  @ApiOperation({ summary: 'Create a menu item for a day and meal time' })
   @ApiResponse({ status: 201, description: 'Menu item created successfully.' })
   @ApiResponse({ status: 401, description: 'Invalid or expired token.' })
   @ApiResponse({ status: 404, description: 'Meal not found.' })
@@ -112,7 +112,7 @@ export class MenuController {
 
   @Patch('menu-items/:id')
   @RequireAuth()
-  @ApiOperation({ summary: 'Cập nhật menu item theo id' })
+  @ApiOperation({ summary: 'Update a menu item by id' })
   @ApiResponse({ status: 200, description: 'Menu item updated successfully.' })
   @ApiResponse({ status: 401, description: 'Invalid or expired token.' })
   @ApiResponse({ status: 404, description: 'Menu item not found.' })
@@ -150,7 +150,7 @@ export class MenuController {
   @Delete('menu-items/:id')
   @RequireAuth()
   @HttpCode(204)
-  @ApiOperation({ summary: 'Xóa menu item theo id' })
+  @ApiOperation({ summary: 'Delete a menu item by id' })
   @ApiResponse({ status: 204, description: 'Menu item deleted successfully.' })
   @ApiResponse({ status: 401, description: 'Invalid or expired token.' })
   @ApiResponse({ status: 404, description: 'Menu item not found.' })
@@ -257,7 +257,7 @@ export class MenuController {
   private getUserIdFromRequest(request: AuthenticatedRequest) {
     const parsed = UuidSchema.safeParse(request.user?.id);
     if (!parsed.success) {
-      throw new UnauthorizedException('Token không hợp lệ hoặc đã hết hạn');
+      throw new UnauthorizedException('Invalid or expired token.');
     }
     return parsed.data;
   }
@@ -270,15 +270,22 @@ export class MenuController {
         details: parsed.error.flatten(),
       });
     }
-    this.assertCalendarDate(parsed.data);
+    this.assertCalendarDate(parsed.data, 'Date path param');
     return parsed.data;
   }
 
-  private assertCalendarDate(value: string) {
-    const date = new Date(`${value}T00:00:00.000Z`);
-    if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value) {
+  private assertCalendarDate(value: string, fieldName: string) {
+    const [year, month, day] = value.split('-').map((part) => Number(part));
+    const utcDate = new Date(Date.UTC(year, month - 1, day));
+
+    if (
+      Number.isNaN(utcDate.getTime()) ||
+      utcDate.getUTCFullYear() !== year ||
+      utcDate.getUTCMonth() !== month - 1 ||
+      utcDate.getUTCDate() !== day
+    ) {
       throw new UnprocessableEntityException({
-        message: 'Date path param must be a valid calendar date in YYYY-MM-DD format.',
+        message: `${fieldName} must be a valid calendar date in YYYY-MM-DD format.`,
       });
     }
   }
@@ -302,6 +309,9 @@ export class MenuController {
         details: parsed.error.flatten(),
       });
     }
+
+    this.assertCalendarDate(parsed.data.date, 'Body field "date"');
+
     return parsed.data;
   }
 

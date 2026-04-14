@@ -134,6 +134,35 @@
       "patch": {
         "operationId": "AllergyController_updateAllergy",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "Allergy update payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "ingredientIds"
+                ],
+                "properties": {
+                  "ingredientIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "example": [
+                      1,
+                      2,
+                      5
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Cập nhật allergy thành công"
@@ -196,6 +225,35 @@
       "patch": {
         "operationId": "FavoriteIngredientController_updateFavoriteIngredient",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "Favorite ingredient update payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "ingredientIds"
+                ],
+                "properties": {
+                  "ingredientIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "example": [
+                      3,
+                      4,
+                      9
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Cập nhật favorite ingredient thành công"
@@ -413,6 +471,38 @@
       "patch": {
         "operationId": "UserController_updateCurrentUser",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "Current user update payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userName": {
+                    "type": "string",
+                    "example": "Nguyen Van A"
+                  },
+                  "gender": {
+                    "type": "string",
+                    "enum": [
+                      "M",
+                      "F"
+                    ],
+                    "example": "M"
+                  },
+                  "dateOfBirth": {
+                    "type": "string",
+                    "format": "date",
+                    "nullable": true,
+                    "example": "2001-08-15"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Return updated user information successfully"
@@ -474,6 +564,34 @@
       "post": {
         "operationId": "MetricController_createMetric",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "Metric creation payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "heightCm",
+                  "weightKg"
+                ],
+                "properties": {
+                  "heightCm": {
+                    "type": "number",
+                    "minimum": 0.01,
+                    "example": 172
+                  },
+                  "weightKg": {
+                    "type": "number",
+                    "minimum": 0.01,
+                    "example": 67.5
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
             "description": "Tạo metric thành công"
@@ -562,6 +680,51 @@
       "patch": {
         "operationId": "ProfileController_updateProfile",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "Profile update payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "dietTypeId": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "example": 2
+                  },
+                  "goalId": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "example": 1
+                  },
+                  "cuisineTypeId": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "example": 3
+                  },
+                  "targetCalories": {
+                    "type": "number",
+                    "minimum": 0.01,
+                    "nullable": true,
+                    "example": 2100
+                  },
+                  "activityLevel": {
+                    "type": "string",
+                    "enum": [
+                      "HIGH",
+                      "AVERAGE",
+                      "LOW"
+                    ],
+                    "nullable": true,
+                    "example": "AVERAGE"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Return the updated profile info of the user."
@@ -587,6 +750,269 @@
         "summary": "Update profile info",
         "tags": [
           "Profile"
+        ]
+      }
+    },
+    "/api/v1/menus/day/{date}": {
+      "get": {
+        "operationId": "MenuController_getMenuByDay",
+        "parameters": [
+          {
+            "name": "date",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns menu data for the given day."
+          },
+          "401": {
+            "description": "Invalid or expired token."
+          },
+          "422": {
+            "description": "Invalid date format."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Lấy thực đơn theo ngày của user hiện tại",
+        "tags": [
+          "Menu"
+        ]
+      },
+      "delete": {
+        "operationId": "MenuController_deleteMenuByDay",
+        "parameters": [
+          {
+            "name": "date",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted successfully, or the day was already empty."
+          },
+          "401": {
+            "description": "Invalid or expired token."
+          },
+          "422": {
+            "description": "Invalid date format."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Xóa toàn bộ item của menu theo ngày",
+        "tags": [
+          "Menu"
+        ]
+      }
+    },
+    "/api/v1/menu-items": {
+      "post": {
+        "operationId": "MenuController_createMenuItem",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "Menu item creation payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "date",
+                  "mealId",
+                  "mealTime",
+                  "portionSize"
+                ],
+                "properties": {
+                  "date": {
+                    "type": "string",
+                    "format": "date",
+                    "example": "2026-03-24"
+                  },
+                  "mealId": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "example": 12
+                  },
+                  "mealTime": {
+                    "type": "string",
+                    "enum": [
+                      "BREAKFAST",
+                      "LUNCH",
+                      "DINNER"
+                    ],
+                    "example": "BREAKFAST"
+                  },
+                  "portionSize": {
+                    "type": "number",
+                    "minimum": 0.01,
+                    "example": 1.5
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Menu item created successfully."
+          },
+          "401": {
+            "description": "Invalid or expired token."
+          },
+          "404": {
+            "description": "Meal not found."
+          },
+          "409": {
+            "description": "Duplicate meal in the same day and meal time."
+          },
+          "422": {
+            "description": "Invalid request payload."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Thêm menu item cho một ngày và bữa ăn",
+        "tags": [
+          "Menu"
+        ]
+      }
+    },
+    "/api/v1/menu-items/{id}": {
+      "patch": {
+        "operationId": "MenuController_updateMenuItem",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Menu item update payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "portionSize": {
+                    "type": "number",
+                    "minimum": 0.01,
+                    "example": 1.25
+                  },
+                  "eated": {
+                    "type": "boolean",
+                    "example": true
+                  }
+                },
+                "additionalProperties": false,
+                "example": {
+                  "portionSize": 1.25,
+                  "eated": true
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Menu item updated successfully."
+          },
+          "401": {
+            "description": "Invalid or expired token."
+          },
+          "404": {
+            "description": "Menu item not found."
+          },
+          "409": {
+            "description": "Conflict while updating menu item."
+          },
+          "422": {
+            "description": "Invalid path parameter or request payload."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Cập nhật menu item theo id",
+        "tags": [
+          "Menu"
+        ]
+      },
+      "delete": {
+        "operationId": "MenuController_deleteMenuItem",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Menu item deleted successfully."
+          },
+          "401": {
+            "description": "Invalid or expired token."
+          },
+          "404": {
+            "description": "Menu item not found."
+          },
+          "422": {
+            "description": "Invalid path parameter."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Xóa menu item theo id",
+        "tags": [
+          "Menu"
         ]
       }
     }

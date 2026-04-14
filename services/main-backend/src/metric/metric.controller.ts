@@ -8,6 +8,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import {
+  ApiBody,
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
@@ -53,6 +54,18 @@ export class MetricController {
     description: 'Invalid request payload.',
   })
   @ApiResponse({ status: 500, description: 'Internal server error.' })
+  @ApiBody({
+    description: 'Metric creation payload',
+    schema: {
+      type: 'object',
+      required: ['heightCm', 'weightKg'],
+      properties: {
+        heightCm: { type: 'number', minimum: 0.01, example: 172 },
+        weightKg: { type: 'number', minimum: 0.01, example: 67.5 },
+      },
+      additionalProperties: false,
+    },
+  })
   createMetric(@Req() request: AuthenticatedRequest, @Body() body: unknown) {
     const userId = this.getUserIdFromRequest(request);
     const payload = this.parseMetricCreate(body);

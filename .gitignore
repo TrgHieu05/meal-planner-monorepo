@@ -27,6 +27,8 @@ Thumbs.db
 # --- IDE/Editor ---
 .idea/
 .vscode/
+.agents/
+docs/
 *.swp
 *.swo
 .trae/

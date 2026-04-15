@@ -8,6 +8,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import {
+  ApiBody,
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
@@ -84,6 +85,30 @@ export class ProfileController {
     description: 'Invalid request payload.',
   })
   @ApiResponse({ status: 500, description: 'Internal server error.' })
+  @ApiBody({
+    description: 'Profile update payload',
+    schema: {
+      type: 'object',
+      properties: {
+        dietTypeId: { type: 'integer', minimum: 1, example: 2 },
+        goalId: { type: 'integer', minimum: 1, example: 1 },
+        cuisineTypeId: { type: 'integer', minimum: 1, example: 3 },
+        targetCalories: {
+          type: 'number',
+          minimum: 0.01,
+          nullable: true,
+          example: 2100,
+        },
+        activityLevel: {
+          type: 'string',
+          enum: ['HIGH', 'AVERAGE', 'LOW'],
+          nullable: true,
+          example: 'AVERAGE',
+        },
+      },
+      additionalProperties: false,
+    },
+  })
   async updateProfile(
     @Req() request: AuthenticatedRequest,
     @Body() body: unknown,

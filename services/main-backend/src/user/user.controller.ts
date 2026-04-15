@@ -8,6 +8,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import {
+  ApiBody,
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
@@ -59,6 +60,23 @@ export class UserController {
     description: 'Unprocessable request body',
   })
   @ApiResponse({ status: 500, description: 'Internal server error' })
+  @ApiBody({
+    description: 'Current user update payload',
+    schema: {
+      type: 'object',
+      properties: {
+        userName: { type: 'string', example: 'Nguyen Van A' },
+        gender: { type: 'string', enum: ['M', 'F'], example: 'M' },
+        dateOfBirth: {
+          type: 'string',
+          format: 'date',
+          nullable: true,
+          example: '2001-08-15',
+        },
+      },
+      additionalProperties: false,
+    },
+  })
   async updateCurrentUser(
     @Req() request: AuthenticatedRequest,
     @Body() body: unknown,

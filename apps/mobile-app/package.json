@@ -16,6 +16,8 @@
     "@hookform/resolvers": "^5.2.2",
     "@meal/database": "workspace:*",
     "@meal/shared": "workspace:*",
+    "@tamagui/animations-moti": "2.0.0-rc.41",
+    "@tamagui/shorthands": "2.0.0-rc.41",
     "axios": "^1.13.6",
     "expo": "~55.0.15",
     "expo-status-bar": "~55.0.5",
@@ -25,10 +27,13 @@
     "react-native": "0.83.4",
     "react-native-safe-area-context": "~5.6.2",
     "react-native-web": "~0.21.2",
+    "tamagui": "2.0.0-rc.41",
     "zod": "^4.3.6",
     "zustand": "^5.0.11"
   },
   "devDependencies": {
+    "@tamagui/babel-plugin": "2.0.0-rc.41",
+    "@tamagui/metro-plugin": "2.0.0-rc.41",
     "@types/jest": "^29.5.14",
     "@types/react": "~19.2.2",
     "jest": "~29.7.0",

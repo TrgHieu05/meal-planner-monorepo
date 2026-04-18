@@ -1,179 +1,110 @@
 # Tài liệu cấu trúc thư mục - Mobile App (Expo)
 
 ## 1. Mục tiêu
-Tài liệu này định nghĩa cấu trúc thư mục chuẩn cho `apps/mobile-app` để:
-- Dễ mở rộng khi số lượng màn hình và tính năng tăng.
-- Tách bạch rõ UI, nghiệp vụ, hạ tầng.
-- Giảm phụ thuộc chéo giữa các module.
-- Giúp team thống nhất cách đặt file, cách import, cách tổ chức code.
+Tài liệu này mô tả cấu trúc thư mục hiện tại của `apps/mobile-app` và quy ước tổ chức mã nguồn đang áp dụng sau khi chuyển sang Expo Router.
 
-## 2. Cấu trúc thư mục chuẩn
+## 2. Cấu trúc thực tế hiện tại (04/2026)
 
 ```text
 apps/mobile-app/
-├─ App.tsx
-├─ index.ts
 ├─ app.json
+├─ package.json
+├─ babel.config.js                  (Config tối ưu biên dịch để tối ưu hóa tamagui)
+├─ metro.config.js                  (Cấu hình bộ đóng gói mã nguồn, hiện đang scaffold)
 ├─ tamagui.config.ts
-├─ assets/
+├─ tsconfig.json                    (Cấu hình TypeScript, chứa thêm Path Aliases)
+├─ assets/                          (Chứa tài nguyên tĩnh như font, image...)
 │  ├─ fonts/
-│  ├─ images/
-│  └─ icons/
-├─ docs/
+│  └─ images/
+├─ docs/                            (Chứa tài liệu liên quan đến dự án, có thể mở rộng thêm khi cần)
+│  ├─ KitchenMind-UI.pen            (File thiết kế chính của UI, có thể mở bằng Pencil Extension)
 │  └─ project-structure.md
 └─ src/
-   ├─ app/
-   │  ├─ providers/
-   │  │  └─ AppProviders.tsx
-   │  ├─ navigation/
-   │  │  └─ RootNavigator.tsx
-   │  ├─ hooks/
-   │  ├─ constants/
-   │  └─ config/
-   ├─ components/
-   │  ├─ ui/
-   │  └─ common/
-   ├─ features/
-   │  ├─ auth/
-   │  │  ├─ api/
-   │  │  ├─ hooks/
-   │  │  ├─ components/
-   │  │  ├─ screens/
-   │  │  └─ types.ts
-   │  ├─ meal/
-   │  │  ├─ api/
-   │  │  ├─ hooks/
-   │  │  ├─ components/
-   │  │  ├─ screens/
-   │  │  └─ types.ts
-   │  └─ profile/
-   │     ├─ api/
-   │     ├─ hooks/
-   │     ├─ components/
-   │     ├─ screens/
-   │     └─ types.ts
-   ├─ services/
-   │  ├─ api/
-   │  │  ├─ client.ts
-   │  │  └─ endpoints.ts
-   │  ├─ storage/
-   │  └─ analytics/
-   ├─ store/
-   │  ├─ index.ts
-   │  └─ slices/
-   ├─ utils/
-   ├─ types/
-   ├─ i18n/
-   └─ tests/
-      ├─ unit/
-      └─ integration/
+   ├─ app/                          (Chứa route files và route groups theo chuẩn Expo Router)
+   │  ├─ _layout.tsx                (Route layout gốc, wrapper bọc lấy tất cả các màn hình khác)
+   │  ├─ index.tsx                  (Route gốc "/")
+   │  ├─ (auth)/
+   │  └─ (tabs)/
+   ├─ components/                   (Chứa component chung như Button, Input, Card, Tag...)
+   ├─ features/                     (Từng feature domain có cấu trúc thư mục như ví dụ bên)
+   │  └─ meals/                     (Tên feature: meal, profile...)
+   │     ├─ api/                    (Chứa adapter gọi API dùng axios)
+   │     ├─ components/             (Chứa component chỉ dùng trong feature này)
+   │     ├─ hooks/                  (Chứa custom hooks chỉ dùng trong feature này)
+   │     ├─ screens/                (các màn hình, modal, dialog... của feature này)
+   │     ├─ constants.ts            (nếu có hằng số riêng của feature)
+   │     └─ types.ts                (Định nghĩa type riêng của feature, nếu cần)
+   ├─ providers/                    (Chứa provider cấp app, hiện tại là AppProviders.tsx)
+   ├─ services/                     (Chứa service layer, ví dụ như API service, utility functions...)
+   ├─ store/                        (Chứa các "kho" dữ liệu mà nhiều feature cùng cần.)
+   ├─ theme/                        (Chứa theme, design tokens, fonts... nếu không đặt trong tamagui.config.ts)
+   └─ utils/                        (Chứa các functions dùng chung, ví dụ formatDate, calculateCalories...)
 ```
 
-## 3. Vai trò của từng thư mục
+## 3. Kiến trúc điều hướng và entrypoint
 
-### 3.1 Cấp root của mobile-app
-- `App.tsx`: Điểm vào UI chính. Chỉ nên chứa bootstrap ở mức cao (load font, provider, mount navigator).
-- `index.ts`: Entry cho Expo runtime (`registerRootComponent`).
-- `app.json`: Cấu hình Expo app (name, icon, splash, android/ios/web config).
-- `tamagui.config.ts`: Design tokens, theme, font config cho Tamagui.
+- Runtime entrypoint dùng Expo Router qua `main: "expo-router/entry"` trong `package.json`.
+- File-based routing đặt tại `src/app`.
+- Root layout nằm ở `src/app/_layout.tsx`, dùng để mount provider dùng chung (`AppProviders`) và khai báo `Stack` chung.
+- Route gốc `/` nằm ở `src/app/index.tsx`.
+- `(auth)` và `(tabs)` đang là route groups đã scaffold, chưa có màn hình bên trong.
 
-### 3.2 assets
-- `assets/fonts`: Chứa file font tĩnh (`.ttf`, `.otf`).
-- `assets/images`: Ảnh minh họa, banner, empty state, onboarding.
-- `assets/icons`: Icon static (nếu không dùng icon library cho một số icon đặc thù thương hiệu).
+Lưu ý: Không còn dùng mô hình entry cũ kiểu `registerRootComponent` với `App.tsx` và `index.ts` ở root.
 
-### 3.3 docs
-- `docs`: Chứa tài liệu kỹ thuật nội bộ của mobile app.
+## 4. Vai trò các thư mục chính
 
-### 3.4 src/app
-- `src/app/providers`: Tổng hợp các provider toàn cục (TamaguiProvider, QueryClientProvider, AuthProvider...).
-- `src/app/navigation`: Điều phối luồng điều hướng chính (auth flow, main flow, tab/stack).
-- `src/app/hooks`: Hook dùng toàn app (không gắn riêng một feature).
-- `src/app/constants`: Hằng số dùng toàn app (route names, keys, regex dùng chung).
-- `src/app/config`: Runtime config theo môi trường (base URL, feature flags).
+### 4.1 Root level
+- `app.json`: Cấu hình Expo app (name, icon, splash, android/ios/web).
+- `package.json`: Scripts, dependencies và entrypoint của app.
+- `babel.config.js`, `metro.config.js`, `tsconfig.json`: Cấu hình build/runtime.
+- `tamagui.config.ts`: Design tokens, fonts và theme của Tamagui.
 
-### 3.5 src/components
-- `src/components/ui`: Thành phần UI tái sử dụng theo design system (Button, Input, Card, Modal...).
-- `src/components/common`: Thành phần dùng chung mức layout/khối chức năng nhỏ (ScreenContainer, SectionHeader...).
+### 4.2 src/app
+- Chứa route files và route groups theo chuẩn Expo Router.
+- Route file chỉ nên làm nhiệm vụ điều hướng/mount screen, không chứa business logic nặng.
 
-### 3.6 src/features
-Mỗi thư mục trong `features` là một domain nghiệp vụ độc lập.
+### 4.3 src/features
+- Chứa business logic và UI theo domain.
+- Hiện đang có `home` (đã có `HomeScreen.tsx`) và `meals` (đang scaffold).
 
-Ví dụ `src/features/auth`:
-- `api`: Hàm gọi API riêng của auth.
-- `hooks`: Hook nghiệp vụ auth.
-- `components`: UI chỉ phục vụ auth.
-- `screens`: Màn hình auth.
-- `types.ts`: Kiểu dữ liệu cục bộ của auth.
+### 4.4 src/providers
+- Chứa provider cấp app, hiện tại là `AppProviders.tsx`.
+- Đây là nơi gom theme, context, query client, auth provider... khi mở rộng.
 
-Áp dụng tương tự cho `meal`, `profile`, và các feature mới trong tương lai.
+### 4.5 src/components, src/services, src/store, src/theme, src/utils
+- Là các khu vực nền tảng đã tạo sẵn để mở rộng.
+- Hiện đang ở trạng thái scaffold, chưa có implementation cụ thể.
 
-### 3.7 src/services
-- `src/services/api/client.ts`: HTTP client chung (axios/fetch wrapper), interceptor, timeout.
-- `src/services/api/endpoints.ts`: Khai báo endpoint constants hoặc builder.
-- `src/services/storage`: Trừu tượng hóa AsyncStorage/SecureStore.
-- `src/services/analytics`: Gửi sự kiện tracking/logging.
+## 5. Quy tắc tổ chức mã nguồn
 
-### 3.8 src/store
-- `src/store/index.ts`: Khởi tạo và export store chính.
-- `src/store/slices`: Chia state theo lát cắt domain.
-
-### 3.9 src/utils, src/types, src/i18n, src/tests
-- `src/utils`: Hàm tiện ích thuần, không phụ thuộc UI.
-- `src/types`: Kiểu dùng chung liên feature.
-- `src/i18n`: Tài nguyên và setup đa ngôn ngữ.
-- `src/tests/unit`: Test đơn vị.
-- `src/tests/integration`: Test tích hợp theo luồng.
-
-## 4. Quy định tổ chức mã nguồn
-
-### 4.1 Quy định đặt file
-- File chỉ dùng trong một feature phải nằm trong feature đó.
-- Chỉ đẩy lên `components`, `services`, `utils`, `types` khi có từ hai feature trở lên cùng dùng.
-- Không đặt business logic trong `src/components/ui`.
-
-### 4.2 Quy định phụ thuộc (dependency direction)
-Luồng phụ thuộc khuyến nghị:
+### 5.1 Dependency direction
 
 ```text
-app -> features -> services -> utils/types
-components/ui -> utils/types
+src/app (routes/layouts) -> src/features -> src/services -> src/utils
+src/components -> src/utils
 ```
 
 Nguyên tắc:
-- `services` không import từ `features`.
-- `components/ui` không import từ `features`.
-- Feature A không import trực tiếp implementation của Feature B.
+- `src/services` không import từ `src/features`.
+- Route files trong `src/app` không chứa business logic nặng.
+- Tái sử dụng qua `src/components` hoặc `src/utils` khi có từ 2 feature trở lên dùng chung.
 
-### 4.3 Quy định import
-- Ưu tiên alias path (ví dụ `@/features/...`) thay vì chuỗi relative dài.
-- Mỗi feature nên có `index.ts` để export public API của feature.
+### 5.2 Quy tắc import và đặt tên
+- Ưu tiên alias `@/` thay cho relative path dài.
+- Component/screen dùng `PascalCase.tsx`.
+- Hook dùng `useXxx.ts`.
+- Utility/service dùng tên ngữ nghĩa rõ ràng.
 
-### 4.4 Quy định tên
-- Thư mục: `kebab-case`.
-- File component/screen: `PascalCase.tsx`.
-- File hook: `useXxx.ts`.
-- File util/service/types: `camelCase.ts` hoặc tên ngữ nghĩa rõ ràng.
-
-### 4.5 Quy định về màn hình và API
-- `screens` chỉ điều phối UI + gọi hook, hạn chế gọi API trực tiếp.
-- Mọi gọi API phải đi qua `features/*/api` hoặc `src/services/api`.
-
-### 4.6 Quy định test
-- Unit test cho util/hook/component nhỏ.
-- Integration test cho luồng màn hình + state + API mock.
-
-## 5. Quy trình thêm feature mới
+## 6. Quy trình thêm feature mới
 
 Ví dụ thêm feature `metrics`:
 1. Tạo `src/features/metrics`.
-2. Tạo các nhánh con: `api`, `hooks`, `components`, `screens`, `types.ts`.
-3. Đăng ký route trong `src/app/navigation`.
-4. Nếu có state dùng chung, thêm slice vào `src/store/slices`.
-5. Nếu có endpoint mới, bổ sung ở `src/features/metrics/api`.
-6. Bổ sung test tối thiểu cho logic chính.
+2. Tạo các nhánh con cần thiết: `api`, `hooks`, `components`, `screens`, `types.ts` (nếu cần).
+3. Đăng ký route trong `src/app` (ví dụ `src/app/(tabs)/metrics.tsx` hoặc `src/app/metrics/index.tsx`).
+4. Nếu cần state dùng chung, thêm vào `src/store`.
+5. Nếu cần gọi API, đặt adapter ở `src/services` hoặc `src/features/metrics/api`.
 
-## 6. Ghi chú triển khai cho trạng thái hiện tại
-- Hiện tại có thể chưa tạo đủ toàn bộ thư mục con trong `src`.
-- Tài liệu này là chuẩn mục tiêu để tạo dần theo từng feature.
-- Ưu tiên tạo đúng cấu trúc ngay từ feature đầu tiên để tránh refactor lớn về sau.
+## 7. Ghi chú cập nhật tài liệu
+
+- Tài liệu này ưu tiên phản ánh **cấu trúc đang tồn tại**.
+- Khi thêm/xóa thư mục ở `src` hoặc đổi route groups trong `src/app`, cần cập nhật lại mục 2 ngay trong cùng PR.

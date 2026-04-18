@@ -11,8 +11,8 @@ module.exports = function (api) {
           logTimings: true,
         },
       ],
-      // Expo Router cần plugin này để hoạt động
-      'react-native-reanimated/plugin', 
+      // Reanimated plugin phải luôn nằm cuối danh sách
+      'react-native-reanimated/plugin',
     ],
   };
 };

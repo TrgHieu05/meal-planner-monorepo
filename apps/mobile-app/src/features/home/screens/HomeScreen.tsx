@@ -1,8 +1,8 @@
 import { StatusBar, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button, H2, Paragraph, Text, YStack, useTheme } from 'tamagui';
+import { Button, Paragraph, Text, YStack, useTheme } from 'tamagui';
 
-import { useAppTheme } from '@/app/providers/AppProviders';
+import { useAppTheme } from '@/providers/AppProviders';
 
 export function HomeScreen() {
   const theme = useTheme();

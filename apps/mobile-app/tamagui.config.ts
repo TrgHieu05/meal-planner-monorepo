@@ -17,7 +17,7 @@ const tokens = createTokens({
         jade1: '#34eb80',
         jade2: '#28d06f',
         white: '#ffffff',
-        black: '#000000',
+        black: '#272727',
     },
 
     space: {

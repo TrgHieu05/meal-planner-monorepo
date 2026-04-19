@@ -6,7 +6,6 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/client"
 }
 
 datasource db {
@@ -57,9 +56,9 @@ enum ProviderEnum {
 model Profile {
   id             String         @id @default(uuid()) @db.Uuid
   userId         String         @unique @map("user_id") @db.Uuid
-  dietTypeId     BigInt         @map("diet_type")
-  goalId         BigInt         @map("goal")
-  cuisineTypeId  BigInt         @map("cuisine_type")
+  dietTypeId     Int            @map("diet_type")
+  goalId         Int            @map("goal")
+  cuisineTypeId  Int            @map("cuisine_type")
   targetCalories Float?         @map("target_calories")
   activityLevel  ActivityLevel? @map("activity_level")
   createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamp()
@@ -80,7 +79,7 @@ enum ActivityLevel {
 }
 
 model Metric {
-  id             BigInt       @id @default(autoincrement())
+  id             Int          @id @default(autoincrement())
   userId         String       @map("user_id") @db.Uuid
   heightCm       Float        @map("height_cm")
   weightKg       Float        @map("weight_kg")
@@ -93,7 +92,7 @@ model Metric {
 }
 
 model Ingredient {
-  id             BigInt                 @id @default(autoincrement())
+  id             Int                 @id @default(autoincrement())
   name           String                 @unique @db.VarChar(150)
   calories       Float
   protein        Float
@@ -113,7 +112,7 @@ model Ingredient {
 
 model Allergy {
   userId         String       @map("user_id") @db.Uuid
-  ingredientId   BigInt       @map("ingredient_id")
+  ingredientId   Int       @map("ingredient_id")
   createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamp()
 
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -126,7 +125,7 @@ model Allergy {
 
 model FavoriteIngredient {
   userId         String       @map("user_id") @db.Uuid
-  ingredientId   BigInt       @map("ingredient_id")
+  ingredientId   Int       @map("ingredient_id")
   createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamp()
 
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -137,11 +136,11 @@ model FavoriteIngredient {
 }
 
 model Meal {
-  id             BigInt       @id @default(autoincrement())
+  id             Int       @id @default(autoincrement())
   name           String       @db.VarChar(255)
   mealImageKey   String?      @map("meal_image_key")
   description    String
-  cuisineTypeId  BigInt       @map("cuisine_type_id")
+  cuisineTypeId  Int       @map("cuisine_type_id")
   difficulty     Difficulty
   cookTimeMins   Int          @map("cook_time_mins")
   totalCalories  Float        @map("total_calories")
@@ -168,9 +167,9 @@ enum Difficulty {
 }
 
 model MealIngredient {
-  id             BigInt       @id @default(autoincrement())
-  mealId         BigInt       @map("meal_id")
-  ingredientId   BigInt       @map("ingredient_id")
+  id             Int       @id @default(autoincrement())
+  mealId         Int       @map("meal_id")
+  ingredientId   Int       @map("ingredient_id")
   quantity       Float
 
   meal           Meal         @relation(fields: [mealId], references: [id], onDelete: Cascade)
@@ -180,7 +179,7 @@ model MealIngredient {
 }
 
 model Menu {
-  id             BigInt       @id @default(autoincrement())
+  id             Int       @id @default(autoincrement())
   userId         String       @map("user_id") @db.Uuid
   date           DateTime     @db.Date
   note           String?
@@ -198,9 +197,9 @@ model Menu {
 }
 
 model MenuItem {
-  id             BigInt       @id @default(autoincrement())
-  menuId         BigInt       @map("menu_id")
-  mealId         BigInt       @map("meal_id")
+  id             Int       @id @default(autoincrement())
+  menuId         Int       @map("menu_id")
+  mealId         Int       @map("meal_id")
   mealTime       MealTime     @map("meal_time")
   eated          Boolean
   portionSize    Float        @map("portion_size")
@@ -218,7 +217,7 @@ enum MealTime {
 }
 
 model DietType {
-  id             BigInt       @id @default(autoincrement())
+  id             Int       @id @default(autoincrement())
   name           String       @db.VarChar(100)
   description    String?
   createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamp()
@@ -230,7 +229,7 @@ model DietType {
 }
 
 model Goal {
-  id             BigInt       @id @default(autoincrement())
+  id             Int       @id @default(autoincrement())
   name           String       @db.VarChar(100)
   description    String?
   createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamp()
@@ -242,7 +241,7 @@ model Goal {
 }
 
 model CuisineType {
-  id             BigInt       @id @default(autoincrement())
+  id             Int       @id @default(autoincrement())
   name           String       @db.VarChar(100)
   description    String?
   createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamp()
@@ -286,7 +285,7 @@ model MealTemplateDay {
 model MealTemplateDayItem {
   id             String                 @id @default(uuid()) @db.Uuid
   dayId          String                 @map("day_id") @db.Uuid
-  mealId         BigInt                 @map("meal_id")
+  mealId         Int                 @map("meal_id")
   mealTime       MealTime               @map("meal_time")
   portionSize    Float                  @map("portion_size")
   createdAt      DateTime               @default(now()) @map("created_at") @db.Timestamp()

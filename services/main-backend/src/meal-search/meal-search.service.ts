@@ -1,0 +1,145 @@
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { PrismaService } from '../database/prisma.service';
+import { MealSearchResultItem } from '@meal/shared';
+
+type DifficultyDB = '1' | '2' | '3' | '4' | '5';
+
+@Injectable()
+export class MealSearchService {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async search(params: {
+    queryText: string;
+    excludeIngredients: string[];
+    difficulty?: 'easy' | 'medium' | 'hard';
+    cookingTimeMaxMins?: number;
+  }): Promise<{ list: MealSearchResultItem[] }> {
+    const normalizedQuery = normalizeText(params.queryText);
+    const queryTokens = tokenize(normalizedQuery);
+    const exclude = normalizeNames(params.excludeIngredients);
+
+    const where: Record<string, unknown> = {};
+
+    if (exclude.length > 0) {
+      where['NOT'] = [
+        {
+          ingredients: {
+            some: {
+              ingredient: {
+                name: { in: exclude },
+              },
+            },
+          },
+        },
+      ];
+    }
+
+    if (params.cookingTimeMaxMins != null) {
+      where['cookTimeMins'] = { lte: params.cookingTimeMaxMins };
+    }
+
+    if (params.difficulty) {
+      where['difficulty'] = {
+        in: toDbDifficultySet(params.difficulty),
+      };
+    }
+
+    const meals = await this.prisma.meal.findMany({
+      where,
+      include: {
+        ingredients: {
+          include: {
+            ingredient: { select: { id: true, name: true } },
+          },
+        },
+      },
+    });
+
+    const results: MealSearchResultItem[] = meals
+      .map((meal) => {
+        const mealName = normalizeText(meal.name);
+        const ingredientNames = meal.ingredients.map((mi) =>
+          normalizeText(mi.ingredient.name),
+        );
+
+        const matchFullName = mealName.includes(normalizedQuery) ? 1 : 0;
+        const searchTokens = new Set<string>([
+          ...tokenize(mealName),
+          ...ingredientNames.flatMap((n) => tokenize(n)),
+        ]);
+        const matchToken = queryTokens.filter((t) => searchTokens.has(t)).length;
+        const score = matchFullName * 3 + matchToken * 2;
+
+        const difficulty = fromDbDifficulty(meal.difficulty as DifficultyDB);
+        if (!difficulty) {
+          throw new InternalServerErrorException(
+            'Invalid difficulty stored for meal',
+          );
+        }
+
+        return {
+          id: meal.id,
+          name: meal.name,
+          difficulty,
+          cook_time_min: meal.cookTimeMins,
+          score,
+        };
+      })
+      .filter((item) => item.score > 0);
+
+    results.sort((a, b) => {
+      if (b.score !== a.score) {
+        return b.score - a.score;
+      }
+      const diffRank = (d: MealSearchResultItem['difficulty']) =>
+        d === 'easy' ? 1 : d === 'medium' ? 2 : 3;
+      if (diffRank(a.difficulty) !== diffRank(b.difficulty)) {
+        return diffRank(a.difficulty) - diffRank(b.difficulty);
+      }
+      return a.name.localeCompare(b.name);
+    });
+
+    return { list: results.slice(0, 10) };
+  }
+}
+
+function normalizeNames(list: string[]) {
+  return list
+    .map((s) => normalizeText(s))
+    .filter((s) => s.length > 0);
+}
+
+function normalizeText(text: string) {
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function tokenize(text: string) {
+  if (!text) return [];
+  return Array.from(new Set(text.split(' ').filter(Boolean)));
+}
+
+function toDbDifficultySet(level: 'easy' | 'medium' | 'hard'): DifficultyDB[] {
+  switch (level) {
+    case 'easy':
+      return ['1', '2'];
+    case 'medium':
+      return ['3'];
+    case 'hard':
+      return ['4', '5'];
+  }
+}
+
+function fromDbDifficulty(
+  d: DifficultyDB,
+): MealSearchResultItem['difficulty'] | null {
+  if (d === '1' || d === '2') return 'easy';
+  if (d === '3') return 'medium';
+  if (d === '4' || d === '5') return 'hard';
+  return null;
+}

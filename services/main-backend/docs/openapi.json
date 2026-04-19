@@ -1,0 +1,629 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api": {
+      "get": {
+        "operationId": "AppController_getHello",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "App"
+        ]
+      }
+    },
+    "/api/auth/google": {
+      "get": {
+        "description": "Chuyển hướng trình duyệt tới trang OAuth2 của Google. Sau khi xác thực thành công, Google sẽ gọi lại callback `/api/auth/google/callback`.",
+        "operationId": "AuthController_googleAuth",
+        "parameters": [],
+        "responses": {
+          "302": {
+            "description": "Chuyển hướng tới trang đăng nhập Google"
+          }
+        },
+        "summary": "Bắt đầu quá trình đăng nhập bằng Google",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/auth/google/callback": {
+      "get": {
+        "description": "Google gọi endpoint này sau khi xác thực. Hệ thống tìm/tạo user rồi phát hành JWT nội bộ (`accessToken`) dùng để gọi các API được bảo vệ.",
+        "operationId": "AuthController_googleAuthRedirect",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Đăng nhập thành công, trả về user và accessToken",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "message": "Xác thực Google thành công",
+                    "user": {
+                      "id": "63914c9d-3f89-4a60-a67d-be0d29b5e623",
+                      "email": "quytvo2626@gmail.com",
+                      "userName": "quý võ"
+                    },
+                    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Xác thực Google không thành công"
+          },
+          "500": {
+            "description": "Lỗi máy chủ nội bộ"
+          }
+        },
+        "summary": "Callback Google OAuth — nhận token",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/auth/profile": {
+      "get": {
+        "description": "Yêu cầu JWT Bearer token hợp lệ trong header `Authorization`. Trả về thông tin user được giải mã từ token.",
+        "operationId": "AuthController_getProfile",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Trả về thông tin user từ JWT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "id": "63914c9d-3f89-4a60-a67d-be0d29b5e623",
+                    "email": "quytvo2626@gmail.com",
+                    "userName": "quý võ"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Lấy thông tin profile user hiện tại",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/v1/allergies": {
+      "get": {
+        "operationId": "AllergyController_getAllergy",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Trả về danh sách allergy"
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          },
+          "404": {
+            "description": "User not found."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Lấy danh sách allergy của user hiện tại",
+        "tags": [
+          "Allergy"
+        ]
+      },
+      "patch": {
+        "operationId": "AllergyController_updateAllergy",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Cập nhật allergy thành công"
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          },
+          "404": {
+            "description": "User or ingredient not found."
+          },
+          "409": {
+            "description": "Ingredient conflict with favorite list."
+          },
+          "422": {
+            "description": "Invalid request payload."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Cập nhật danh sách allergy của user hiện tại",
+        "tags": [
+          "Allergy"
+        ]
+      }
+    },
+    "/api/v1/favorite-ingredients": {
+      "get": {
+        "operationId": "FavoriteIngredientController_getFavoriteIngredient",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Trả về danh sách favorite ingredient"
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          },
+          "404": {
+            "description": "User not found."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Lấy danh sách favorite ingredient của user hiện tại",
+        "tags": [
+          "Favorite Ingredient"
+        ]
+      },
+      "patch": {
+        "operationId": "FavoriteIngredientController_updateFavoriteIngredient",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Cập nhật favorite ingredient thành công"
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          },
+          "404": {
+            "description": "User or ingredient not found."
+          },
+          "409": {
+            "description": "Ingredient conflict with allergy list."
+          },
+          "422": {
+            "description": "Invalid request payload."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Cập nhật danh sách favorite ingredient của user hiện tại",
+        "tags": [
+          "Favorite Ingredient"
+        ]
+      }
+    },
+    "/api/v1/options/diet-types": {
+      "get": {
+        "operationId": "OptionsController_getDietTypes",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Trả về danh sách diet types"
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "summary": "Lấy danh sách diet types",
+        "tags": [
+          "Options"
+        ]
+      }
+    },
+    "/api/v1/options/diet-types/{id}": {
+      "get": {
+        "operationId": "OptionsController_getDietTypeById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Trả về diet type theo id"
+          },
+          "404": {
+            "description": "Diet type not found."
+          },
+          "422": {
+            "description": "Invalid option id."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "summary": "Lấy chi tiết diet type theo id",
+        "tags": [
+          "Options"
+        ]
+      }
+    },
+    "/api/v1/options/goals": {
+      "get": {
+        "operationId": "OptionsController_getGoals",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Trả về danh sách goals"
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "summary": "Lấy danh sách goals",
+        "tags": [
+          "Options"
+        ]
+      }
+    },
+    "/api/v1/options/goals/{id}": {
+      "get": {
+        "operationId": "OptionsController_getGoalById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Trả về goal theo id"
+          },
+          "404": {
+            "description": "Goal not found."
+          },
+          "422": {
+            "description": "Invalid option id."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "summary": "Lấy chi tiết goal theo id",
+        "tags": [
+          "Options"
+        ]
+      }
+    },
+    "/api/v1/options/cuisine-types": {
+      "get": {
+        "operationId": "OptionsController_getCuisineTypes",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Trả về danh sách cuisine types"
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "summary": "Lấy danh sách cuisine types",
+        "tags": [
+          "Options"
+        ]
+      }
+    },
+    "/api/v1/options/cuisine-types/{id}": {
+      "get": {
+        "operationId": "OptionsController_getCuisineTypeById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Trả về cuisine type theo id"
+          },
+          "404": {
+            "description": "Cuisine type not found."
+          },
+          "422": {
+            "description": "Invalid option id."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "summary": "Lấy chi tiết cuisine type theo id",
+        "tags": [
+          "Options"
+        ]
+      }
+    },
+    "/api/v1/users/me": {
+      "get": {
+        "operationId": "UserController_getCurrentUser",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Return current user information successfully"
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          },
+          "404": {
+            "description": "User not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Get current user information",
+        "tags": [
+          "User"
+        ]
+      }
+    },
+    "/api/v1/users": {
+      "patch": {
+        "operationId": "UserController_updateCurrentUser",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Return updated user information successfully"
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          },
+          "404": {
+            "description": "User not found"
+          },
+          "422": {
+            "description": "Unprocessable request body"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Update current user information",
+        "tags": [
+          "User"
+        ]
+      }
+    },
+    "/api/v1/metrics/latest": {
+      "get": {
+        "operationId": "MetricController_getLatestMetric",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Trả về metric gần nhất hoặc null"
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          },
+          "404": {
+            "description": "User not found."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Lấy metric gần nhất của user hiện tại",
+        "tags": [
+          "Metric"
+        ]
+      }
+    },
+    "/api/v1/metrics": {
+      "post": {
+        "operationId": "MetricController_createMetric",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Tạo metric thành công"
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          },
+          "404": {
+            "description": "User not found."
+          },
+          "422": {
+            "description": "Invalid request payload."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Tạo metric mới cho user hiện tại",
+        "tags": [
+          "Metric"
+        ]
+      }
+    },
+    "/api/v1/profile/overview": {
+      "get": {
+        "operationId": "ProfileController_getFullProfile",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Return the full profile of the user."
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          },
+          "404": {
+            "description": "User or profile not found."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Get full profile (user, profile info, allergies, favorite ingredients, latest metric)",
+        "tags": [
+          "Profile"
+        ]
+      }
+    },
+    "/api/v1/profile": {
+      "get": {
+        "operationId": "ProfileController_getProfile",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Return the profile info of the user."
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          },
+          "404": {
+            "description": "Profile not found."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Get only profile info",
+        "tags": [
+          "Profile"
+        ]
+      },
+      "patch": {
+        "operationId": "ProfileController_updateProfile",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Return the updated profile info of the user."
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          },
+          "404": {
+            "description": "User, profile, or referenced option not found."
+          },
+          "422": {
+            "description": "Invalid request payload."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Update profile info",
+        "tags": [
+          "Profile"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "KitchenMind API",
+    "description": "Tài liệu hướng dẫn và kiểm thử API cho hệ thống Meal Planner\n\n## Xác thực\nCác endpoint được bảo vệ yêu cầu JWT Bearer token.\nĐăng nhập qua Google (`GET /api/auth/google`) để nhận `accessToken`,\nsau đó nhấn **Authorize** và nhập token vào ô `Bearer <token>`.",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [
+    {
+      "name": "Authentication",
+      "description": "Các API liên quan đến xác thực người dùng"
+    }
+  ],
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Nginx Gateway Local"
+    },
+    {
+      "url": "http://localhost:3000",
+      "description": "Direct Main-Backend Port"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "JWT": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http",
+        "name": "Authorization",
+        "description": "Nhập JWT token (không cần tiền tố Bearer)",
+        "in": "header"
+      }
+    },
+    "schemas": {}
+  }
+}

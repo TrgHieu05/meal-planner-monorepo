@@ -76,6 +76,10 @@
       "ts"
     ],
     "rootDir": "src",
+    "moduleNameMapper": {
+      "^@meal/shared(?:/(.*))?$": "<rootDir>/../../../packages/shared/$1",
+      "^@meal/database(?:/(.*))?$": "<rootDir>/../../../packages/database/$1"
+    },
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"

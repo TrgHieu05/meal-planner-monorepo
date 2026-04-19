@@ -12,7 +12,11 @@ import { OptionsModule } from './options/options.module';
 import { ProfileModule } from './profile/profile.module';
 import { UserModule } from './user/user.module';
 import { JwtAuthOptInGuard } from './auth/jwt-auth.guard';
+<<<<<<< HEAD
 import { MealSearchModule } from './meal-search/meal-search.module';
+=======
+import { MenuModule } from './menu/menu.module';
+>>>>>>> 3c768a955ddc617db863a056dcc287ce96df48f1
 
 @Module({
   imports: [
@@ -28,7 +32,11 @@ import { MealSearchModule } from './meal-search/meal-search.module';
     UserModule,
     MetricModule,
     ProfileModule,
+<<<<<<< HEAD
     MealSearchModule,
+=======
+    MenuModule,
+>>>>>>> 3c768a955ddc617db863a056dcc287ce96df48f1
   ],
   controllers: [AppController],
   providers: [

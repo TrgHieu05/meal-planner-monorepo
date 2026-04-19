@@ -5,5 +5,7 @@ export * from './types/diet-type';
 export * from './types/favorite-ingredient';
 export * from './types/goal';
 export * from './types/ingredient';
+export * from './types/menu';
+export * from './types/menu-item';
 export * from './types/profile';
 export * from './types/meal-search';

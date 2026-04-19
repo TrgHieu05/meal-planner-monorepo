@@ -8,6 +8,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import {
+  ApiBody,
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
@@ -69,6 +70,21 @@ export class FavoriteIngredientController {
     description: 'Invalid request payload.',
   })
   @ApiResponse({ status: 500, description: 'Internal server error.' })
+  @ApiBody({
+    description: 'Favorite ingredient update payload',
+    schema: {
+      type: 'object',
+      required: ['ingredientIds'],
+      properties: {
+        ingredientIds: {
+          type: 'array',
+          items: { type: 'integer', minimum: 1 },
+          example: [3, 4, 9],
+        },
+      },
+      additionalProperties: false,
+    },
+  })
   updateFavoriteIngredient(
     @Req() request: AuthenticatedRequest,
     @Body() body: unknown,

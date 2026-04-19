@@ -16,6 +16,7 @@
     "prisma:generate": "pnpm --filter @meal/database exec prisma generate",
     "prisma:migrate": "pnpm --filter @meal/database exec prisma migrate dev",
     "prisma:reset": "pnpm --filter @meal/database exec prisma migrate reset",
+    "prisma:seed": "pnpm --filter @meal/database exec prisma db seed",
     "prisma:studio": "pnpm --filter @meal/database exec prisma studio",
     "test:backend": "pnpm --filter main-backend run test && pnpm --filter main-backend run test:e2e"
   },

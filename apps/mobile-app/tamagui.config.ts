@@ -10,14 +10,51 @@ const commonFontSizes = {
   h1: 40,
   h2: 32,
   h3: 24,
-  true: 14, // Bắt buộc phải có
+  h4: 20,
+  true: 14,
 }
+
 const tokens = createTokens({
     color: {
-        jade1: '#34eb80',
-        jade2: '#28d06f',
-        white: '#ffffff',
-        black: '#272727',
+        jade1: '#E8F8F0',
+        jade2: '#BDEBD6',
+        jade3: '#93DEBB',
+        jade4: '#69D2A0',
+        jade5: '#3EC586',
+        jade6: '#14b86b', //base
+        jade7: '#12A25E',
+        jade8: '#0F8C51',
+        jade9: '#0D7644',
+        jade10: '#0A6038',
+        jade11: '#084A2B',
+
+        red1: '#FCEBEB',
+        red2: '#F6C6C6',
+        red3: '#F0A2A2',
+        red4: '#EA7E7E',
+        red5: '#E45959',
+        red6: '#de3535', //base
+        red7: '#C32F2F',
+        red8: '#A92828',
+        red9: '#8E2222',
+        red10: '#731C1C',
+        red11: '#591515',
+
+        gray1: '#FAFAFA',
+        gray2: '#F4F4F4',
+        gray3: '#EFEFEF',
+        gray4: '#E9E9E9',  
+        gray5: '#E3E3E3',
+        gray6: '#DDDDDD',
+        gray7: '#D7D7D7',   
+        gray8: '#d1D1d1',
+        gray9: '#B9B9B9',
+        gray10: '#A1A1A1',
+        gray11: '#717171',
+        gray12: '#898989',
+        gray13: '#5A5A5A', 
+        gray14: '#424242',
+        gray15: '#2A2A2A',
     },
 
     space: {
@@ -31,10 +68,12 @@ const tokens = createTokens({
     },
 
     radius: {
-        sm: 4,
-        md: 8,
-        lg: 12,
-        xl: 16,
+        none: 0,
+        xs: 4,
+        sm: 8,
+        md: 12,
+        lg: 16,
+        xl: 24,
         pill: 999,
         true: 16,
     },
@@ -103,16 +142,53 @@ const bodyFont = createFont({
 
 const themes = {
     light: {
-        primary: tokens.color.jade1,
-        background: tokens.color.white,
-        color: tokens.color.black,
+        background: tokens.color.gray3,
+
+        surface: tokens.color.gray1,
+        surfaceHover: tokens.color.gray2,
+        surfacePress: tokens.color.gray4,
+
+        primary: tokens.color.jade6,
+        primaryHover: tokens.color.jade7,
+        primaryPress: tokens.color.jade8,
+        softPrimary: tokens.color.jade1,
+
+        danger: tokens.color.red6,
+        dangerHover: tokens.color.red7,
+        dangerPress: tokens.color.red8,
+        softDanger: tokens.color.red1,
+
+        text: tokens.color.gray15,
+        textSubtle: tokens.color.gray10,
+        textPrimary: tokens.color.jade8,
+        textSuccess: tokens.color.jade8,
+        textDanger: tokens.color.red8,
+        textInverse: tokens.color.gray1, //for text on colored backgrounds
     },
 
     dark: {
-        primary: tokens.color.jade2,
-        background: tokens.color.black,
-        color: tokens.color.white,
-    }
+        background: tokens.color.gray15,
+
+        surface: tokens.color.gray12,
+        surfaceHover: tokens.color.gray13,
+        surfacePress: tokens.color.gray14,
+
+        primary: tokens.color.jade6,
+        primaryHover: tokens.color.jade7,
+        primaryPress: tokens.color.jade8,
+        softPrimary: tokens.color.jade2,
+
+        danger: tokens.color.red6,
+        dangerHover: tokens.color.red7,
+        dangerPress: tokens.color.red8,
+        softDanger: tokens.color.red2,
+
+        text: tokens.color.gray1,
+        textSubtle: tokens.color.gray7,
+        textPrimary: tokens.color.jade6,
+        textDanger: tokens.color.red6,
+        textInverse: tokens.color.gray1,
+    },
 }
 
 const config = createTamagui({
@@ -125,7 +201,7 @@ const config = createTamagui({
     defaultFont: 'body',
     shorthands,
     settings: {
-        allowedStyleValues: false,
+        allowedStyleValues: true,
     },
 })
 

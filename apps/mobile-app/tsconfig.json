@@ -5,7 +5,9 @@
     "paths": {
       "@/*": ["./src/*"],
       "@assets/*": ["./assets/*"],
-      "@tamagui-config": ["./tamagui.config.ts"]
+      "@tamagui-config": ["./tamagui.config.ts"],
+      "@components/*": ["./src/components/*"],
+      "@features/*": ["./src/features/*"],
     }
   }
 }

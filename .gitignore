@@ -28,7 +28,6 @@ Thumbs.db
 .idea/
 .vscode/
 .agents/
-docs/
 *.swp
 *.swo
 .trae/

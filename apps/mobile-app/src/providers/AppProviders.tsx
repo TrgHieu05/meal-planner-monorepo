@@ -13,6 +13,8 @@ import { TamaguiProvider } from 'tamagui';
 
 import config from '@tamagui-config';
 
+import { AuthProvider } from './AuthProvider';
+
 type AppThemeName = 'light' | 'dark';
 
 type AppThemeContextValue = {
@@ -74,7 +76,9 @@ export function AppProviders({ children }: AppProvidersProps) {
 
   return (
     <TamaguiProvider config={config} defaultTheme={themeName}>
-      <AppThemeContext.Provider value={contextValue}>{children}</AppThemeContext.Provider>
+      <AppThemeContext.Provider value={contextValue}>
+        <AuthProvider>{children}</AuthProvider>
+      </AppThemeContext.Provider>
     </TamaguiProvider>
   );
 }

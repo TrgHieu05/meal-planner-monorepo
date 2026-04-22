@@ -1,6 +1,7 @@
 import axios from 'axios';
-import { Platform } from 'react-native';
 import { z } from 'zod';
+
+import { normalizeOptionalString, resolveApiBaseUrl } from '@/services/api/api-config';
 
 import type { ProfileScreenData } from '../types';
 
@@ -65,9 +66,6 @@ export type ProfileApiConfig = {
   accessToken?: string;
 };
 
-const DEFAULT_API_BASE_URL =
-  Platform.OS === 'android' ? 'http://10.0.2.2:3000/api' : 'http://localhost:3000/api';
-
 const GENDER_LABEL_BY_CODE: Record<string, string> = {
   M: 'Male',
   F: 'Female',
@@ -80,16 +78,6 @@ const ACTIVITY_LEVEL_LABEL_BY_CODE: Record<string, string> = {
   LOW: 'Low',
 };
 
-const normalizeOptionalString = (value: string | null | undefined) => {
-  if (!value) {
-    return null;
-  }
-
-  const trimmed = value.trim();
-  return trimmed.length ? trimmed : null;
-};
-
-const ENV_API_BASE_URL = normalizeOptionalString(process.env.EXPO_PUBLIC_API_BASE_URL);
 const ENV_PROFILE_ACCESS_TOKEN = normalizeOptionalString(
   process.env.EXPO_PUBLIC_PROFILE_ACCESS_TOKEN,
 );
@@ -188,8 +176,7 @@ const mapProfileOverviewToScreenData = (
 export async function fetchProfileScreenData(
   config: ProfileApiConfig = {},
 ): Promise<ProfileScreenData> {
-  const apiBaseUrl =
-    normalizeOptionalString(config.apiBaseUrl) ?? ENV_API_BASE_URL ?? DEFAULT_API_BASE_URL;
+  const apiBaseUrl = resolveApiBaseUrl(config.apiBaseUrl);
   const accessToken =
     normalizeOptionalString(config.accessToken) ?? ENV_PROFILE_ACCESS_TOKEN ?? ENV_ACCESS_TOKEN;
 

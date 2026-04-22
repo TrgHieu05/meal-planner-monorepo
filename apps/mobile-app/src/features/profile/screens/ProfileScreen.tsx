@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button, ScrollView, Spinner, Text, XStack, YStack, useTheme } from 'tamagui';
 import { Pencil } from '@tamagui/lucide-icons-2';
 
+import { useSession } from '@features/auth/hooks/useSession';
 import { fetchProfileScreenData } from '../api/profile.api';
 import {
     BASIC_INFO_UI_CONFIG,
@@ -45,6 +46,7 @@ const getErrorMessage = (error: unknown) => {
 
 export default function ProfileScreen() {
     const theme = useTheme();
+    const { session, signOut } = useSession();
     const [profileData, setProfileData] = useState<ProfileScreenData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -54,20 +56,39 @@ export default function ProfileScreen() {
         setErrorMessage(null);
 
         try {
-            const response = await fetchProfileScreenData();
+            if (!session?.accessToken) {
+                throw new Error('No authenticated session found.');
+            }
+
+            const response = await fetchProfileScreenData({
+                accessToken: session.accessToken,
+            });
             setProfileData(response);
         } catch (error) {
             setErrorMessage(getErrorMessage(error));
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [session?.accessToken]);
 
     useEffect(() => {
         void loadProfile();
     }, [loadProfile]);
 
-    const dataToRender = useMemo(() => profileData ?? EMPTY_PROFILE_DATA, [profileData]);
+    const dataToRender = useMemo(() => {
+        if (profileData) {
+            return profileData;
+        }
+
+        return {
+            ...EMPTY_PROFILE_DATA,
+            basicInfo: {
+                ...EMPTY_PROFILE_DATA.basicInfo,
+                userName: session?.user.userName ?? EMPTY_PROFILE_DATA.basicInfo.userName,
+                email: session?.user.email ?? EMPTY_PROFILE_DATA.basicInfo.email,
+            },
+        } satisfies ProfileScreenData;
+    }, [profileData, session?.user.email, session?.user.userName]);
 
     return (
         <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: theme.background.val }}>
@@ -138,6 +159,19 @@ export default function ProfileScreen() {
                     </XStack>
                     <InfoItemWrapper userData={dataToRender.metrics} config={METRICS_UI_CONFIG} />
                 </YStack>
+
+                <Button
+                    h="hug"
+                    ai="center"
+                    jc="center"
+                    bg="$danger"
+                    py="$sm"
+                    onPress={signOut}
+                >
+                    <Text ff="$body" fos="$sm" fow="$medium" col="$textInverse">
+                        Sign out
+                    </Text>
+                </Button>
             </YStack>
         </ScrollView>
     );

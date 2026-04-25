@@ -1,69 +1,66 @@
-import { StatusBar, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link } from 'expo-router';
-import { Button, Paragraph, Text, YStack, XStack, useTheme } from 'tamagui';
+import { Button, Paragraph, SizableText, YStack, XStack, useTheme } from 'tamagui';
 
 import { useAppTheme } from '@/providers/AppProviders';
+import { useAuthStore } from '@store/authStore';
 
 export default function HomeScreen() {
-  const theme = useTheme();
   const { themeName, toggleTheme } = useAppTheme();
   const isDark = themeName === 'dark';
+  const { logout } = useAuthStore();
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background.val }]}>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content' } backgroundColor={theme.background.val} />
-
+    <YStack h="100%" w="100%" bg="$background">
       <YStack h={200} bg="$primary" bblr="$lg" bbrr="$lg" ai="center" jc="center">
-        <Text col="$textInverse" ff="$heading" fos="$h1" fow="$bold">
+        <SizableText col="$textInverse" ff="$heading" fos="$h1" fow="$bold">
           Kitchen Mind
-        </Text>
+        </SizableText>
       </YStack>
 
       <YStack f={1} ai="center" jc="center" px="$lg">
-        <Text color="$text" ff="$heading" fos="$xl" fow="$bold">
+        <SizableText color="$text" ff="$heading" fos="$xl" fow="$bold">
           Meal Planner Mobile
-        </Text>
+        </SizableText>
         <Paragraph mt="$sm" textAlign="center" color="$textSubtle" ff="$body">
-          <Text>Base app is cleaned and ready for Tamagui setup.</Text>
+          <SizableText>Base app is cleaned and ready for Tamagui setup.</SizableText>
         </Paragraph>
 
         <Button mt="$lg" w="100%" h="hug" onPress={toggleTheme} bg="$primary" py="$sm">
-          <Text col="$textInverse" ff="$body" fos="$lg" fow="$medium">
+          <SizableText col="$textInverse" ff="$body" fos="$lg" fow="$medium">
             Switch to {isDark ? 'Light' : 'Dark'} mode
-          </Text>
+          </SizableText>
         </Button>
-        <Text mt="$lg" ff="$body" fos="$xs" fow="$light" color="$text">
+        <SizableText mt="$lg" ff="$body" fos="$xs" fow="$light" color="$text">
           This is a simple text element.
-        </Text>
+        </SizableText>
 
         <XStack mt="$lg" gap="$md">
           <Link href="/meals">
-            <Text col="$text" ff="$body" fos="$lg" fow="$medium">
+            <SizableText col="$text" ff="$body" fos="$lg" fow="$medium">
               Go to Meals
-            </Text>
+            </SizableText>
           </Link>
 
           <Link href="/metrics">
-            <Text col="$text" ff="$body" fos="$lg" fow="$medium">
+            <SizableText col="$text" ff="$body" fos="$lg" fow="$medium">
               Go to Metrics
-            </Text>
+            </SizableText>
           </Link>"
 
-          <Link href="/(auth)/">
-            <Text col="$text" ff="$body" fos="$lg" fow="$medium">
+          <Link href="/login">
+            <SizableText col="$text" ff="$body" fos="$lg" fow="$medium">
               Go to Auth
-            </Text>
+            </SizableText>
           </Link>
 
         </XStack>
+
+        <Button mt="$lg" w="100%" h="hug" onPress={logout} bg="$danger" py="$sm">
+          <SizableText col="$textInverse" ff="$body" fos="$lg" fow="$medium">
+            Logout
+          </SizableText>
+        </Button> 
       </YStack>
-    </SafeAreaView>
+    </YStack>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
-});

@@ -25521,77 +25521,77 @@
           "isVar": true,
           "key": "$jade1",
           "name": "c-jade1",
-          "val": "#E8F8F0",
+          "val": "#E6F9F4",
           "variable": ""
         },
         "jade2": {
           "isVar": true,
           "key": "$jade2",
           "name": "c-jade2",
-          "val": "#BDEBD6",
+          "val": "#B8EDDF",
           "variable": ""
         },
         "jade3": {
           "isVar": true,
           "key": "$jade3",
           "name": "c-jade3",
-          "val": "#93DEBB",
+          "val": "#8AE2CB",
           "variable": ""
         },
         "jade4": {
           "isVar": true,
           "key": "$jade4",
           "name": "c-jade4",
-          "val": "#69D2A0",
+          "val": "#5CD6B6",
           "variable": ""
         },
         "jade5": {
           "isVar": true,
           "key": "$jade5",
           "name": "c-jade5",
-          "val": "#3EC586",
+          "val": "#2ECBA2",
           "variable": ""
         },
         "jade6": {
           "isVar": true,
           "key": "$jade6",
           "name": "c-jade6",
-          "val": "#14b86b",
+          "val": "#00bf8d",
           "variable": ""
         },
         "jade7": {
           "isVar": true,
           "key": "$jade7",
           "name": "c-jade7",
-          "val": "#12A25E",
+          "val": "#00A87C",
           "variable": ""
         },
         "jade8": {
           "isVar": true,
           "key": "$jade8",
           "name": "c-jade8",
-          "val": "#0F8C51",
+          "val": "#00916B",
           "variable": ""
         },
         "jade9": {
           "isVar": true,
           "key": "$jade9",
           "name": "c-jade9",
-          "val": "#0D7644",
+          "val": "#007A5A",
           "variable": ""
         },
         "jade10": {
           "isVar": true,
           "key": "$jade10",
           "name": "c-jade10",
-          "val": "#0A6038",
+          "val": "#006349",
           "variable": ""
         },
         "jade11": {
           "isVar": true,
           "key": "$jade11",
           "name": "c-jade11",
-          "val": "#084A2B",
+          "val": "#004C38",
           "variable": ""
         },
         "red1": {
@@ -25774,6 +25774,48 @@
           "key": "$gray15",
           "name": "c-gray15",
           "val": "#2A2A2A",
+          "variable": ""
+        },
+        "yellow1": {
+          "isVar": true,
+          "key": "$yellow1",
+          "name": "c-yellow1",
+          "val": "#FDF7ED",
+          "variable": ""
+        },
+        "yellow6": {
+          "isVar": true,
+          "key": "$yellow6",
+          "name": "c-yellow6",
+          "val": "#efac4e",
+          "variable": ""
+        },
+        "purple1": {
+          "isVar": true,
+          "key": "$purple1",
+          "name": "c-purple1",
+          "val": "#F1EDFB",
+          "variable": ""
+        },
+        "purple6": {
+          "isVar": true,
+          "key": "$purple6",
+          "name": "c-purple6",
+          "val": "#6f48db",
+          "variable": ""
+        },
+        "green1": {
+          "isVar": true,
+          "key": "$green1",
+          "name": "c-green1",
+          "val": "#EEF8EC",
+          "variable": ""
+        },
+        "green6": {
+          "isVar": true,
+          "key": "$green6",
+          "name": "c-green6",
+          "val": "#53ba45",
           "variable": ""
         }
       },
@@ -25963,17 +26005,17 @@
     },
     "themes": {
       "dark": {
-        "jade1": "#E8F8F0",
-        "jade2": "#BDEBD6",
-        "jade3": "#93DEBB",
-        "jade4": "#69D2A0",
-        "jade5": "#3EC586",
-        "jade6": "#14b86b",
-        "jade7": "#12A25E",
-        "jade8": "#0F8C51",
-        "jade9": "#0D7644",
-        "jade10": "#0A6038",
-        "jade11": "#084A2B",
+        "jade1": "#E6F9F4",
+        "jade2": "#B8EDDF",
+        "jade3": "#8AE2CB",
+        "jade4": "#5CD6B6",
+        "jade5": "#2ECBA2",
+        "jade6": "#00bf8d",
+        "jade7": "#00A87C",
+        "jade8": "#00916B",
+        "jade9": "#007A5A",
+        "jade10": "#006349",
+        "jade11": "#004C38",
         "red1": "#FCEBEB",
         "red2": "#F6C6C6",
         "red3": "#F0A2A2",
@@ -26000,37 +26042,44 @@
         "gray13": "#5A5A5A",
         "gray14": "#424242",
         "gray15": "#2A2A2A",
+        "yellow1": "#FDF7ED",
+        "yellow6": "#efac4e",
+        "purple1": "#F1EDFB",
+        "purple6": "#6f48db",
+        "green1": "#EEF8EC",
+        "green6": "#53ba45",
         "background": "#2A2A2A",
-        "surface": "#898989",
+        "surface": "#424242",
         "surfaceHover": "#5A5A5A",
-        "surfacePress": "#424242",
-        "primary": "#14b86b",
-        "primaryHover": "#12A25E",
-        "primaryPress": "#0F8C51",
-        "softPrimary": "#BDEBD6",
+        "surfacePress": "#898989",
+        "primary": "#00bf8d",
+        "primaryHover": "#00A87C",
+        "primaryPress": "#00916B",
+        "softPrimary": "#B8EDDF",
         "danger": "#de3535",
         "dangerHover": "#C32F2F",
         "dangerPress": "#A92828",
         "softDanger": "#F6C6C6",
         "text": "#FAFAFA",
         "textSubtle": "#D7D7D7",
-        "textPrimary": "#14b86b",
+        "textPrimary": "#00bf8d",
         "textDanger": "#de3535",
         "textInverse": "#FAFAFA",
+        "boderFocus": "#00A87C",
         "id": "dark"
       },
       "light": {
-        "jade1": "#E8F8F0",
-        "jade2": "#BDEBD6",
-        "jade3": "#93DEBB",
-        "jade4": "#69D2A0",
-        "jade5": "#3EC586",
-        "jade6": "#14b86b",
-        "jade7": "#12A25E",
-        "jade8": "#0F8C51",
-        "jade9": "#0D7644",
-        "jade10": "#0A6038",
-        "jade11": "#084A2B",
+        "jade1": "#E6F9F4",
+        "jade2": "#B8EDDF",
+        "jade3": "#8AE2CB",
+        "jade4": "#5CD6B6",
+        "jade5": "#2ECBA2",
+        "jade6": "#00bf8d",
+        "jade7": "#00A87C",
+        "jade8": "#00916B",
+        "jade9": "#007A5A",
+        "jade10": "#006349",
+        "jade11": "#004C38",
         "red1": "#FCEBEB",
         "red2": "#F6C6C6",
         "red3": "#F0A2A2",
@@ -26057,24 +26106,30 @@
         "gray13": "#5A5A5A",
         "gray14": "#424242",
         "gray15": "#2A2A2A",
-        "background": "#EFEFEF",
-        "surface": "#FAFAFA",
-        "surfaceHover": "#F4F4F4",
-        "surfacePress": "#E9E9E9",
-        "primary": "#14b86b",
-        "primaryHover": "#12A25E",
-        "primaryPress": "#0F8C51",
-        "softPrimary": "#E8F8F0",
+        "yellow1": "#FDF7ED",
+        "yellow6": "#efac4e",
+        "purple1": "#F1EDFB",
+        "purple6": "#6f48db",
+        "green1": "#EEF8EC",
+        "green6": "#53ba45",
+        "background": "#FAFAFA",
+        "surface": "#EFEFEF",
+        "surfaceHover": "#E9E9E9",
+        "surfacePress": "#E3E3E3",
+        "primary": "#00bf8d",
+        "primaryHover": "#00A87C",
+        "primaryPress": "#00916B",
+        "softPrimary": "#E6F9F4",
         "danger": "#de3535",
         "dangerHover": "#C32F2F",
         "dangerPress": "#A92828",
         "softDanger": "#FCEBEB",
         "text": "#2A2A2A",
         "textSubtle": "#A1A1A1",
-        "textPrimary": "#0F8C51",
-        "textSuccess": "#0F8C51",
-        "textDanger": "#A92828",
+        "textPrimary": "#00bf8d",
+        "textDanger": "#de3535",
         "textInverse": "#FAFAFA",
+        "boderFocus": "#00A87C",
         "id": "light"
       }
     },
@@ -26295,81 +26350,109 @@
         "val": "#B9B9B9",
         "variable": ""
       },
+      "$color.green1": {
+        "isVar": true,
+        "key": "$green1",
+        "name": "c-green1",
+        "val": "#EEF8EC",
+        "variable": ""
+      },
+      "$color.green6": {
+        "isVar": true,
+        "key": "$green6",
+        "name": "c-green6",
+        "val": "#53ba45",
+        "variable": ""
+      },
       "$color.jade1": {
         "isVar": true,
         "key": "$jade1",
         "name": "c-jade1",
-        "val": "#E8F8F0",
+        "val": "#E6F9F4",
         "variable": ""
       },
       "$color.jade10": {
         "isVar": true,
         "key": "$jade10",
         "name": "c-jade10",
-        "val": "#0A6038",
+        "val": "#006349",
         "variable": ""
       },
       "$color.jade11": {
         "isVar": true,
         "key": "$jade11",
         "name": "c-jade11",
-        "val": "#084A2B",
+        "val": "#004C38",
         "variable": ""
       },
       "$color.jade2": {
         "isVar": true,
         "key": "$jade2",
         "name": "c-jade2",
-        "val": "#BDEBD6",
+        "val": "#B8EDDF",
         "variable": ""
       },
       "$color.jade3": {
         "isVar": true,
         "key": "$jade3",
         "name": "c-jade3",
-        "val": "#93DEBB",
+        "val": "#8AE2CB",
         "variable": ""
       },
       "$color.jade4": {
         "isVar": true,
         "key": "$jade4",
         "name": "c-jade4",
-        "val": "#69D2A0",
+        "val": "#5CD6B6",
         "variable": ""
       },
       "$color.jade5": {
         "isVar": true,
         "key": "$jade5",
         "name": "c-jade5",
-        "val": "#3EC586",
+        "val": "#2ECBA2",
         "variable": ""
       },
       "$color.jade6": {
         "isVar": true,
         "key": "$jade6",
         "name": "c-jade6",
-        "val": "#14b86b",
+        "val": "#00bf8d",
         "variable": ""
       },
       "$color.jade7": {
         "isVar": true,
         "key": "$jade7",
         "name": "c-jade7",
-        "val": "#12A25E",
+        "val": "#00A87C",
         "variable": ""
       },
       "$color.jade8": {
         "isVar": true,
         "key": "$jade8",
         "name": "c-jade8",
-        "val": "#0F8C51",
+        "val": "#00916B",
         "variable": ""
       },
       "$color.jade9": {
         "isVar": true,
         "key": "$jade9",
         "name": "c-jade9",
-        "val": "#0D7644",
+        "val": "#007A5A",
+        "variable": ""
+      },
+      "$color.purple1": {
+        "isVar": true,
+        "key": "$purple1",
+        "name": "c-purple1",
+        "val": "#F1EDFB",
+        "variable": ""
+      },
+      "$color.purple6": {
+        "isVar": true,
+        "key": "$purple6",
+        "name": "c-purple6",
+        "val": "#6f48db",
         "variable": ""
       },
       "$color.red1": {
@@ -26447,6 +26530,20 @@
         "key": "$red9",
         "name": "c-red9",
         "val": "#8E2222",
+        "variable": ""
+      },
+      "$color.yellow1": {
+        "isVar": true,
+        "key": "$yellow1",
+        "name": "c-yellow1",
+        "val": "#FDF7ED",
+        "variable": ""
+      },
+      "$color.yellow6": {
+        "isVar": true,
+        "key": "$yellow6",
+        "name": "c-yellow6",
+        "val": "#efac4e",
         "variable": ""
       },
       "$radius.lg": {

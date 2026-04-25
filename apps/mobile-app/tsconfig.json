@@ -6,8 +6,10 @@
       "@/*": ["./src/*"],
       "@assets/*": ["./assets/*"],
       "@tamagui-config": ["./tamagui.config.ts"],
-      "@components/*": ["./src/components/*"],
+      "@components": ["./src/components/index.ts"],
       "@features/*": ["./src/features/*"],
+      "@hooks/*": ["./src/hooks/*"],
+      "@store/*": ["./src/store/*"],
     }
   }
 }

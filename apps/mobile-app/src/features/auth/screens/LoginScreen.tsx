@@ -1,114 +1,74 @@
-import { useMemo, useState } from 'react';
-import { Button, Input, Spinner, Text, XStack, YStack } from 'tamagui';
-import GoogleIcon from '@assets/svg/google-icon.svg';
-import FacebookIcon from '@assets/svg/facebook-icon.svg';
-
-import { useSession } from '@features/auth/hooks/useSession';
-
-const DEV_ACCESS_TOKEN =
-    process.env.EXPO_PUBLIC_ACCESS_TOKEN?.trim() ??
-    process.env.EXPO_PUBLIC_PROFILE_ACCESS_TOKEN?.trim() ??
-    '';
-
-const getErrorMessage = (error: unknown) => {
-    if (error instanceof Error && error.message.trim()) {
-        return error.message;
-    }
-
-    return 'Unable to restore a session with that token.';
-};
+import { View, SizableText, Label, YStack, XStack } from 'tamagui'
+import { LogIn } from '@tamagui/lucide-icons-2'
+import { Link } from 'expo-router'
+import GoogleIcon from '@assets/svg/google-icon.svg'
+import FacebookIcon from '@assets/svg/facebook-icon.svg'
+import { useAuthStore } from '@store/authStore'
+import { Button, InputText, Divider } from '@components'
 
 export default function LoginScreen() {
-    const { signInWithToken } = useSession();
-    const [accessToken, setAccessToken] = useState(DEV_ACCESS_TOKEN);
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const hasPrefilledToken = useMemo(() => DEV_ACCESS_TOKEN.length > 0, []);
-
-    const handleSignIn = async () => {
-        const trimmedToken = accessToken.trim();
-        if (!trimmedToken) {
-            setErrorMessage('Paste a valid backend JWT to continue.');
-            return;
-        }
-
-        setIsSubmitting(true);
-        setErrorMessage(null);
-
-        try {
-            await signInWithToken(trimmedToken);
-        } catch (error) {
-            setErrorMessage(getErrorMessage(error));
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
+    const { login } = useAuthStore();
 
     return (
-        <YStack f={1} px="$lg" py="$xl" ai="center" jc="center" gap="$lg">
-            <YStack gap="$sm" ai="center" maw={420}>
-                <Text ff="$heading" fos="$h1" fow="$bold" textAlign="center">
-                Welcome to Kitchen Mind
-                </Text>
-
-                <Text ff="$body" fos="$md" col="$textSubtle" textAlign="center">
-                    Phase 1 restores an app session from a backend JWT and keeps it in secure storage.
-                    Google and Facebook sign-in will be connected in Phase 2.
-                </Text>
+        <YStack bg="$background" flex={1} alignItems="center" justifyContent="center">
+            <YStack w="100%" h={240} px="$md" ai="flex-start" jc="center" bg="$primary" br="$radius.lg" overflow="hidden">
+                <View h={128} w={128} position='absolute' bg='$jade7' br="$radius.pill" bottom={-64} left={20} />
+                <SizableText ff="$heading" fos="$h2" fow="$bold" col="$textInverse">Welcome back</SizableText>
+                <SizableText ff="$body" fos="$md" fow="$medium" col="$textInverse">
+                    Plan meals faster with your saved preferences and weekly routine.
+                </SizableText>
             </YStack>
 
-            <YStack w="100%" maw={420} gap="$md">
-                <Input
-                    value={accessToken}
-                    onChangeText={setAccessToken}
-                    placeholder="Paste backend access token"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    multiline
-                    minHeight={120}
-                    textAlignVertical="top"
-                />
+            <YStack px="$md" py="$lg" w="100%" h="fill" flex={1} ai="center" jc="flex-start" gap="$space.xl">
+                <YStack w="100%" gap="$md">
+                    <YStack w="100%" gap="$xs">
+                        <Label ff="$body" fos="$md" fow="$medium" col="$textSubtle" htmlFor='email'>Email</Label>
+                        <InputText id="email" placeholder="Enter your email"/>
+                    </YStack>
 
-                {hasPrefilledToken ? (
-                    <Text ff="$body" fos="$sm" col="$textSubtle">
-                        Using EXPO_PUBLIC_ACCESS_TOKEN as the initial value.
-                    </Text>
-                ) : null}
+                    <YStack w="100%" gap="$xs">
+                        <Label ff="$body" fos="$md" fow="$medium" col="$textSubtle">Password</Label>
+                        <InputText readOnly placeholder="Enter your email" secureTextEntry/>
+                    </YStack>
 
-                {errorMessage ? (
-                    <Text ff="$body" fos="$sm" col="$textDanger">
-                        {errorMessage}
-                    </Text>
-                ) : null}
-
-                <Button
-                    h="hug"
-                    ai="center"
-                    jc="center"
-                    bg="$primary"
-                    py="$sm"
-                    disabled={isSubmitting}
-                    onPress={handleSignIn}
-                >
-                    <XStack ai="center" gap="$sm">
-                        {isSubmitting ? <Spinner size="small" color="$textInverse" /> : null}
-                        <Text ff="$body" fos="$md" fow="$medium" col="$textInverse">
-                            Restore session
-                        </Text>
+                    <XStack w="100%" ai="center" justifyContent="flex-end">
+                        <Link href="/forgot-password">
+                            <SizableText col="$primary" ff="$body"fos="$md" fow="$semiBold" ta="right">Forgot password?</SizableText>
+                        </Link>
                     </XStack>
+                </YStack>
+
+                <Button color="primary" size="large" onPress={login}>
+                    <Button.Text>Login</Button.Text>
+                    <Button.Icon icon={LogIn} />
                 </Button>
+
+                <YStack w="100%" gap="$md">
+                    <Divider label="Or countinue with" />
+                    <XStack w="100%" gap="$lg" ai="center" justifyContent="center">
+                        <Link href="/login-with-google-placeholder">
+                            <XStack  p="$space.md" br="$radius.pill" bg="$surface" ai="center" jc="center">
+                                <GoogleIcon width={24} height={24} />
+                            </XStack>
+                        </Link>
+
+                        <Link href="/login-with-facebook-placeholder">
+                            <XStack  p="$space.md" br="$radius.pill" bg="$surface" ai="center" jc="center">
+                                <FacebookIcon width={24} height={24} />
+                            </XStack>
+                        </Link>
+                    </XStack>
+                </YStack>
+
+
+                <XStack w="100%" gap="$space.xs" ai="center" jc="center">
+                    <SizableText ff="$body" fos="$md" fow="$medium" col="$textSubtle">Don't have an account?</SizableText>
+                    <Link href="/signup">
+                        <SizableText col="$primary" ff="$body"fos="$md" fow="$semiBold">Sign up</SizableText>
+                    </Link>
+                </XStack>
             </YStack>
-
-            <XStack ai="center" gap="$md" jc="center">
-                <XStack bw={1} p="$space.md" borderRadius={999} alignItems="center" gap={8} opacity={0.4}>
-                    <FacebookIcon width={20} height={20} />
-                </XStack>
-                <XStack p="$space.md" borderRadius={16} alignItems="center" gap={8} opacity={0.4}>
-                    <GoogleIcon width={20} height={20} />
-                </XStack>
-            </XStack>
+            
         </YStack>
-    );
+    )
 }
-

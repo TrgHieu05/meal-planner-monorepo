@@ -16,17 +16,17 @@ const commonFontSizes = {
 
 const tokens = createTokens({
     color: {
-        jade1: '#E8F8F0',
-        jade2: '#BDEBD6',
-        jade3: '#93DEBB',
-        jade4: '#69D2A0',
-        jade5: '#3EC586',
-        jade6: '#14b86b', //base
-        jade7: '#12A25E',
-        jade8: '#0F8C51',
-        jade9: '#0D7644',
-        jade10: '#0A6038',
-        jade11: '#084A2B',
+        jade1: '#E6F9F4',
+        jade2: '#B8EDDF',
+        jade3: '#8AE2CB',
+        jade4: '#5CD6B6',
+        jade5: '#2ECBA2',
+        jade6: '#00bf8d', //base
+        jade7: '#00A87C',
+        jade8: '#00916B',
+        jade9: '#007A5A',
+        jade10: '#006349',
+        jade11: '#004C38',
 
         red1: '#FCEBEB',
         red2: '#F6C6C6',
@@ -55,6 +55,17 @@ const tokens = createTokens({
         gray13: '#5A5A5A', 
         gray14: '#424242',
         gray15: '#2A2A2A',
+
+        // Other colors can be added here as needed
+        yellow1: '#FDF7ED',
+        yellow6: '#efac4e',
+
+        purple1: '#F1EDFB',
+        purple6: '#6f48db',
+
+        green1: '#EEF8EC',
+        green6: '#53ba45',
+
     },
 
     space: {
@@ -142,11 +153,11 @@ const bodyFont = createFont({
 
 const themes = {
     light: {
-        background: tokens.color.gray3,
+        background: tokens.color.gray1,
 
-        surface: tokens.color.gray1,
-        surfaceHover: tokens.color.gray2,
-        surfacePress: tokens.color.gray4,
+        surface: tokens.color.gray3,
+        surfaceHover: tokens.color.gray4,
+        surfacePress: tokens.color.gray5,
 
         primary: tokens.color.jade6,
         primaryHover: tokens.color.jade7,
@@ -160,18 +171,19 @@ const themes = {
 
         text: tokens.color.gray15,
         textSubtle: tokens.color.gray10,
-        textPrimary: tokens.color.jade8,
-        textSuccess: tokens.color.jade8,
-        textDanger: tokens.color.red8,
+        textPrimary: tokens.color.jade6,
+        textDanger: tokens.color.red6,
         textInverse: tokens.color.gray1, //for text on colored backgrounds
+
+        boderFocus: tokens.color.jade7,
     },
 
     dark: {
         background: tokens.color.gray15,
 
-        surface: tokens.color.gray12,
+        surface: tokens.color.gray14,
         surfaceHover: tokens.color.gray13,
-        surfacePress: tokens.color.gray14,
+        surfacePress: tokens.color.gray12,
 
         primary: tokens.color.jade6,
         primaryHover: tokens.color.jade7,
@@ -188,6 +200,8 @@ const themes = {
         textPrimary: tokens.color.jade6,
         textDanger: tokens.color.red6,
         textInverse: tokens.color.gray1,
+
+        boderFocus: tokens.color.jade7,
     },
 }
 

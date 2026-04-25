@@ -8,3 +8,4 @@ export * from './types/ingredient';
 export * from './types/menu';
 export * from './types/menu-item';
 export * from './types/profile';
+export * from './types/meal-search';

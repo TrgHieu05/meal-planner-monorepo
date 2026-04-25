@@ -12,6 +12,7 @@ import { OptionsModule } from './options/options.module';
 import { ProfileModule } from './profile/profile.module';
 import { UserModule } from './user/user.module';
 import { JwtAuthOptInGuard } from './auth/jwt-auth.guard';
+import { MealSearchModule } from './meal-search/meal-search.module';
 import { MenuModule } from './menu/menu.module';
 
 @Module({
@@ -28,6 +29,7 @@ import { MenuModule } from './menu/menu.module';
     UserModule,
     MetricModule,
     ProfileModule,
+    MealSearchModule,
     MenuModule,
   ],
   controllers: [AppController],

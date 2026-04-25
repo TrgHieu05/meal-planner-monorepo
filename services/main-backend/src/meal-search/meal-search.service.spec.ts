@@ -1,3 +1,4 @@
+import { Difficulty } from '@prisma/client';
 import { MealSearchService } from './meal-search.service';
 import { PrismaService } from '../database/prisma.service';
 
@@ -15,7 +16,7 @@ describe('MealSearchService', () => {
       {
         id: 1,
         name: 'Omelette',
-        difficulty: '1',
+        difficulty: Difficulty.LEVEL_1,
         cookTimeMins: 25,
         ingredients: [
           { ingredient: { id: 10, name: 'egg' } },
@@ -42,7 +43,7 @@ describe('MealSearchService', () => {
     const meals = Array.from({ length: 12 }).map((_, idx) => ({
       id: idx + 1,
       name: idx === 0 ? 'Egg Deluxe' : `Meal${idx + 1}`,
-      difficulty: idx % 3 === 0 ? '2' : idx % 3 === 1 ? '3' : '5',
+      difficulty: idx % 3 === 0 ? Difficulty.LEVEL_2 : idx % 3 === 1 ? Difficulty.LEVEL_3 : Difficulty.LEVEL_5,
       cookTimeMins: 20 + idx,
       ingredients: [
         { ingredient: { id: idx + 100, name: 'egg' } },

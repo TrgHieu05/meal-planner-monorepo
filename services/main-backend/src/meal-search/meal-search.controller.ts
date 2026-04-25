@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Header,
+  InternalServerErrorException,
   Query,
 } from '@nestjs/common';
 import {
@@ -12,7 +13,6 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import {
-  CookingTimeSchema,
   MealSearchQuery,
   MealSearchQuerySchema,
   MealSearchResponseSchema,
@@ -56,13 +56,13 @@ export class MealSearchController {
 
     const safe = MealSearchResponseSchema.safeParse(result);
     if (!safe.success) {
-      throw new BadRequestException({
-        error: 'Bad Response',
+      throw new InternalServerErrorException({
+        error: 'Internal Server Error',
         message: 'Response schema validation failed',
         details: safe.error.flatten(),
       });
     }
-    return result;
+    return safe.data;
   }
 
   private normalizeQuery(q: MealSearchQuery): {
@@ -85,15 +85,8 @@ export class MealSearchController {
 
     let cookingTimeMaxMins: number | undefined;
     if (q.cookingTime) {
-      const v = CookingTimeSchema.safeParse(q.cookingTime);
-      if (!v.success) {
-        throw new BadRequestException({
-          error: 'Bad Request',
-          message: 'Invalid filter value: cookingTime',
-        });
-      }
       cookingTimeMaxMins =
-        v.data === '<30m' ? 30 : v.data === '<45m' ? 45 : 60;
+        q.cookingTime === '<30m' ? 30 : q.cookingTime === '<45m' ? 45 : 60;
     }
 
     return {

@@ -1,8 +1,7 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Difficulty, Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { MealSearchResultItem } from '@meal/shared';
-
-type DifficultyDB = '1' | '2' | '3' | '4' | '5';
 
 @Injectable()
 export class MealSearchService {
@@ -18,7 +17,7 @@ export class MealSearchService {
     const queryTokens = tokenize(normalizedQuery);
     const exclude = normalizeNames(params.excludeIngredients);
 
-    const where: Record<string, unknown> = {};
+    const where: Prisma.MealWhereInput = {};
 
     if (exclude.length > 0) {
       where['NOT'] = [
@@ -26,7 +25,12 @@ export class MealSearchService {
           ingredients: {
             some: {
               ingredient: {
-                name: { in: exclude },
+                OR: exclude.map((name) => ({
+                  name: {
+                    contains: name,
+                    mode: 'insensitive' as const,
+                  },
+                })),
               },
             },
           },
@@ -70,7 +74,7 @@ export class MealSearchService {
         const matchToken = queryTokens.filter((t) => searchTokens.has(t)).length;
         const score = matchFullName * 3 + matchToken * 2;
 
-        const difficulty = fromDbDifficulty(meal.difficulty as DifficultyDB);
+        const difficulty = fromDbDifficulty(meal.difficulty);
         if (!difficulty) {
           throw new InternalServerErrorException(
             'Invalid difficulty stored for meal',
@@ -124,22 +128,22 @@ function tokenize(text: string) {
   return Array.from(new Set(text.split(' ').filter(Boolean)));
 }
 
-function toDbDifficultySet(level: 'easy' | 'medium' | 'hard'): DifficultyDB[] {
+function toDbDifficultySet(level: 'easy' | 'medium' | 'hard'): Difficulty[] {
   switch (level) {
     case 'easy':
-      return ['1', '2'];
+      return [Difficulty.LEVEL_1, Difficulty.LEVEL_2];
     case 'medium':
-      return ['3'];
+      return [Difficulty.LEVEL_3];
     case 'hard':
-      return ['4', '5'];
+      return [Difficulty.LEVEL_4, Difficulty.LEVEL_5];
   }
 }
 
 function fromDbDifficulty(
-  d: DifficultyDB,
+  d: Difficulty,
 ): MealSearchResultItem['difficulty'] | null {
-  if (d === '1' || d === '2') return 'easy';
-  if (d === '3') return 'medium';
-  if (d === '4' || d === '5') return 'hard';
+  if (d === Difficulty.LEVEL_1 || d === Difficulty.LEVEL_2) return 'easy';
+  if (d === Difficulty.LEVEL_3) return 'medium';
+  if (d === Difficulty.LEVEL_4 || d === Difficulty.LEVEL_5) return 'hard';
   return null;
 }

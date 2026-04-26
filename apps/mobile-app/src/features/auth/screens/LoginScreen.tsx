@@ -62,7 +62,7 @@ export default function LoginScreen() {
                 </Button>
 
                 <YStack w="100%" gap="$md">
-                    <Divider label="Or countinue with" />
+                    <Divider label="Or continue with" />
                     <XStack w="100%" gap="$lg" ai="center" justifyContent="center">
                         <Link href="/login-with-google-placeholder">
                             <XStack  p="$space.md" br="$radius.pill" bg="$surface" ai="center" jc="center">

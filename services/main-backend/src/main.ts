@@ -22,7 +22,7 @@ async function bootstrap() {
       'Tài liệu hướng dẫn và kiểm thử API cho hệ thống Meal Planner\n\n' +
         '## Xác thực\n' +
         'Các endpoint được bảo vệ yêu cầu JWT Bearer token.\n' +
-        'Đăng nhập qua Google (`GET /api/auth/google`) để nhận `accessToken`,\n' +
+        'Mobile app Android gửi Google ID token vào `POST /api/auth/google/exchange` để nhận `accessToken`,\n' +
         'sau đó nhấn **Authorize** và nhập token vào ô `Bearer <token>`.',
     )
     .setVersion('1.0')

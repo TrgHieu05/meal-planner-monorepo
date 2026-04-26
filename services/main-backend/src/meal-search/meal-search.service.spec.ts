@@ -1,4 +1,4 @@
-import { Difficulty } from '@prisma/client';
+import { Difficulty } from '@meal/database';
 import { MealSearchService } from './meal-search.service';
 import { PrismaService } from '../database/prisma.service';
 

@@ -1,5 +1,5 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { Difficulty, Prisma } from '@prisma/client';
+import { Difficulty, Prisma } from '@meal/database';
 import { PrismaService } from '../database/prisma.service';
 import { MealSearchResultItem } from '@meal/shared';
 

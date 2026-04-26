@@ -3,6 +3,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 
 const mockAuthService = {
+  googleLogin: jest.fn(),
   exchangeGoogleIdToken: jest.fn(),
 };
 
@@ -22,6 +23,40 @@ describe('AuthController', () => {
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
+  });
+
+  // ── googleAuthRedirect ───────────────────────────────────────────────────
+  describe('googleAuthRedirect()', () => {
+    it('should call authService.googleLogin with the request object', async () => {
+      const mockReq = { user: { email: 'quytvo2626@gmail.com' } };
+      const mockResult = {
+        message: 'Xác thực Google thành công',
+        user: {
+          id: 'uuid-123',
+          email: 'quytvo2626@gmail.com',
+          userName: 'quý võ',
+        },
+        accessToken: 'jwt-token-here',
+      };
+      mockAuthService.googleLogin.mockResolvedValueOnce(mockResult);
+
+      const result = await controller.googleAuthRedirect(mockReq as any);
+
+      expect(mockAuthService.googleLogin).toHaveBeenCalledTimes(1);
+      expect(mockAuthService.googleLogin).toHaveBeenCalledWith(mockReq);
+      expect(result).toEqual(mockResult);
+    });
+
+    it('should return no-data message when req.user is undefined', async () => {
+      const mockReq = {};
+      mockAuthService.googleLogin.mockResolvedValueOnce({
+        message: 'Không có dữ liệu từ Google',
+      });
+
+      const result = await controller.googleAuthRedirect(mockReq as any);
+
+      expect(result).toMatchObject({ message: 'Không có dữ liệu từ Google' });
+    });
   });
 
   describe('exchangeGoogleIdToken()', () => {
@@ -45,12 +80,6 @@ describe('AuthController', () => {
         'google-id-token',
       );
       expect(result).toEqual(mockResult);
-    });
-
-    it('should throw when the payload is invalid', async () => {
-      await expect(controller.exchangeGoogleIdToken({})).rejects.toMatchObject({
-        status: 422,
-      });
     });
   });
 

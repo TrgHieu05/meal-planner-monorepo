@@ -1,7 +1,6 @@
 import {
   Injectable,
   InternalServerErrorException,
-  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -9,12 +8,11 @@ import { OAuth2Client } from 'google-auth-library';
 import { PrismaService } from '../database/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 
-import { Prisma, ProviderEnum } from '@meal/database';
+import { ProviderEnum } from '@meal/database';
 
 @Injectable()
 export class AuthService {
   private readonly googleAuthClient = new OAuth2Client();
-  private readonly logger = new Logger(AuthService.name);
 
   constructor(
     private readonly prisma: PrismaService,
@@ -22,11 +20,42 @@ export class AuthService {
     private readonly configService: ConfigService,
   ) {}
 
+  async googleLogin(req) {
+    if (!req.user) {
+      return { message: 'Không có dữ liệu từ Google' };
+    }
+
+    const { email, firstName, lastName, fullName, providerId } = req.user;
+
+    return this.signInWithGoogleIdentity({
+      providerId: providerId ?? email,
+      email,
+      firstName,
+      lastName,
+      fullName,
+    });
+  }
+
   async exchangeGoogleIdToken(idToken: string) {
+    const googleIdentity = await this.verifyGoogleIdToken(idToken);
+    return this.signInWithGoogleIdentity(googleIdentity);
+  }
+
+  async login(user: any) {
+    const payload = {
+      email: user.email,
+      sub: user.id,
+    };
+
+    return {
+      accessToken: this.jwtService.sign(payload),
+    };
+  }
+
+  private async signInWithGoogleIdentity(identity: GoogleIdentity) {
     try {
-      const googleIdentity = await this.verifyGoogleIdToken(idToken);
-      const user = await this.findOrCreateGoogleUser(googleIdentity);
-      const accessToken = this.issueAccessToken(user);
+      const user = await this.findOrCreateGoogleUser(identity);
+      const token = await this.login(user);
 
       return {
         message: 'Xác thực Google thành công',
@@ -35,7 +64,7 @@ export class AuthService {
           email: user.email,
           userName: user.userName,
         },
-        accessToken,
+        ...token,
       };
     } catch (error) {
       if (
@@ -45,19 +74,9 @@ export class AuthService {
         throw error;
       }
 
-      this.logger.error(
-        'Lỗi khi xử lý Google ID token exchange',
-        error instanceof Error ? error.stack : undefined,
-      );
+      console.error('Lỗi khi xử lý Google Login:', error);
       throw new InternalServerErrorException('Lỗi máy chủ khi xử lý đăng nhập');
     }
-  }
-
-  private issueAccessToken(user: { id: string; email: string }) {
-    return this.jwtService.sign({
-      email: user.email,
-      sub: user.id,
-    });
   }
 
   private async verifyGoogleIdToken(idToken: string): Promise<GoogleIdentity> {
@@ -69,7 +88,7 @@ export class AuthService {
     try {
       const ticket = await this.googleAuthClient.verifyIdToken({
         idToken: trimmedIdToken,
-        audience: this.getGoogleWebAudience(),
+        audience: this.getGoogleAuthAudiences(),
       });
       const payload = ticket.getPayload();
 
@@ -95,18 +114,25 @@ export class AuthService {
     }
   }
 
-  private getGoogleWebAudience() {
-    const audience = this.configService
-      .get<string>('GOOGLE_WEB_CLIENT_ID')
-      ?.trim();
+  private getGoogleAuthAudiences() {
+    const audiences = Array.from(
+      new Set(
+        [
+          this.configService.get<string>('GOOGLE_CLIENT_ID'),
+          this.configService.get<string>('GOOGLE_WEB_CLIENT_ID'),
+          this.configService.get<string>('GOOGLE_ANDROID_CLIENT_ID'),
+          this.configService.get<string>('GOOGLE_IOS_CLIENT_ID'),
+        ].filter((value): value is string => Boolean(value?.trim())),
+      ),
+    );
 
-    if (!audience) {
+    if (!audiences.length) {
       throw new InternalServerErrorException(
-        'Thiếu cấu hình GOOGLE_WEB_CLIENT_ID cho xác thực Google ID token',
+        'Thiếu cấu hình Google client IDs cho xác thực mobile',
       );
     }
 
-    return audience;
+    return audiences;
   }
 
   private async findOrCreateGoogleUser(identity: GoogleIdentity) {
@@ -157,36 +183,19 @@ export class AuthService {
     );
 
     if (!hasGoogleProvider) {
-      try {
-        await this.prisma.userProvider.create({
-          data: {
-            userId: user.id,
-            provider: ProviderEnum.GOOGLE,
-            providerId: identity.providerId,
-          },
-        });
-      } catch (error) {
-        if (
-          error instanceof Prisma.PrismaClientKnownRequestError &&
-          error.code === 'P2002'
-        ) {
-          return this.reloadUserOrFail(user.id);
-        }
+      await this.prisma.userProvider.create({
+        data: {
+          userId: user.id,
+          provider: ProviderEnum.GOOGLE,
+          providerId: identity.providerId,
+        },
+      });
 
-        throw error;
-      }
-
-      return this.reloadUserOrFail(user.id);
+      user = await this.prisma.user.findUnique({
+        where: { id: user.id },
+        include: { providers: true },
+      });
     }
-
-    return user;
-  }
-
-  private async reloadUserOrFail(userId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      include: { providers: true },
-    });
 
     if (!user) {
       throw new InternalServerErrorException(

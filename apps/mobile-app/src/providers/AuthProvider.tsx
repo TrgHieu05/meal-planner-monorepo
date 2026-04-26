@@ -8,7 +8,10 @@ import {
   useState,
 } from 'react';
 
-import { fetchAuthProfile } from '@features/auth/api/auth.api';
+import {
+  exchangeGoogleIdToken,
+  fetchAuthProfile,
+} from '@features/auth/api/auth.api';
 import type { AuthSession } from '@features/auth/types';
 
 import {
@@ -22,6 +25,7 @@ type AuthContextValue = {
   session: AuthSession | null;
   isLoading: boolean;
   signInWithToken: (accessToken: string) => Promise<AuthSession>;
+  signInWithGoogleIdToken: (idToken: string) => Promise<AuthSession>;
   signOut: () => Promise<void>;
   refreshSession: () => Promise<AuthSession | null>;
 };
@@ -36,10 +40,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [session, setSession] = useState<AuthSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const clearSession = useCallback(async () => {
-    await setStorageItemAsync(AUTH_STORAGE_KEY, null);
-    setSession(null);
+  const persistSession = useCallback(async (nextSession: AuthSession | null) => {
+    setSession(nextSession);
+    await setStorageItemAsync(
+      AUTH_STORAGE_KEY,
+      nextSession?.accessToken ?? null,
+    );
+
+    return nextSession;
   }, []);
+
+  const clearSession = useCallback(async () => {
+    await persistSession(null);
+  }, [persistSession]);
 
   const hydrateSession = useCallback(async (accessToken: string) => {
     const user = await fetchAuthProfile({ accessToken });
@@ -48,17 +61,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
       user,
     } satisfies AuthSession;
 
-    setSession(nextSession);
-    await setStorageItemAsync(AUTH_STORAGE_KEY, accessToken);
+    await persistSession(nextSession);
 
     return nextSession;
-  }, []);
+  }, [persistSession]);
 
   const signInWithToken = useCallback(
     async (accessToken: string) => {
       return hydrateSession(accessToken.trim());
     },
     [hydrateSession],
+  );
+
+  const signInWithGoogleIdToken = useCallback(
+    async (idToken: string) => {
+      const nextSession = await exchangeGoogleIdToken({
+        idToken: idToken.trim(),
+      });
+      await persistSession(nextSession);
+      return nextSession;
+    },
+    [persistSession],
   );
 
   const signOut = useCallback(async () => {
@@ -96,7 +119,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           return;
         }
 
-        setSession({
+        await persistSession({
           accessToken: storedToken,
           user: restoredSession,
         });
@@ -124,10 +147,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
       session,
       isLoading,
       signInWithToken,
+      signInWithGoogleIdToken,
       signOut,
       refreshSession,
     };
-  }, [isLoading, refreshSession, session, signInWithToken, signOut]);
+  }, [
+    isLoading,
+    refreshSession,
+    session,
+    signInWithGoogleIdToken,
+    signInWithToken,
+    signOut,
+  ]);
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 }

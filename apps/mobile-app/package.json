@@ -17,6 +17,7 @@
     "@hookform/resolvers": "^5.2.2",
     "@meal/database": "workspace:*",
     "@meal/shared": "workspace:*",
+    "@react-native-google-signin/google-signin": "^16.1.2",
     "@tamagui/animations-moti": "2.0.0-rc.41",
     "@tamagui/animations-react-native": "2.0.0-rc.41",
     "@tamagui/lucide-icons-2": "2.0.0-rc.41",

@@ -12,8 +12,11 @@ import { useColorScheme } from 'react-native';
 import { TamaguiProvider } from 'tamagui';
 
 import config from '@tamagui-config';
+import { bootstrapGoogleSignIn } from '@features/auth/hooks/useGoogleIdTokenSignIn';
 
 import { AuthProvider } from './AuthProvider';
+
+bootstrapGoogleSignIn();
 
 type AppThemeName = 'light' | 'dark';
 

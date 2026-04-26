@@ -15,27 +15,33 @@
         ]
       }
     },
-    "/api/auth/google": {
-      "get": {
-        "description": "Chuyển hướng trình duyệt tới trang OAuth2 của Google. Sau khi xác thực thành công, Google sẽ gọi lại callback `/api/auth/google/callback`.",
-        "operationId": "AuthController_googleAuth",
+    "/api/auth/google/exchange": {
+      "post": {
+        "description": "Mobile app gửi `idToken` nhận từ Google Sign-In. Backend xác minh token với Google rồi phát hành `accessToken` nội bộ và trả về user hiện tại.",
+        "operationId": "AuthController_exchangeGoogleIdToken",
         "parameters": [],
-        "responses": {
-          "302": {
-            "description": "Chuyển hướng tới trang đăng nhập Google"
+        "requestBody": {
+          "required": true,
+          "description": "Google ID token nhận từ mobile app sau khi đăng nhập Google thành công",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "idToken"
+                ],
+                "properties": {
+                  "idToken": {
+                    "type": "string",
+                    "minLength": 1,
+                    "example": "eyJhbGciOiJSUzI1NiIsImtpZCI6Ij..."
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
           }
         },
-        "summary": "Bắt đầu quá trình đăng nhập bằng Google",
-        "tags": [
-          "Authentication"
-        ]
-      }
-    },
-    "/api/auth/google/callback": {
-      "get": {
-        "description": "Google gọi endpoint này sau khi xác thực. Hệ thống tìm/tạo user rồi phát hành JWT nội bộ (`accessToken`) dùng để gọi các API được bảo vệ.",
-        "operationId": "AuthController_googleAuthRedirect",
-        "parameters": [],
         "responses": {
           "200": {
             "description": "Đăng nhập thành công, trả về user và accessToken",
@@ -56,13 +62,13 @@
             }
           },
           "401": {
-            "description": "Xác thực Google không thành công"
+            "description": "Google ID token không hợp lệ hoặc không có email đã xác minh"
           },
-          "500": {
-            "description": "Lỗi máy chủ nội bộ"
+          "422": {
+            "description": "Payload không hợp lệ"
           }
         },
-        "summary": "Callback Google OAuth — nhận token",
+        "summary": "Đổi Google ID token lấy JWT nội bộ cho mobile app",
         "tags": [
           "Authentication"
         ]
@@ -753,6 +759,32 @@
         ]
       }
     },
+    "/api/v1/meals": {
+      "get": {
+        "operationId": "MealSearchController_search",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Trả về danh sách món ăn phù hợp"
+          },
+          "400": {
+            "description": "Invalid request (missing or invalid query params)."
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Tìm kiếm món ăn theo chuỗi q (tên món hoặc nguyên liệu) với bộ lọc difficulty/cookingTime/allergies",
+        "tags": [
+          "Meals"
+        ]
+      }
+    },
     "/api/v1/menus/day/{date}": {
       "get": {
         "operationId": "MenuController_getMenuByDay",
@@ -1019,7 +1051,7 @@
   },
   "info": {
     "title": "KitchenMind API",
-    "description": "Tài liệu hướng dẫn và kiểm thử API cho hệ thống Meal Planner\n\n## Xác thực\nCác endpoint được bảo vệ yêu cầu JWT Bearer token.\nĐăng nhập qua Google (`GET /api/auth/google`) để nhận `accessToken`,\nsau đó nhấn **Authorize** và nhập token vào ô `Bearer <token>`.",
+    "description": "Tài liệu hướng dẫn và kiểm thử API cho hệ thống Meal Planner\n\n## Xác thực\nCác endpoint được bảo vệ yêu cầu JWT Bearer token.\nMobile app Android gửi Google ID token vào `POST /api/auth/google/exchange` để nhận `accessToken`,\nsau đó nhấn **Authorize** và nhập token vào ô `Bearer <token>`.",
     "version": "1.0",
     "contact": {}
   },

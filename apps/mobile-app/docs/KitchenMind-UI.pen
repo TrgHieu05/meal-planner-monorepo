@@ -11303,7 +11303,7 @@
               "ref": "ZGjNb",
               "name": "chipD",
               "fill": "$softPrimary",
-              "x": 191.01000000000002,
+              "x": 191.01,
               "y": 0,
               "width": "fit_content",
               "height": "fit_content",
@@ -11854,7 +11854,7 @@
               "ref": "ZGjNb",
               "name": "chipD",
               "fill": "$softDanger",
-              "x": 190.01000000000002,
+              "x": 190.01,
               "width": "fit_content",
               "height": "fit_content",
               "y": 0,
@@ -24695,7 +24695,7 @@
     {
       "type": "frame",
       "id": "zSdXW",
-      "x": 6425,
+      "x": 7067,
       "y": 1266,
       "name": "OnboardingInfoScreen",
       "clip": true,
@@ -24844,7 +24844,7 @@
               "type": "text",
               "id": "uynuw",
               "name": "infoSubtitle",
-              "fill": "#6B7280",
+              "fill": "$textSubtle",
               "textGrowth": "fixed-width",
               "width": "fill_container",
               "content": "We only need a few basics to personalize your meal plan and recommendations.",
@@ -25032,7 +25032,7 @@
     {
       "type": "frame",
       "id": "Qh8KS",
-      "x": 6878,
+      "x": 7520,
       "y": 1266,
       "name": "OnboardingDietTypeScreen",
       "clip": true,
@@ -25235,7 +25235,7 @@
     {
       "type": "frame",
       "id": "7ijk0",
-      "x": 7331,
+      "x": 7973,
       "y": 1266,
       "name": "OnboardingCuisineTypeScreen",
       "clip": true,
@@ -25438,7 +25438,7 @@
     {
       "type": "frame",
       "id": "6zEO7",
-      "x": 7784,
+      "x": 8426,
       "y": 1266,
       "name": "OnboardingTargetScreen",
       "clip": true,
@@ -25682,7 +25682,7 @@
     {
       "type": "frame",
       "id": "i7oXD",
-      "x": 8237,
+      "x": 8879,
       "y": 1266,
       "name": "OnboardingMetricScreen",
       "clip": true,
@@ -25908,6 +25908,452 @@
               ]
             }
           ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "pyvB9",
+      "x": 5881,
+      "y": 1266,
+      "name": "ResetPasswordScreen",
+      "clip": true,
+      "width": 402,
+      "height": 874,
+      "fill": "#FFFFFF",
+      "cornerRadius": 32,
+      "stroke": {
+        "thickness": 1,
+        "fill": "#E5E4E1"
+      },
+      "layout": "vertical",
+      "children": [
+        {
+          "id": "sGDx7",
+          "type": "ref",
+          "ref": "mtc64",
+          "width": "fill_container",
+          "name": "forgotStatusNew"
+        },
+        {
+          "type": "frame",
+          "id": "sm2XJ",
+          "name": "forgotNav",
+          "width": "fill_container",
+          "padding": [
+            24,
+            24,
+            16,
+            24
+          ],
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "icon_font",
+              "id": "GXQ4c",
+              "layoutPosition": "absolute",
+              "x": 24,
+              "y": 24,
+              "width": 24,
+              "height": 24,
+              "iconFontName": "chevron_left",
+              "iconFontFamily": "Material Symbols Outlined",
+              "weight": 300,
+              "fill": "#1A1A1A"
+            },
+            {
+              "type": "text",
+              "id": "JhFvm",
+              "fill": "#1A1A1A",
+              "content": "Reset Password",
+              "fontFamily": "Bricolage Grotesque",
+              "fontSize": 20,
+              "fontWeight": "700"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "b1TY1",
+          "name": "content",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "gap": 24,
+          "padding": [
+            24,
+            24,
+            100,
+            24
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "truYO",
+              "name": "passwordField",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "bJkKM",
+                  "fill": "$textSubtle",
+                  "content": "Password",
+                  "fontFamily": "DM Sans",
+                  "fontSize": "$font.size.true",
+                  "fontWeight": "$font.weight.medium"
+                },
+                {
+                  "type": "frame",
+                  "id": "O819J",
+                  "name": "Password Input Surface",
+                  "width": "fill_container",
+                  "fill": "$surface",
+                  "cornerRadius": "$radius.sm",
+                  "stroke": {
+                    "thickness": 1
+                  },
+                  "padding": 16,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "hWNTW",
+                      "fill": "$textSubtle",
+                      "content": "Enter your password",
+                      "fontFamily": "DM Sans",
+                      "fontSize": "$font.size.md",
+                      "fontWeight": "$font.weight.regular"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "6oDQ6",
+              "name": "confirmPasswordField",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "IlBdO",
+                  "fill": "$textSubtle",
+                  "content": "Confirm Password",
+                  "fontFamily": "DM Sans",
+                  "fontSize": "$font.size.true",
+                  "fontWeight": "$font.weight.medium"
+                },
+                {
+                  "type": "frame",
+                  "id": "4C6rR",
+                  "name": "Password Input Surface",
+                  "width": "fill_container",
+                  "fill": "$surface",
+                  "cornerRadius": "$radius.sm",
+                  "stroke": {
+                    "thickness": 1
+                  },
+                  "padding": 16,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "5dMHa",
+                      "fill": "$textSubtle",
+                      "content": "Repeat your password",
+                      "fontFamily": "DM Sans",
+                      "fontSize": "$font.size.md",
+                      "fontWeight": "$font.weight.regular"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "m3Cds",
+          "name": "btn1",
+          "width": "fill_container",
+          "padding": [
+            0,
+            24,
+            34,
+            24
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "VMw3A",
+              "name": "forgotBtn",
+              "theme": {
+                "Theme": "Default"
+              },
+              "width": "fill_container",
+              "height": 56,
+              "fill": "$primary",
+              "cornerRadius": "$radius.lg",
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "GHL7Q",
+                  "fill": "$textInverse",
+                  "content": "Change Password",
+                  "fontFamily": "DM Sans",
+                  "fontSize": "$font.size.lg",
+                  "fontWeight": "$font.weight.semiBold"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "IHB7h",
+      "x": 6363,
+      "y": 1266,
+      "name": "AlertSuccess",
+      "reusable": true,
+      "width": 360,
+      "fill": "#FFFFFF",
+      "cornerRadius": 24,
+      "effect": {
+        "type": "shadow",
+        "shadowType": "outer",
+        "color": "#00BF8D0A",
+        "offset": {
+          "x": 0,
+          "y": 8
+        },
+        "blur": 16
+      },
+      "gap": 14,
+      "padding": 18,
+      "justifyContent": "space_between",
+      "children": [
+        {
+          "type": "frame",
+          "id": "iraXT",
+          "name": "content",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 8,
+          "children": [
+            {
+              "type": "frame",
+              "id": "1KTn1",
+              "name": "titleRow",
+              "width": 250,
+              "gap": 10,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "36txh",
+                  "name": "successLeftIcon",
+                  "width": 24,
+                  "height": 24,
+                  "iconFontName": "lock",
+                  "iconFontFamily": "Material Symbols Outlined",
+                  "weight": 300,
+                  "fill": "$textPrimary"
+                },
+                {
+                  "type": "text",
+                  "id": "gQmkJ",
+                  "name": "successTitle",
+                  "fill": "$textPrimary",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "ACTION COMPLETED",
+                  "fontFamily": "Bricolage Grotesque",
+                  "fontSize": "$font.size.h4",
+                  "fontWeight": "700"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "SBwPB",
+              "name": "successBody",
+              "fill": "#6B7280",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Your request was completed successfully.",
+              "lineHeight": 1.4,
+              "fontFamily": "DM Sans",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "icon_font",
+          "id": "7GJOi",
+          "width": 24,
+          "height": 24,
+          "iconFontName": "x",
+          "iconFontFamily": "lucide",
+          "fill": "$textPrimary"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "hgL8o",
+      "x": 6363,
+      "y": 1396,
+      "name": "AlertError",
+      "reusable": true,
+      "width": 360,
+      "fill": "#FFFFFF",
+      "cornerRadius": 24,
+      "effect": {
+        "type": "shadow",
+        "shadowType": "outer",
+        "color": "#FF6B5A0A",
+        "offset": {
+          "x": 0,
+          "y": 8
+        },
+        "blur": 16
+      },
+      "gap": 14,
+      "padding": 18,
+      "justifyContent": "space_between",
+      "children": [
+        {
+          "type": "frame",
+          "id": "55Se5",
+          "name": "content",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 8,
+          "children": [
+            {
+              "type": "frame",
+              "id": "M4F0x",
+              "name": "titleRow",
+              "width": 250,
+              "gap": 10,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "Q35t5",
+                  "name": "errorLeftIcon",
+                  "width": 24,
+                  "height": 24,
+                  "iconFontName": "lock",
+                  "iconFontFamily": "Material Symbols Outlined",
+                  "weight": 300,
+                  "fill": "$textDanger"
+                },
+                {
+                  "type": "text",
+                  "id": "UgSYk",
+                  "name": "errorTitle",
+                  "fill": "$textDanger",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "ACTION FAILED",
+                  "fontFamily": "Bricolage Grotesque",
+                  "fontSize": "$font.size.h4",
+                  "fontWeight": "700"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "9U5Da",
+              "name": "errorBody",
+              "fill": "#6B7280",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Something went wrong while processing your request.",
+              "lineHeight": 1.4,
+              "fontFamily": "DM Sans",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "icon_font",
+          "id": "gzUnh",
+          "width": 24,
+          "height": 24,
+          "iconFontName": "x",
+          "iconFontFamily": "lucide",
+          "fill": "$textDanger"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "ZGHhd",
+      "x": 5881,
+      "y": 2220,
+      "name": "ResetPasswordAlertExamples",
+      "width": 402,
+      "layout": "vertical",
+      "gap": 24,
+      "alignItems": "center",
+      "children": [
+        {
+          "id": "w4Ce7",
+          "type": "ref",
+          "ref": "IHB7h",
+          "width": "fill_container",
+          "name": "successInstance",
+          "rotation": 0,
+          "x": 0,
+          "y": 0,
+          "justifyContent": "space_between",
+          "descendants": {
+            "iraXT": {
+              "width": "fill_container"
+            },
+            "1KTn1": {
+              "width": "fill_container"
+            },
+            "gQmkJ": {
+              "content": "PASSWORD UPDATED",
+              "width": "fill_container",
+              "textGrowth": "fixed-width",
+              "height": 24
+            },
+            "SBwPB": {
+              "content": "Your password has been changed successfully. Please log in again.",
+              "width": "fill_container"
+            }
+          }
+        },
+        {
+          "id": "EZTTM",
+          "type": "ref",
+          "ref": "hgL8o",
+          "width": "fill_container",
+          "name": "errorInstance",
+          "descendants": {
+            "M4F0x": {
+              "width": "fill_container"
+            },
+            "UgSYk": {
+              "content": "PASSWORD CHANGE FAILED"
+            },
+            "9U5Da": {
+              "content": "We couldn't update your password. Please check the fields and try again."
+            }
+          }
         }
       ]
     }

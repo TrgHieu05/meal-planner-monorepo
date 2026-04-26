@@ -10,10 +10,14 @@ export default function RootLayout() {
 			<Stack screenOptions={{ headerShown: false }}>
 				<Stack.Protected guard={isLoggedIn}>
 					<Stack.Screen name="(tabs)" />
+					<Stack.Screen name="onboarding" />
 				</Stack.Protected>
 				<Stack.Protected guard={!isLoggedIn}>
 					<Stack.Screen name="login" />
 					<Stack.Screen name="signup" />
+					<Stack.Screen name="forgot-password" />
+					<Stack.Screen name="verify-otp" />
+					<Stack.Screen name="reset-password" />
 				</Stack.Protected>
 			</Stack>
 		</AppProviders>

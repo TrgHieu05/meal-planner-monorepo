@@ -1,4 +1,5 @@
 import { createTokens, createTamagui, createFont } from 'tamagui'
+import { createAnimations } from '@tamagui/animations-react-native'
 import { shorthands } from '@tamagui/shorthands'
 
 const commonFontSizes = {
@@ -205,6 +206,23 @@ const themes = {
     },
 }
 
+const animations = createAnimations({
+    bouncy: {
+      damping: 10,
+      mass: 0.9,
+      stiffness: 100,
+    },
+    lazy: {
+      damping: 18,
+      stiffness: 50,
+    },
+    quick: {
+      damping: 20,
+      mass: 1.2,
+      stiffness: 250,
+    },
+})
+
 const config = createTamagui({
     tokens,
     themes,
@@ -214,6 +232,7 @@ const config = createTamagui({
     },
     defaultFont: 'body',
     shorthands,
+    animations,
     settings: {
         allowedStyleValues: true,
     },

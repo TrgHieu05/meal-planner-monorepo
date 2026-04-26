@@ -1,13 +1,31 @@
+import { useCallback, useEffect, useState } from 'react'
 import { View, SizableText, Label, YStack, XStack } from 'tamagui'
-import { LogIn } from '@tamagui/lucide-icons-2'
-import { Link } from 'expo-router'
+import { Lock, LogIn } from '@tamagui/lucide-icons-2'
+import { Link, useLocalSearchParams, useRouter } from 'expo-router'
 import GoogleIcon from '@assets/svg/google-icon.svg'
 import FacebookIcon from '@assets/svg/facebook-icon.svg'
 import { useAuthStore } from '@store/authStore'
-import { Button, InputText, Divider } from '@components'
+import { Alert, Button, InputText, Divider } from '@components'
 
 export default function LoginScreen() {
     const { login } = useAuthStore();
+    const router = useRouter();
+    const { passwordReset } = useLocalSearchParams<{ passwordReset?: string }>();
+    const [showPasswordResetAlert, setShowPasswordResetAlert] = useState(false);
+
+    useEffect(() => {
+        if (passwordReset === 'success') {
+            setShowPasswordResetAlert(true);
+            router.setParams({ passwordReset: undefined });
+        }
+    }, [passwordReset, router]);
+
+    const handlePasswordResetAlertChange = useCallback(
+        (nextOpen: boolean) => {
+            setShowPasswordResetAlert(nextOpen);
+        },
+        [],
+    );
 
     return (
         <YStack bg="$background" flex={1} alignItems="center" justifyContent="center">
@@ -68,6 +86,15 @@ export default function LoginScreen() {
                     </Link>
                 </XStack>
             </YStack>
+
+            <Alert
+                variant="success"
+                icon={Lock}
+                open={showPasswordResetAlert}
+                onOpenChange={handlePasswordResetAlertChange}
+                title="PASSWORD UPDATED"
+                description="Your password has been changed successfully. Please log in again."
+            />
             
         </YStack>
     )

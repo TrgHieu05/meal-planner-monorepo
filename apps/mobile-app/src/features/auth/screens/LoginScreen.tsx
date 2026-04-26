@@ -1,17 +1,27 @@
 import { useCallback, useEffect, useState } from 'react'
+import axios from 'axios'
 import { View, SizableText, Label, YStack, XStack } from 'tamagui'
 import { Lock, LogIn } from '@tamagui/lucide-icons-2'
 import { Link, useLocalSearchParams, useRouter } from 'expo-router'
 import GoogleIcon from '@assets/svg/google-icon.svg'
 import FacebookIcon from '@assets/svg/facebook-icon.svg'
-import { useAuthStore } from '@store/authStore'
 import { Alert, Button, InputText, Divider } from '@components'
+import { useSession } from '@/providers/AuthProvider'
+import { useGoogleIdTokenSignIn } from '@features/auth/hooks/useGoogleIdTokenSignIn'
 
 export default function LoginScreen() {
-    const { login } = useAuthStore();
     const router = useRouter();
+    const { signInWithGoogleIdToken } = useSession();
     const { passwordReset } = useLocalSearchParams<{ passwordReset?: string }>();
     const [showPasswordResetAlert, setShowPasswordResetAlert] = useState(false);
+    const [googleSignInError, setGoogleSignInError] = useState<string | null>(null);
+    const [isGoogleSigningIn, setIsGoogleSigningIn] = useState(false);
+    const {
+        clearError: clearGoogleHookError,
+        error: googleHookError,
+        isReady: isGoogleSignInReady,
+        signInForIdToken,
+    } = useGoogleIdTokenSignIn();
 
     useEffect(() => {
         if (passwordReset === 'success') {
@@ -20,12 +30,52 @@ export default function LoginScreen() {
         }
     }, [passwordReset, router]);
 
+    useEffect(() => {
+        if (!googleHookError) {
+            return;
+        }
+
+        setGoogleSignInError(googleHookError);
+    }, [googleHookError]);
+
     const handlePasswordResetAlertChange = useCallback(
         (nextOpen: boolean) => {
             setShowPasswordResetAlert(nextOpen);
         },
         [],
     );
+
+    const handleGoogleSignInAlertChange = useCallback(
+        (nextOpen: boolean) => {
+            if (!nextOpen) {
+                setGoogleSignInError(null);
+                clearGoogleHookError();
+            }
+        },
+        [clearGoogleHookError],
+    );
+
+    const handleGoogleSignIn = useCallback(async () => {
+        setGoogleSignInError(null);
+        clearGoogleHookError();
+        setIsGoogleSigningIn(true);
+
+        try {
+            const idToken = await signInForIdToken();
+            await signInWithGoogleIdToken(idToken);
+            router.replace('/');
+        } catch (error) {
+            setGoogleSignInError(getGoogleSignInErrorMessage(error));
+        } finally {
+            setIsGoogleSigningIn(false);
+        }
+    }, [clearGoogleHookError, router, signInForIdToken, signInWithGoogleIdToken]);
+
+    const handleEmailPasswordLogin = useCallback(() => {
+        setGoogleSignInError(
+            'Đăng nhập email/password chưa được triển khai trong phase Android-only. Hãy dùng Google Sign-In.',
+        );
+    }, []);
 
     return (
         <YStack bg="$background" flex={1} alignItems="center" justifyContent="center">
@@ -56,22 +106,28 @@ export default function LoginScreen() {
                     </XStack>
                 </YStack>
 
-                <Button color="primary" size="large" onPress={login}>
-                    <Button.Text>Login</Button.Text>
+                <Button color="primary" size="large" onPress={handleEmailPasswordLogin}>
+                    <Button.Text>Login with Email</Button.Text>
                     <Button.Icon icon={LogIn} />
                 </Button>
 
                 <YStack w="100%" gap="$md">
                     <Divider label="Or continue with" />
-                    <XStack w="100%" gap="$lg" ai="center" justifyContent="center">
-                        <Link href="/login-with-google-placeholder">
-                            <XStack  p="$space.md" br="$radius.pill" bg="$surface" ai="center" jc="center">
-                                <GoogleIcon width={24} height={24} />
-                            </XStack>
-                        </Link>
+                    <Button
+                        color="secondary"
+                        size="large"
+                        disabled={!isGoogleSignInReady || isGoogleSigningIn}
+                        onPress={handleGoogleSignIn}
+                    >
+                        <GoogleIcon height="100%" />
+                        <Button.Text>
+                            {isGoogleSigningIn ? 'Signing in with Google...' : 'Continue with Google'}
+                        </Button.Text>
+                    </Button>
 
+                    <XStack w="100%" ai="center" jc="center">
                         <Link href="/login-with-facebook-placeholder">
-                            <XStack  p="$space.md" br="$radius.pill" bg="$surface" ai="center" jc="center">
+                            <XStack p="$space.md" br="$radius.pill" bg="$surface" ai="center" jc="center">
                                 <FacebookIcon width={24} height={24} />
                             </XStack>
                         </Link>
@@ -95,7 +151,44 @@ export default function LoginScreen() {
                 title="PASSWORD UPDATED"
                 description="Your password has been changed successfully. Please log in again."
             />
+
+            <Alert
+                variant="error"
+                open={Boolean(googleSignInError)}
+                onOpenChange={handleGoogleSignInAlertChange}
+                title="GOOGLE SIGN-IN FAILED"
+                description={googleSignInError ?? ''}
+            />
             
         </YStack>
     )
+}
+
+function getGoogleSignInErrorMessage(error: unknown) {
+    if (axios.isAxiosError(error)) {
+        if (!error.response) {
+            return 'Không thể kết nối tới máy chủ. Hãy kiểm tra mạng và EXPO_PUBLIC_API_BASE_URL.'
+        }
+
+        if (error.response.status === 401) {
+            return 'Google token không hợp lệ hoặc tài khoản Google chưa xác minh email.'
+        }
+
+        if (error.response.status === 422) {
+            return 'Payload Google Sign-In không hợp lệ khi gửi tới backend.'
+        }
+
+        const responseMessage = error.response.data?.message
+        if (typeof responseMessage === 'string' && responseMessage.trim().length > 0) {
+            return responseMessage.trim()
+        }
+
+        return 'Backend không thể xử lý đăng nhập Google lúc này.'
+    }
+
+    if (error instanceof Error && error.message.trim().length > 0) {
+        return error.message.trim()
+    }
+
+    return 'Đăng nhập Google thất bại. Hãy thử lại.'
 }

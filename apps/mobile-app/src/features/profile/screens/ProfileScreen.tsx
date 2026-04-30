@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'expo-router';
 import { Button, ScrollView, Spinner, Text, XStack, YStack, useTheme } from 'tamagui';
 import { Pencil } from '@tamagui/lucide-icons-2';
 
@@ -46,6 +47,7 @@ const getErrorMessage = (error: unknown) => {
 
 export default function ProfileScreen() {
     const theme = useTheme();
+    const router = useRouter();
     const { session, signOut } = useSession();
     const [profileData, setProfileData] = useState<ProfileScreenData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -135,7 +137,9 @@ export default function ProfileScreen() {
                         <Text ff="$heading" fos="$h4" fow="$bold">
                             User Information
                         </Text>
-                        <Pencil size={20} color="#00b90f" />
+                        <XStack ai="center" gap="$xs" onPress={() => router.push('/profile/edit-user-info')} pressStyle={{ opacity: 0.7 }}>
+                            <Pencil size={20} color="#00b90f" />
+                        </XStack>
                     </XStack>
                     <InfoItemWrapper userData={dataToRender.basicInfo} config={BASIC_INFO_UI_CONFIG} />
                 </YStack>
@@ -145,7 +149,9 @@ export default function ProfileScreen() {
                         <Text ff="$heading" fos="$h4" fow="$bold">
                             Preferences
                         </Text>
-                        <Pencil size={24} color="#00b90f" />
+                        <XStack ai="center" gap="$xs" onPress={() => router.push('/profile/edit-preference')} pressStyle={{ opacity: 0.7 }}>
+                            <Pencil size={20} color="#00b90f" />
+                        </XStack>
                     </XStack>
                     <InfoItemWrapper userData={dataToRender.preferences} config={PREFERENCES_UI_CONFIG} />
                 </YStack>
@@ -155,7 +161,9 @@ export default function ProfileScreen() {
                         <Text ff="$heading" fos="$h4" fow="$bold">
                             Health Metrics
                         </Text>
-                        <Pencil size={24} color="#00b90f" />
+                        <XStack ai="center" gap="$xs" onPress={() => router.push('/profile/edit-metric')} pressStyle={{ opacity: 0.7 }}>
+                            <Pencil size={20} color="#00b90f" />
+                        </XStack>
                     </XStack>
                     <InfoItemWrapper userData={dataToRender.metrics} config={METRICS_UI_CONFIG} />
                 </YStack>

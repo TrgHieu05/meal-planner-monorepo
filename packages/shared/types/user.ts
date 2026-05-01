@@ -6,14 +6,14 @@ export const UserSchema = z.object({
   id: UuidSchema,
   email: z.email(),
   userName: z.string(),
-  gender: GenderSchema,
+  gender: GenderSchema.nullable(),
   dateOfBirth: z.date().nullable(),
 });
 
 export const UserCreateSchema = z.object({
   email: z.email(),
   userName: z.string(),
-  gender: GenderSchema,
+  gender: GenderSchema.nullable().optional(),
   dateOfBirth: z.date().nullable().optional(),
 });
 
@@ -26,7 +26,7 @@ export const UserUpdateSchema = z.object({
 export const UserResponseSchema = z.object({
   email: z.email(),
   userName: z.string(),
-  gender: GenderSchema,
+  gender: GenderSchema.nullable(),
   dateOfBirth: z.date().nullable(),
 });
 

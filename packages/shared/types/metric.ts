@@ -16,7 +16,11 @@ export const MetricCreateSchema = z.object({
 });
 
 export const MetricResponseSchema = MetricSchema.omit({ userId: true });
+export const MetricCreateResponseSchema = MetricResponseSchema;
+export const LatestMetricResponseSchema = MetricResponseSchema.nullable();
 
 export type Metric = z.infer<typeof MetricSchema>;
 export type MetricCreate = z.infer<typeof MetricCreateSchema>;
 export type MetricResponse = z.infer<typeof MetricResponseSchema>;
+export type MetricCreateResponse = z.infer<typeof MetricCreateResponseSchema>;
+export type LatestMetricResponse = z.infer<typeof LatestMetricResponseSchema>;

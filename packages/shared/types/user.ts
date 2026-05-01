@@ -1,7 +1,11 @@
 import { z } from 'zod';
 import { UuidSchema } from './common';
 
+<<<<<<< HEAD
 export const GenderSchema = z.enum(['M', 'F', 'U']);
+=======
+export const GenderSchema = z.enum(['M', 'F']);
+>>>>>>> e982cb573a5011b40e1a20685c697c440b658343
 export const UserSchema = z.object({
   id: UuidSchema,
   email: z.email(),

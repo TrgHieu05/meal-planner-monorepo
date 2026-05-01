@@ -17,8 +17,12 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+<<<<<<< HEAD
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "docs:generate": "ts-node -r tsconfig-paths/register src/generate-openapi.ts"
+=======
+    "test:e2e": "jest --config ./test/jest-e2e.json"
+>>>>>>> e982cb573a5011b40e1a20685c697c440b658343
   },
   "dependencies": {
     "@meal/database": "workspace:*",
@@ -32,6 +36,10 @@
     "@nestjs/swagger": "^11.2.6",
     "@prisma/adapter-pg": "^7.5.0",
     "dotenv": "^17.3.1",
+<<<<<<< HEAD
+=======
+    "google-auth-library": "^10.6.2",
+>>>>>>> e982cb573a5011b40e1a20685c697c440b658343
     "nestjs-zod": "^5.1.1",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
@@ -77,6 +85,13 @@
       "ts"
     ],
     "rootDir": "src",
+<<<<<<< HEAD
+=======
+    "moduleNameMapper": {
+      "^@meal/shared(?:/(.*))?$": "<rootDir>/../../../packages/shared/$1",
+      "^@meal/database(?:/(.*))?$": "<rootDir>/../../../packages/database/$1"
+    },
+>>>>>>> e982cb573a5011b40e1a20685c697c440b658343
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"

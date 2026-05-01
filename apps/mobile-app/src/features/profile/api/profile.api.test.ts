@@ -8,6 +8,10 @@ import {
   updateCurrentUser,
   updateProfilePreferences,
 } from './profile.api';
+import {
+  extractFieldErrors,
+  FormValidationError,
+} from '../utils/profile-form';
 
 import { ApiError } from '@/services/api/http-client';
 
@@ -220,6 +224,27 @@ describe('profile.api', () => {
     expect(result.dateOfBirth).toBeInstanceOf(Date);
   });
 
+  it('returns a friendly validation error before calling the API for invalid user updates', async () => {
+    const client = createClient();
+    mockedAxios.create.mockImplementationOnce(() => client as never);
+
+    await updateCurrentUser({
+      accessToken: 'token-123',
+      payload: {
+        userName: '   ',
+        dateOfBirth: new Date('2000-01-02T09:45:00.000Z'),
+      },
+    }).catch((error) => {
+      expect(error).toBeInstanceOf(FormValidationError);
+      expect(error.message).toBe('Please review the highlighted fields.');
+      expect(extractFieldErrors(error, ['userName'] as const)).toEqual({
+        userName: 'Full name is required.',
+      });
+    });
+
+    expect(client.patch).not.toHaveBeenCalled();
+  });
+
   it('submits profile preference changes using id-based payloads', async () => {
     const client = createClient();
     mockedAxios.create.mockImplementationOnce(() => client as never);
@@ -264,6 +289,29 @@ describe('profile.api', () => {
       cuisineTypeId: 3,
       targetCalories: null,
     });
+  });
+
+  it('returns a friendly validation error before calling the API for invalid preference payloads', async () => {
+    const client = createClient();
+    mockedAxios.create.mockImplementationOnce(() => client as never);
+
+    await createProfilePreferences({
+      accessToken: 'token-123',
+      payload: {
+        dietTypeId: 1,
+        goalId: 2,
+        cuisineTypeId: 3,
+        targetCalories: 0,
+      },
+    }).catch((error) => {
+      expect(error).toBeInstanceOf(FormValidationError);
+      expect(error.message).toBe('Please review the highlighted fields.');
+      expect(extractFieldErrors(error, ['targetCalories'] as const)).toEqual({
+        targetCalories: 'Target calories must be a positive number.',
+      });
+    });
+
+    expect(client.post).not.toHaveBeenCalledWith('/v1/profile', expect.anything());
   });
 
   it('submits metric values and parses the returned metric response', async () => {

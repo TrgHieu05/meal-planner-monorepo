@@ -1,19 +1,45 @@
+import { useCallback, useState } from 'react'
 import { useRouter } from 'expo-router'
 import { SizableText, XStack, YStack } from 'tamagui'
 
 import { Button, InputSelect } from '@components'
 
 import { useOnboardingProfile } from '../onboarding/OnboardingProfileProvider'
+import {
+	extractFieldErrors,
+	validateOnboardingDietTypeStep,
+} from '../utils/profile-form'
 
 export default function OnboardingDietTypeScreen() {
 	const router = useRouter()
 	const { draft, options, isLoadingOptions, optionsError, reloadOptions, updateDraft } =
 		useOnboardingProfile()
-	const canContinue = draft.dietTypeId !== null && !isLoadingOptions
+	const [fieldErrors, setFieldErrors] = useState<
+		Partial<Record<'dietTypeId', string>>
+	>({})
 	const dietOptions = options.dietTypes.map((dietType) => ({
 		label: dietType.name,
 		value: `${dietType.id}`,
 	}))
+
+	const handleDietTypeChange = useCallback((value: string) => {
+		updateDraft({ dietTypeId: Number.parseInt(value, 10) })
+		setFieldErrors({ dietTypeId: undefined })
+	}, [updateDraft])
+
+	const handleNext = useCallback(() => {
+		try {
+			validateOnboardingDietTypeStep({
+				dietTypeId: draft.dietTypeId,
+			})
+			setFieldErrors({})
+			router.push('/onboarding/step-3')
+		} catch (error) {
+			setFieldErrors(
+				extractFieldErrors(error, ['dietTypeId'] as const),
+			)
+		}
+	}, [draft.dietTypeId, router])
 
 	return (
 		<YStack w="100%" h="100%" p="$md" alignItems="center" justifyContent="space-between" py="$md" gap="$space.xl" bg="$background">
@@ -41,9 +67,8 @@ export default function OnboardingDietTypeScreen() {
 					placeholder="Select your diet type"
 					value={draft.dietTypeId == null ? undefined : `${draft.dietTypeId}`}
 					disabled={isLoadingOptions}
-					onValueChange={(value) =>
-						updateDraft({ dietTypeId: Number.parseInt(value, 10) })
-					}
+					onValueChange={handleDietTypeChange}
+					errorMessage={fieldErrors.dietTypeId}
 					w="100%"
 				/>
 			</YStack>
@@ -56,8 +81,8 @@ export default function OnboardingDietTypeScreen() {
 					color="primary"
 					size="large"
 					w={120}
-					disabled={!canContinue}
-					onPress={() => router.push('/onboarding/step-3')}
+					disabled={isLoadingOptions}
+					onPress={handleNext}
 				>
 					<Button.Text>Next</Button.Text>
 				</Button>

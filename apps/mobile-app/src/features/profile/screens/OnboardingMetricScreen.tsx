@@ -1,27 +1,48 @@
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { useRouter } from 'expo-router'
 import { Label, SizableText, XStack, YStack } from 'tamagui'
 
 import { Button, InputText } from '@components'
 
 import { useOnboardingProfile } from '../onboarding/OnboardingProfileProvider'
+import { extractFieldErrors } from '../utils/profile-form'
 
 export default function OnboardingMetricScreen() {
 	const router = useRouter()
 	const { draft, updateDraft, isSubmitting, submitError, clearSubmitError, submitOnboarding } =
 		useOnboardingProfile()
-	const canComplete =
-		draft.weightKg.trim().length > 0 &&
-		draft.heightCm.trim().length > 0 &&
-		!isSubmitting
+	const [fieldErrors, setFieldErrors] = useState<
+		Partial<Record<'heightCm' | 'weightKg', string>>
+	>({})
+	const canComplete = !isSubmitting
+
+	const handleWeightChange = useCallback((value: string) => {
+		updateDraft({ weightKg: value })
+		setFieldErrors((current) => ({
+			...current,
+			weightKg: undefined,
+		}))
+	}, [updateDraft])
+
+	const handleHeightChange = useCallback((value: string) => {
+		updateDraft({ heightCm: value })
+		setFieldErrors((current) => ({
+			...current,
+			heightCm: undefined,
+		}))
+	}, [updateDraft])
 
 	const handleComplete = useCallback(async () => {
 		clearSubmitError()
+		setFieldErrors({})
 
 		try {
 			await submitOnboarding()
 			router.replace('/')
-		} catch {
+		} catch (error) {
+			setFieldErrors(
+				extractFieldErrors(error, ['heightCm', 'weightKg'] as const),
+			)
 			return
 		}
 	}, [clearSubmitError, router, submitOnboarding])
@@ -45,7 +66,8 @@ export default function OnboardingMetricScreen() {
 						placeholder="60.5"
 						keyboardType="decimal-pad"
 						value={draft.weightKg}
-						onChangeText={(value) => updateDraft({ weightKg: value })}
+						onChangeText={handleWeightChange}
+						errorMessage={fieldErrors.weightKg}
 					/>
 				</YStack>
 				<YStack w="100%" gap="$xs">
@@ -56,7 +78,8 @@ export default function OnboardingMetricScreen() {
 						placeholder="160.5"
 						keyboardType="decimal-pad"
 						value={draft.heightCm}
-						onChangeText={(value) => updateDraft({ heightCm: value })}
+						onChangeText={handleHeightChange}
+						errorMessage={fieldErrors.heightCm}
 					/>
 				</YStack>
 				{submitError ? (

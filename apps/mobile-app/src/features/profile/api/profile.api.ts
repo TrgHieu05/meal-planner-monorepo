@@ -60,7 +60,11 @@ import {
   createAuthenticatedApiClient,
 } from '@/services/api/http-client';
 
-import { formatDateOnly, resolveGenderLabel } from '../utils/profile-form';
+import {
+  FormValidationError,
+  formatDateOnly,
+  resolveGenderLabel,
+} from '../utils/profile-form';
 
 import type { ProfileScreenData } from '../types';
 
@@ -117,7 +121,7 @@ const parseProfileOverview = (payload: unknown): ProfileOverview => {
   return parseWithSchema(
     ProfileOverviewApiSchema,
     payload,
-    'Profile overview response payload is invalid.',
+    { userMessage: 'Unable to load your profile right now.' },
   );
 };
 
@@ -125,7 +129,7 @@ const parseUserResponse = (payload: unknown): UserResponse => {
   return parseWithSchema(
     UserResponseApiSchema,
     payload,
-    'User response payload is invalid.',
+    { userMessage: 'Unable to update user information right now.' },
   );
 };
 
@@ -133,7 +137,7 @@ const parseProfileResponse = (payload: unknown): ProfileResponse => {
   return parseWithSchema(
     ProfileResponseSchema,
     payload,
-    'Profile response payload is invalid.',
+    { userMessage: 'Unable to save your profile preferences right now.' },
   );
 };
 
@@ -141,7 +145,7 @@ const parseMetricResponse = (payload: unknown): MetricResponse => {
   return parseWithSchema(
     MetricResponseApiSchema,
     payload,
-    'Metric response payload is invalid.',
+    { userMessage: 'Unable to load metric data right now.' },
   );
 };
 
@@ -149,7 +153,7 @@ const parseMetricCreateResponse = (payload: unknown): MetricCreateResponse => {
   return parseWithSchema(
     MetricCreateResponseApiSchema,
     payload,
-    'Metric creation response payload is invalid.',
+    { userMessage: 'Unable to save your metric changes right now.' },
   );
 };
 
@@ -236,7 +240,7 @@ export async function fetchDietTypes(
   return parseWithSchema(
     DietTypeListSchema,
     response.data,
-    'Diet types response payload is invalid.',
+    { userMessage: 'Unable to load profile options right now.' },
   );
 }
 
@@ -249,7 +253,7 @@ export async function fetchGoals(
   return parseWithSchema(
     GoalListSchema,
     response.data,
-    'Goals response payload is invalid.',
+    { userMessage: 'Unable to load profile options right now.' },
   );
 }
 
@@ -262,7 +266,7 @@ export async function fetchCuisineTypes(
   return parseWithSchema(
     CuisineTypeListSchema,
     response.data,
-    'Cuisine types response payload is invalid.',
+    { userMessage: 'Unable to load profile options right now.' },
   );
 }
 
@@ -303,7 +307,10 @@ export async function createProfilePreferences(config: {
   const payload = parseWithSchema(
     ProfileCreateSchema,
     config.payload,
-    'Profile creation payload is invalid.',
+    {
+      userMessage: 'Please review the highlighted fields.',
+      failureMode: 'request',
+    },
   );
   const response = await client.post('/v1/profile', payload);
 
@@ -319,7 +326,10 @@ export async function updateProfilePreferences(config: {
   const payload = parseWithSchema(
     ProfileUpdateSchema,
     config.payload,
-    'Profile update payload is invalid.',
+    {
+      userMessage: 'Please review the highlighted fields.',
+      failureMode: 'request',
+    },
   );
   const response = await client.patch('/v1/profile', payload);
 
@@ -335,7 +345,10 @@ export async function createMetricEntry(config: {
   const payload = parseWithSchema(
     MetricCreateSchema,
     config.payload,
-    'Metric payload is invalid.',
+    {
+      userMessage: 'Please review the highlighted fields.',
+      failureMode: 'request',
+    },
   );
   const response = await client.post('/v1/metrics', payload);
 
@@ -351,7 +364,7 @@ export async function fetchAllergies(
   return parseWithSchema(
     AllergyResponseSchema,
     response.data,
-    'Allergy response payload is invalid.',
+    { userMessage: 'Unable to load allergy data right now.' },
   );
 }
 
@@ -364,14 +377,17 @@ export async function updateAllergies(config: {
   const payload = parseWithSchema(
     AllergyUpdateSchema,
     config.payload,
-    'Allergy update payload is invalid.',
+    {
+      userMessage: 'Unable to save ingredient changes right now.',
+      failureMode: 'request',
+    },
   );
   const response = await client.patch('/v1/allergies', payload);
 
   return parseWithSchema(
     AllergyResponseSchema,
     response.data,
-    'Allergy response payload is invalid.',
+    { userMessage: 'Unable to save ingredient changes right now.' },
   );
 }
 
@@ -384,7 +400,7 @@ export async function fetchFavoriteIngredients(
   return parseWithSchema(
     FavoriteIngredientResponseSchema,
     response.data,
-    'Favorite ingredient response payload is invalid.',
+    { userMessage: 'Unable to load favorite ingredients right now.' },
   );
 }
 
@@ -397,14 +413,17 @@ export async function updateFavoriteIngredients(config: {
   const payload = parseWithSchema(
     FavoriteIngredientUpdateSchema,
     config.payload,
-    'Favorite ingredient update payload is invalid.',
+    {
+      userMessage: 'Unable to save ingredient changes right now.',
+      failureMode: 'request',
+    },
   );
   const response = await client.patch('/v1/favorite-ingredients', payload);
 
   return parseWithSchema(
     FavoriteIngredientResponseSchema,
     response.data,
-    'Favorite ingredient response payload is invalid.',
+    { userMessage: 'Unable to save ingredient changes right now.' },
   );
 }
 
@@ -416,7 +435,7 @@ export async function fetchIngredientCatalog(config: {
   const query = parseWithSchema(
     IngredientCatalogQuerySchema,
     config.query ?? {},
-    'Ingredient catalog query is invalid.',
+    { userMessage: 'Unable to load ingredients right now.' },
   );
   const response = await client.get('/v1/ingredients', {
     params: query,
@@ -425,7 +444,7 @@ export async function fetchIngredientCatalog(config: {
   return parseWithSchema(
     IngredientCatalogResponseSchema,
     response.data,
-    'Ingredient catalog response payload is invalid.',
+    { userMessage: 'Unable to load ingredients right now.' },
   );
 }
 
@@ -459,11 +478,18 @@ export async function fetchProfileScreenData(
 function parseWithSchema<T>(
   schema: z.ZodType<T>,
   payload: unknown,
-  errorMessage: string,
+  config: {
+    userMessage: string;
+    failureMode?: 'request' | 'response';
+  },
 ): T {
   const parsed = schema.safeParse(payload);
   if (!parsed.success) {
-    throw new Error(errorMessage);
+    if (config.failureMode === 'request') {
+      throw createFormValidationError(config.userMessage, parsed.error.issues);
+    }
+
+    throw new Error(config.userMessage);
   }
 
   return parsed.data;
@@ -480,7 +506,10 @@ function serializeUserUpdatePayload(payload: UserUpdate) {
   const parsedPayload = parseWithSchema(
     UserUpdateSchema,
     payload,
-    'User update payload is invalid.',
+    {
+      userMessage: 'Please review the highlighted fields.',
+      failureMode: 'request',
+    },
   );
   const serializedPayload: Record<string, unknown> = {};
 
@@ -499,4 +528,25 @@ function serializeUserUpdatePayload(payload: UserUpdate) {
   }
 
   return serializedPayload;
+}
+
+function createFormValidationError(
+  userMessage: string,
+  issues: readonly z.ZodIssue[],
+) {
+  const fieldErrors: Record<string, string> = {};
+
+  for (const issue of issues) {
+    const fieldName = issue.path.find(
+      (segment): segment is string => typeof segment === 'string',
+    );
+
+    if (!fieldName || fieldErrors[fieldName]) {
+      continue;
+    }
+
+    fieldErrors[fieldName] = issue.message;
+  }
+
+  return new FormValidationError(userMessage, fieldErrors);
 }

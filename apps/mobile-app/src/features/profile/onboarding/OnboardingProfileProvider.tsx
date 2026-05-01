@@ -18,6 +18,17 @@ import {
   updateProfilePreferences,
 } from '../api/profile.api';
 
+import {
+  extractFieldErrors,
+  hasFieldErrors,
+  resolveApiErrorMessage,
+  validateOnboardingCuisineTypeStep,
+  validateOnboardingDietTypeStep,
+  validateOnboardingGoalStep,
+  validateOnboardingInfoStep,
+  validateOnboardingMetricStep,
+} from '../utils/profile-form';
+
 import { isApiErrorWithStatus } from '@/services/api/http-client';
 import { useSession } from '@/providers/AuthProvider';
 
@@ -126,11 +137,24 @@ export function OnboardingProfileProvider({ children }: { children: ReactNode })
     try {
       payloads = buildOnboardingPayloads(draft);
     } catch (error) {
-      const message = resolveOnboardingErrorMessage(
-        error,
-        'Please complete all required onboarding fields.',
+      const nextFieldErrors = extractFieldErrors(error, [
+        'gender',
+        'dateOfBirth',
+        'dietTypeId',
+        'cuisineTypeId',
+        'goalId',
+        'targetCalories',
+        'heightCm',
+        'weightKg',
+      ] as const);
+      setSubmitError(
+        hasFieldErrors(nextFieldErrors)
+          ? null
+          : resolveOnboardingErrorMessage(
+              error,
+              'Please review the highlighted fields.',
+            ),
       );
-      setSubmitError(message);
       throw error;
     }
 
@@ -169,11 +193,21 @@ export function OnboardingProfileProvider({ children }: { children: ReactNode })
         );
       }
     } catch (error) {
+      const nextFieldErrors = extractFieldErrors(error, [
+        'gender',
+        'dateOfBirth',
+        'dietTypeId',
+        'cuisineTypeId',
+        'goalId',
+        'targetCalories',
+        'heightCm',
+        'weightKg',
+      ] as const);
       const message = resolveOnboardingErrorMessage(
         error,
         'Unable to save onboarding data right now.',
       );
-      setSubmitError(message);
+      setSubmitError(hasFieldErrors(nextFieldErrors) ? null : message);
       throw error instanceof Error ? error : new Error(message);
     } finally {
       setIsSubmitting(false);
@@ -238,69 +272,37 @@ async function getProfileOverviewOrNull(accessToken: string) {
 }
 
 function buildOnboardingPayloads(draft: OnboardingDraft) {
-  if (!draft.gender) {
-    throw new Error('Please select your gender.');
-  }
-
-  if (!draft.dateOfBirth) {
-    throw new Error('Please select your birth date.');
-  }
-
-  if (draft.dietTypeId == null) {
-    throw new Error('Please select your diet type.');
-  }
-
-  if (draft.cuisineTypeId == null) {
-    throw new Error('Please select your favorite cuisine.');
-  }
-
-  if (draft.goalId == null) {
-    throw new Error('Please select your goal.');
-  }
+  const user = validateOnboardingInfoStep({
+    gender: draft.gender,
+    dateOfBirth: draft.dateOfBirth,
+  });
+  const dietTypeId = validateOnboardingDietTypeStep({
+    dietTypeId: draft.dietTypeId,
+  });
+  const cuisineTypeId = validateOnboardingCuisineTypeStep({
+    cuisineTypeId: draft.cuisineTypeId,
+  });
+  const goal = validateOnboardingGoalStep({
+    goalId: draft.goalId,
+    targetCalories: draft.targetCalories,
+  });
+  const metric = validateOnboardingMetricStep({
+    heightCm: draft.heightCm,
+    weightKg: draft.weightKg,
+  });
 
   return {
-    user: {
-      gender: draft.gender,
-      dateOfBirth: draft.dateOfBirth,
-    },
+    user,
     profile: {
-      dietTypeId: draft.dietTypeId,
-      goalId: draft.goalId,
-      cuisineTypeId: draft.cuisineTypeId,
-      targetCalories: parseOptionalPositiveNumber(
-        draft.targetCalories,
-        'Target calories',
-      ),
+      dietTypeId,
+      goalId: goal.goalId,
+      cuisineTypeId,
+      targetCalories: goal.targetCalories,
     },
-    metric: {
-      heightCm: parseRequiredPositiveNumber(draft.heightCm, 'Height'),
-      weightKg: parseRequiredPositiveNumber(draft.weightKg, 'Weight'),
-    },
+    metric,
   };
 }
 
-function parseOptionalPositiveNumber(value: string, label: string) {
-  const normalizedValue = value.trim();
-  if (!normalizedValue) {
-    return null;
-  }
-
-  return parseRequiredPositiveNumber(normalizedValue, label);
-}
-
-function parseRequiredPositiveNumber(value: string, label: string) {
-  const parsedNumber = Number(value.trim());
-  if (!Number.isFinite(parsedNumber) || parsedNumber <= 0) {
-    throw new Error(`${label} must be a positive number.`);
-  }
-
-  return parsedNumber;
-}
-
 function resolveOnboardingErrorMessage(error: unknown, fallbackMessage: string) {
-  if (error instanceof Error && error.message.trim()) {
-    return error.message.trim();
-  }
-
-  return fallbackMessage;
+  return resolveApiErrorMessage(error, fallbackMessage);
 }

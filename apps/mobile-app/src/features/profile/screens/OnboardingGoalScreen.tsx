@@ -1,19 +1,57 @@
+import { useCallback, useState } from 'react'
 import { useRouter } from 'expo-router'
 import { Label, SizableText, XStack, YStack } from 'tamagui'
 
 import { Button, InputSelect, InputText } from '@components'
 
 import { useOnboardingProfile } from '../onboarding/OnboardingProfileProvider'
+import {
+	extractFieldErrors,
+	validateOnboardingGoalStep,
+} from '../utils/profile-form'
 
 export default function OnboardingGoalScreen() {
 	const router = useRouter()
 	const { draft, options, isLoadingOptions, optionsError, reloadOptions, updateDraft } =
 		useOnboardingProfile()
-	const canContinue = draft.goalId !== null && !isLoadingOptions
+	const [fieldErrors, setFieldErrors] = useState<
+		Partial<Record<'goalId' | 'targetCalories', string>>
+	>({})
 	const goalOptions = options.goals.map((goal) => ({
 		label: goal.name,
 		value: `${goal.id}`,
 	}))
+
+	const handleTargetCaloriesChange = useCallback((value: string) => {
+		updateDraft({ targetCalories: value })
+		setFieldErrors((current) => ({
+			...current,
+			targetCalories: undefined,
+		}))
+	}, [updateDraft])
+
+	const handleGoalChange = useCallback((value: string) => {
+		updateDraft({ goalId: Number.parseInt(value, 10) })
+		setFieldErrors((current) => ({
+			...current,
+			goalId: undefined,
+		}))
+	}, [updateDraft])
+
+	const handleNext = useCallback(() => {
+		try {
+			validateOnboardingGoalStep({
+				goalId: draft.goalId,
+				targetCalories: draft.targetCalories,
+			})
+			setFieldErrors({})
+			router.push('/onboarding/step-5')
+		} catch (error) {
+			setFieldErrors(
+				extractFieldErrors(error, ['goalId', 'targetCalories'] as const),
+			)
+		}
+	}, [draft.goalId, draft.targetCalories, router])
 
 	return (
 		<YStack w="100%" h="100%" alignItems="center" justifyContent="space-between" p="$md" gap="$space.xl" bg="$background">
@@ -34,7 +72,8 @@ export default function OnboardingGoalScreen() {
 						placeholder="2000"
 						keyboardType="number-pad"
 						value={draft.targetCalories}
-						onChangeText={(value) => updateDraft({ targetCalories: value })}
+						onChangeText={handleTargetCaloriesChange}
+						errorMessage={fieldErrors.targetCalories}
 					/>
 				</YStack>
 				<YStack w="100%" gap="$xs">
@@ -56,9 +95,8 @@ export default function OnboardingGoalScreen() {
 						placeholder="Select your goal"
 						value={draft.goalId == null ? undefined : `${draft.goalId}`}
 						disabled={isLoadingOptions}
-						onValueChange={(value) =>
-							updateDraft({ goalId: Number.parseInt(value, 10) })
-						}
+						onValueChange={handleGoalChange}
+						errorMessage={fieldErrors.goalId}
 						w="100%"
 					/>
 				</YStack>
@@ -72,8 +110,8 @@ export default function OnboardingGoalScreen() {
 					color="primary"
 					size="large"
 					w={120}
-					disabled={!canContinue}
-					onPress={() => router.push('/onboarding/step-5')}
+					disabled={isLoadingOptions}
+					onPress={handleNext}
 				>
 					<Button.Text>Next</Button.Text>
 				</Button>

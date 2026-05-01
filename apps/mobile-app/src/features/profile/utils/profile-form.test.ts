@@ -2,12 +2,17 @@ import { ApiError } from '@/services/api/http-client';
 
 import {
   extractFieldErrors,
+  FormValidationError,
   formatDateOnly,
   GENDER_OPTIONS,
+  hasFieldErrors,
   resolveApiErrorMessage,
   resolveGenderCode,
   resolveGenderLabel,
   summarizeConflictIngredientNames,
+  validateMetricForm,
+  validateOnboardingGoalStep,
+  validateUserInfoForm,
 } from './profile-form';
 
 describe('profile-form utils', () => {
@@ -48,15 +53,101 @@ describe('profile-form utils', () => {
     expect(
       extractFieldErrors(error, ['userName', 'dateOfBirth', 'gender'] as const),
     ).toEqual({
-      userName: 'userName must not be empty',
-      dateOfBirth: 'dateOfBirth must be a valid ISO date string',
+      userName: 'Full name is required.',
+      dateOfBirth: 'Please select a valid birth date.',
     });
+  });
+
+  it('extracts field-level validation errors from API details.fieldErrors', () => {
+    const error = new ApiError({
+      message: 'Request body is invalid for profile update.',
+      status: 422,
+      data: {
+        message: 'Request body is invalid for profile update.',
+        details: {
+          formErrors: [],
+          fieldErrors: {
+            targetCalories: ['Too small: expected number to be >0'],
+          },
+        },
+      },
+    });
+
+    expect(extractFieldErrors(error, ['targetCalories'] as const)).toEqual({
+      targetCalories: 'Target calories must be a positive number.',
+    });
+    expect(
+      resolveApiErrorMessage(error, 'Please review the highlighted fields.'),
+    ).toBe('Please review the highlighted fields.');
+  });
+
+  it('keeps frontend validation errors on the field layer', () => {
+    const error = new FormValidationError('Please review the highlighted fields.', {
+      weightKg: 'Weight must be a positive number.',
+    });
+
+    const fieldErrors = extractFieldErrors(error, ['heightCm', 'weightKg'] as const);
+
+    expect(fieldErrors).toEqual({
+      weightKg: 'Weight must be a positive number.',
+    });
+    expect(hasFieldErrors(fieldErrors)).toBe(true);
+    expect(
+      resolveApiErrorMessage(error, 'Please review the highlighted fields.'),
+    ).toBe('Please review the highlighted fields.');
   });
 
   it('prefers explicit error messages over fallback messages', () => {
     expect(
       resolveApiErrorMessage(new Error('Request failed'), 'Fallback message'),
     ).toBe('Request failed');
+  });
+
+  it('validates user info fields before save', () => {
+    expect(() =>
+      validateUserInfoForm({
+        userName: '   ',
+        dateOfBirth: new Date('2100-01-01T00:00:00.000Z'),
+      }),
+    ).toThrow(FormValidationError);
+  });
+
+  it('validates target calories as an optional positive number', () => {
+    expect(
+      validateOnboardingGoalStep({
+        goalId: 2,
+        targetCalories: '',
+      }),
+    ).toEqual({
+      goalId: 2,
+      targetCalories: null,
+    });
+
+    expect(() =>
+      validateOnboardingGoalStep({
+        goalId: 2,
+        targetCalories: '0',
+      }),
+    ).toThrow(FormValidationError);
+  });
+
+  it('validates metric fields as required positive numbers', () => {
+    expect(
+      validateMetricForm({
+        heightCm: '170.5',
+        weightKg: '62',
+      }),
+    ).toEqual({
+      heightCm: 170.5,
+      weightKg: 62,
+    });
+
+    expect(() =>
+      validateMetricForm({
+        heightCm: '',
+        weightKg: '-1',
+      }),
+    ).toThrow(FormValidationError);
   });
 
   it('summarizes long ingredient conflict lists using + x others', () => {

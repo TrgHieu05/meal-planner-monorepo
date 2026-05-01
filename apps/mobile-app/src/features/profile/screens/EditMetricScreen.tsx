@@ -7,7 +7,12 @@ import { Label, SizableText, XStack, YStack, useTheme } from 'tamagui'
 import { Button, InputText } from '@components'
 
 import { createMetricEntry, fetchProfileOverview } from '../api/profile.api'
-import { extractFieldErrors, resolveApiErrorMessage } from '../utils/profile-form'
+import {
+	extractFieldErrors,
+	hasFieldErrors,
+	resolveApiErrorMessage,
+	validateMetricForm,
+} from '../utils/profile-form'
 
 import { useSession } from '@/providers/AuthProvider'
 
@@ -23,6 +28,24 @@ export default function EditMetricScreen() {
 	const [fieldErrors, setFieldErrors] = useState<
 		Partial<Record<'heightCm' | 'weightKg', string>>
 	>({})
+
+	const handleHeightChange = useCallback((value: string) => {
+		setHeight(value)
+		setFieldErrors((current) => ({
+			...current,
+			heightCm: undefined,
+		}))
+		setFormError(null)
+	}, [])
+
+	const handleWeightChange = useCallback((value: string) => {
+		setWeight(value)
+		setFieldErrors((current) => ({
+			...current,
+			weightKg: undefined,
+		}))
+		setFormError(null)
+	}, [])
 
 	const loadMetricData = useCallback(async () => {
 		if (!session?.accessToken) {
@@ -59,22 +82,54 @@ export default function EditMetricScreen() {
 			return
 		}
 
-		setIsSaving(true)
 		setFieldErrors({})
 		setFormError(null)
+
+		let payload: ReturnType<typeof validateMetricForm>
+		try {
+			payload = validateMetricForm({
+				heightCm: height,
+				weightKg: weight,
+			})
+		} catch (error) {
+			const nextFieldErrors = extractFieldErrors(
+				error,
+				['heightCm', 'weightKg'] as const,
+			)
+			setFieldErrors(nextFieldErrors)
+			setFormError(
+				hasFieldErrors(nextFieldErrors)
+					? null
+					: resolveApiErrorMessage(
+							error,
+							'Please review the highlighted fields.',
+					  ),
+			)
+			return
+		}
+
+		setIsSaving(true)
 
 		try {
 			await createMetricEntry({
 				accessToken: session.accessToken,
-				payload: {
-					heightCm: Number(height.trim()),
-					weightKg: Number(weight.trim()),
-				},
+				payload,
 			})
 			router.back()
 		} catch (error) {
-			setFieldErrors(extractFieldErrors(error, ['heightCm', 'weightKg'] as const))
-			setFormError(resolveApiErrorMessage(error, 'Unable to update metric data.'))
+			const nextFieldErrors = extractFieldErrors(
+				error,
+				['heightCm', 'weightKg'] as const,
+			)
+			setFieldErrors(nextFieldErrors)
+			setFormError(
+				hasFieldErrors(nextFieldErrors)
+					? null
+					: resolveApiErrorMessage(
+							error,
+							'Unable to update metric data right now.',
+					  ),
+			)
 		} finally {
 			setIsSaving(false)
 		}
@@ -112,7 +167,7 @@ export default function EditMetricScreen() {
 							</Label>
 							<InputText
 								value={height}
-								onChangeText={setHeight}
+								onChangeText={handleHeightChange}
 								keyboardType="decimal-pad"
 								errorMessage={fieldErrors.heightCm}
 							/>
@@ -124,7 +179,7 @@ export default function EditMetricScreen() {
 							</Label>
 							<InputText
 								value={weight}
-								onChangeText={setWeight}
+								onChangeText={handleWeightChange}
 								keyboardType="decimal-pad"
 								errorMessage={fieldErrors.weightKg}
 							/>

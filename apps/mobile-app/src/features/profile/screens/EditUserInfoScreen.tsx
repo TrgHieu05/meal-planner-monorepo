@@ -10,7 +10,9 @@ import { fetchProfileOverview, updateCurrentUser } from '../api/profile.api'
 import {
 	extractFieldErrors,
 	GENDER_OPTIONS,
+	hasFieldErrors,
 	resolveApiErrorMessage,
+	validateUserInfoForm,
 } from '../utils/profile-form'
 
 import { useSession } from '@/providers/AuthProvider'
@@ -28,6 +30,33 @@ export default function EditUserInfoScreen() {
 	const [fieldErrors, setFieldErrors] = useState<
 		Partial<Record<'userName' | 'gender' | 'dateOfBirth', string>>
 	>({})
+
+	const handleFullNameChange = useCallback((value: string) => {
+		setFullName(value)
+		setFieldErrors((current) => ({
+			...current,
+			userName: undefined,
+		}))
+		setFormError(null)
+	}, [])
+
+	const handleGenderChange = useCallback((value: string) => {
+		setGender(value)
+		setFieldErrors((current) => ({
+			...current,
+			gender: undefined,
+		}))
+		setFormError(null)
+	}, [])
+
+	const handleBirthDateChange = useCallback((value: Date) => {
+		setBirthDate(value)
+		setFieldErrors((current) => ({
+			...current,
+			dateOfBirth: undefined,
+		}))
+		setFormError(null)
+	}, [])
 
 	const loadUserProfile = useCallback(async () => {
 		if (!session?.accessToken) {
@@ -61,25 +90,56 @@ export default function EditUserInfoScreen() {
 			return
 		}
 
-		setIsSaving(true)
-		setFormError(null)
 		setFieldErrors({})
+		setFormError(null)
+
+		let payload: ReturnType<typeof validateUserInfoForm>
+		try {
+			payload = validateUserInfoForm({
+				userName: fullName,
+				gender: gender as 'M' | 'F' | undefined,
+				dateOfBirth: birthDate,
+			})
+			setFullName(payload.userName)
+		} catch (error) {
+			const nextFieldErrors = extractFieldErrors(
+				error,
+				['userName', 'gender', 'dateOfBirth'] as const,
+			)
+			setFieldErrors(nextFieldErrors)
+			setFormError(
+				hasFieldErrors(nextFieldErrors)
+					? null
+					: resolveApiErrorMessage(
+							error,
+							'Please review the highlighted fields.',
+					  ),
+			)
+			return
+		}
+
+		setIsSaving(true)
 
 		try {
 			await updateCurrentUser({
 				accessToken: session.accessToken,
-				payload: {
-					userName: fullName.trim(),
-					gender: gender as 'M' | 'F' | undefined,
-					dateOfBirth: birthDate,
-				},
+				payload,
 			})
 			router.back()
 		} catch (error) {
-			setFieldErrors(
-				extractFieldErrors(error, ['userName', 'gender', 'dateOfBirth'] as const),
+			const nextFieldErrors = extractFieldErrors(
+				error,
+				['userName', 'gender', 'dateOfBirth'] as const,
 			)
-			setFormError(resolveApiErrorMessage(error, 'Unable to update user information.'))
+			setFieldErrors(nextFieldErrors)
+			setFormError(
+				hasFieldErrors(nextFieldErrors)
+					? null
+					: resolveApiErrorMessage(
+							error,
+							'Unable to update user information right now.',
+					  ),
+			)
 		} finally {
 			setIsSaving(false)
 		}
@@ -117,7 +177,7 @@ export default function EditUserInfoScreen() {
 							</Label>
 							<InputText
 								value={fullName}
-								onChangeText={setFullName}
+								onChangeText={handleFullNameChange}
 								errorMessage={fieldErrors.userName}
 							/>
 						</YStack>
@@ -129,7 +189,7 @@ export default function EditUserInfoScreen() {
 							<InputSelect
 								options={GENDER_OPTIONS}
 								value={gender}
-								onValueChange={setGender}
+								onValueChange={handleGenderChange}
 								errorMessage={fieldErrors.gender}
 								w="100%"
 							/>
@@ -141,7 +201,7 @@ export default function EditUserInfoScreen() {
 							</Label>
 							<InputDate
 								value={birthDate}
-								onValueChange={setBirthDate}
+								onValueChange={handleBirthDateChange}
 								errorMessage={fieldErrors.dateOfBirth}
 								w="100%"
 							/>

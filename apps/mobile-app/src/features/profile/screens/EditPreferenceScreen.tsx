@@ -15,7 +15,10 @@ import {
 } from '../api/profile.api'
 import {
 	ACTIVITY_LEVEL_OPTIONS,
+	extractFieldErrors,
+	hasFieldErrors,
 	resolveApiErrorMessage,
+	validatePreferenceForm,
 } from '../utils/profile-form'
 
 import { useSession } from '@/providers/AuthProvider'
@@ -38,6 +41,50 @@ export default function EditPreferenceScreen() {
 	const [isLoading, setIsLoading] = useState(true)
 	const [isSaving, setIsSaving] = useState(false)
 	const [formError, setFormError] = useState<string | null>(null)
+	const [fieldErrors, setFieldErrors] = useState<
+		Partial<Record<'dietTypeId' | 'goalId' | 'cuisineTypeId' | 'targetCalories', string>>
+	>({})
+
+	const handleDietTypeChange = useCallback((value: string) => {
+		setDietTypeId(value)
+		setFieldErrors((current) => ({
+			...current,
+			dietTypeId: undefined,
+		}))
+		setFormError(null)
+	}, [])
+
+	const handleGoalChange = useCallback((value: string) => {
+		setGoalId(value)
+		setFieldErrors((current) => ({
+			...current,
+			goalId: undefined,
+		}))
+		setFormError(null)
+	}, [])
+
+	const handleCuisineTypeChange = useCallback((value: string) => {
+		setCuisineTypeId(value)
+		setFieldErrors((current) => ({
+			...current,
+			cuisineTypeId: undefined,
+		}))
+		setFormError(null)
+	}, [])
+
+	const handleTargetCaloriesChange = useCallback((value: string) => {
+		setTargetCalories(value)
+		setFieldErrors((current) => ({
+			...current,
+			targetCalories: undefined,
+		}))
+		setFormError(null)
+	}, [])
+
+	const handleActivityLevelChange = useCallback((value: string) => {
+		setActivityLevel(value)
+		setFormError(null)
+	}, [])
 
 	const loadPreferenceData = useCallback(async () => {
 		if (!session?.accessToken) {
@@ -93,21 +140,36 @@ export default function EditPreferenceScreen() {
 			return
 		}
 
-		if (!dietTypeId || !goalId || !cuisineTypeId) {
-			setFormError('Please select diet type, goal, and cuisine type.')
+		setFieldErrors({})
+		setFormError(null)
+
+		let payload: ReturnType<typeof validatePreferenceForm>
+		try {
+			payload = validatePreferenceForm({
+				dietTypeId,
+				goalId,
+				cuisineTypeId,
+				targetCalories,
+				activityLevel: activityLevel as 'HIGH' | 'AVERAGE' | 'LOW' | undefined,
+			})
+		} catch (error) {
+			const nextFieldErrors = extractFieldErrors(
+				error,
+				['dietTypeId', 'goalId', 'cuisineTypeId', 'targetCalories'] as const,
+			)
+			setFieldErrors(nextFieldErrors)
+			setFormError(
+				hasFieldErrors(nextFieldErrors)
+					? null
+					: resolveApiErrorMessage(
+							error,
+							'Please review the highlighted fields.',
+					  ),
+			)
 			return
 		}
 
 		setIsSaving(true)
-		setFormError(null)
-
-		const payload = {
-			dietTypeId: Number.parseInt(dietTypeId, 10),
-			goalId: Number.parseInt(goalId, 10),
-			cuisineTypeId: Number.parseInt(cuisineTypeId, 10),
-			targetCalories: targetCalories.trim() ? Number(targetCalories.trim()) : null,
-			activityLevel: activityLevel as 'HIGH' | 'AVERAGE' | 'LOW' | undefined,
-		}
 
 		try {
 			if (hasExistingProfile) {
@@ -124,7 +186,19 @@ export default function EditPreferenceScreen() {
 
 			router.back()
 		} catch (error) {
-			setFormError(resolveApiErrorMessage(error, 'Unable to update profile preferences.'))
+			const nextFieldErrors = extractFieldErrors(
+				error,
+				['dietTypeId', 'goalId', 'cuisineTypeId', 'targetCalories'] as const,
+			)
+			setFieldErrors(nextFieldErrors)
+			setFormError(
+				hasFieldErrors(nextFieldErrors)
+					? null
+					: resolveApiErrorMessage(
+							error,
+							'Unable to update profile preferences right now.',
+					  ),
+			)
 		} finally {
 			setIsSaving(false)
 		}
@@ -182,14 +256,14 @@ export default function EditPreferenceScreen() {
 							<Label ff="$body" fos="$md" fow="$medium" col="$textSubtle">
 								Diet Type
 							</Label>
-							<InputSelect options={dietOptions} value={dietTypeId} onValueChange={setDietTypeId} w="100%" />
+							<InputSelect options={dietOptions} value={dietTypeId} onValueChange={handleDietTypeChange} errorMessage={fieldErrors.dietTypeId} w="100%" />
 						</YStack>
 
 						<YStack w="100%" gap="$xs">
 							<Label ff="$body" fos="$md" fow="$medium" col="$textSubtle">
 								Goal
 							</Label>
-							<InputSelect options={goalOptions} value={goalId} onValueChange={setGoalId} w="100%" />
+							<InputSelect options={goalOptions} value={goalId} onValueChange={handleGoalChange} errorMessage={fieldErrors.goalId} w="100%" />
 						</YStack>
 
 						<YStack w="100%" gap="$xs">
@@ -199,7 +273,8 @@ export default function EditPreferenceScreen() {
 							<InputSelect
 								options={cuisineOptions}
 								value={cuisineTypeId}
-								onValueChange={setCuisineTypeId}
+								onValueChange={handleCuisineTypeChange}
+								errorMessage={fieldErrors.cuisineTypeId}
 								w="100%"
 							/>
 						</YStack>
@@ -208,7 +283,7 @@ export default function EditPreferenceScreen() {
 							<Label ff="$body" fos="$md" fow="$medium" col="$textSubtle">
 								Target Calories
 							</Label>
-							<InputText value={targetCalories} onChangeText={setTargetCalories} keyboardType="number-pad" />
+							<InputText value={targetCalories} onChangeText={handleTargetCaloriesChange} keyboardType="number-pad" errorMessage={fieldErrors.targetCalories} />
 						</YStack>
 
 						<YStack w="100%" gap="$xs">
@@ -218,7 +293,7 @@ export default function EditPreferenceScreen() {
 							<InputSelect
 								options={ACTIVITY_LEVEL_OPTIONS}
 								value={activityLevel}
-								onValueChange={setActivityLevel}
+								onValueChange={handleActivityLevelChange}
 								w="100%"
 							/>
 						</YStack>

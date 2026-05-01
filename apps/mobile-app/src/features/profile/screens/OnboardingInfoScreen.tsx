@@ -1,10 +1,14 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useRouter } from 'expo-router'
 import { YStack, SizableText, XStack } from 'tamagui'
 
 import { Button, InputDate, InputSelect } from '@components'
 
 import { useOnboardingProfile } from '../onboarding/OnboardingProfileProvider'
+import {
+    extractFieldErrors,
+    validateOnboardingInfoStep,
+} from '../utils/profile-form'
 
 import { useSession } from '@/providers/AuthProvider'
 
@@ -13,6 +17,9 @@ export default function OnboardingInfoScreen() {
     const router = useRouter()
     const { signOut } = useSession()
     const { draft, updateDraft } = useOnboardingProfile()
+    const [fieldErrors, setFieldErrors] = useState<
+        Partial<Record<'gender' | 'dateOfBirth', string>>
+    >({})
     const genderOptions = useMemo(
         () => [
             { label: 'Male', value: 'M' },
@@ -20,11 +27,41 @@ export default function OnboardingInfoScreen() {
         ],
         [],
     )
-    const canContinue = draft.gender !== null && draft.dateOfBirth !== null
     const handleBackToLogin = useCallback(async () => {
         await signOut()
         router.replace('/login')
     }, [router, signOut])
+
+    const handleGenderChange = useCallback((value: string) => {
+        updateDraft({ gender: value as 'M' | 'F' })
+        setFieldErrors((current) => ({
+            ...current,
+            gender: undefined,
+        }))
+    }, [updateDraft])
+
+    const handleDateOfBirthChange = useCallback((value: Date) => {
+        updateDraft({ dateOfBirth: value })
+        setFieldErrors((current) => ({
+            ...current,
+            dateOfBirth: undefined,
+        }))
+    }, [updateDraft])
+
+    const handleNext = useCallback(() => {
+        try {
+            validateOnboardingInfoStep({
+                gender: draft.gender,
+                dateOfBirth: draft.dateOfBirth,
+            })
+            setFieldErrors({})
+            router.push('/onboarding/step-2')
+        } catch (error) {
+            setFieldErrors(
+                extractFieldErrors(error, ['gender', 'dateOfBirth'] as const),
+            )
+        }
+    }, [draft.dateOfBirth, draft.gender, router])
 
 
     return (
@@ -38,13 +75,15 @@ export default function OnboardingInfoScreen() {
                     options={genderOptions}
                     placeholder="Select your gender"
                     value={draft.gender ?? undefined}
-                    onValueChange={(value) => updateDraft({ gender: value as 'M' | 'F' })}
+                    onValueChange={handleGenderChange}
+                    errorMessage={fieldErrors.gender}
                     w="100%"
                 />
                 <InputDate
                     placeholder="Select your birth date"
                     value={draft.dateOfBirth}
-                    onValueChange={(value) => updateDraft({ dateOfBirth: value })}
+                    onValueChange={handleDateOfBirthChange}
+                    errorMessage={fieldErrors.dateOfBirth}
                     w="100%"
                 />
             </YStack>
@@ -62,8 +101,7 @@ export default function OnboardingInfoScreen() {
                     color="primary"
                     size="large"
                     w={120}
-                    disabled={!canContinue}
-                    onPress={() => router.push('/onboarding/step-2')}
+                    onPress={handleNext}
                 >
                     <Button.Text>Next</Button.Text>
                 </Button>

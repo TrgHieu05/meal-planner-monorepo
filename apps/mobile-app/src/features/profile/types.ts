@@ -10,24 +10,22 @@ export interface UserDetailItem {
 export type ProfileBasicInfo = {
   userName: string;
   email: string;
-  gender: string;
+  gender: string | null;
   dob: Date | null;
 };
 
 export type ProfilePreferences = {
   dietType: string | null;
   goal: string | null;
-  cuisineTypes: string[];
+  cuisineType: string | null;
   targetCalories: number | null;
   activityLevel: string | null;
-  notificationsEnabled: boolean | null;
 };
 
 export type ProfileMetrics = {
   weight: number | null;
   height: number | null;
   bmi: number | null;
-  bodyFatPercent: number | null;
   updatedAt: Date | null;
 };
 

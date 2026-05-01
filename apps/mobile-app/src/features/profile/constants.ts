@@ -138,8 +138,8 @@ export const PREFERENCES_UI_CONFIG: ProfileUIConfigItem[] = [
     icon: Target,
   },
   {
-    key: 'cuisineTypes',
-    label: 'Cuisine Types',
+    key: 'cuisineType',
+    label: 'Cuisine Type',
     icon: User,
   },
   {
@@ -155,18 +155,6 @@ export const PREFERENCES_UI_CONFIG: ProfileUIConfigItem[] = [
     key: 'activityLevel',
     label: 'Activity Level',
     icon: Activity,
-  },
-  {
-    key: 'notificationsEnabled',
-    label: 'Notifications',
-    icon: Mail,
-    formatValue: (value: unknown) => {
-      if (typeof value === 'boolean') {
-        return value ? 'Enabled' : 'Disabled';
-      }
-
-      return formatProfileValue(value);
-    },
   },
 ];
 
@@ -196,15 +184,6 @@ export const METRICS_UI_CONFIG: ProfileUIConfigItem[] = [
     formatValue: (value: unknown) => {
       const bmi = toNumber(value);
       return bmi == null ? formatProfileValue(value) : bmi.toFixed(1);
-    },
-  },
-  {
-    key: 'bodyFatPercent',
-    label: 'Body Fat',
-    icon: User,
-    formatValue: (value: unknown) => {
-      const bodyFat = toNumber(value);
-      return bodyFat == null ? formatProfileValue(value) : `${bodyFat}%`;
     },
   },
   {

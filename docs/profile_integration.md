@@ -135,18 +135,18 @@ Phạm vi `profile` trong tài liệu này bao gồm:
 
 #### Data layer và session usage
 
-- [ ] Chuẩn hóa toàn bộ profile API calls để dùng `session.accessToken` từ `AuthProvider`.
-- [ ] Giảm hoặc loại bỏ dependency vào `EXPO_PUBLIC_PROFILE_ACCESS_TOKEN` trong luồng UI chính.
-- [ ] Dùng explicit field `isOnboardingCompleted` từ backend để route guard quyết định vào `onboarding` hay `(tabs)`, không tự suy luận từ nhiều request rời rạc ở client.
-- [ ] Tạo API functions riêng cho:
-- [ ] đọc profile overview
-- [ ] cập nhật user
-- [ ] cập nhật preferences
-- [ ] tạo metric
-- [ ] đọc/cập nhật allergy
-- [ ] đọc/cập nhật favorite ingredient
-- [ ] đọc ingredient catalog nếu backend bổ sung endpoint
-- [ ] Chốt có cần `axios` instance/interceptor chung cho `401` và lỗi mạng hay không. `[Cần bạn làm rõ]` **Có**
+- [x] Chuẩn hóa toàn bộ profile API calls để dùng `session.accessToken` từ `AuthProvider`.
+- [x] Giảm hoặc loại bỏ dependency vào `EXPO_PUBLIC_PROFILE_ACCESS_TOKEN` trong luồng UI chính.
+- [x] Dùng explicit field `isOnboardingCompleted` từ backend để route guard quyết định vào `onboarding` hay `(tabs)`, không tự suy luận từ nhiều request rời rạc ở client.
+- [x] Tạo API functions riêng cho:
+- [x] đọc profile overview
+- [x] cập nhật user
+- [x] cập nhật preferences
+- [x] tạo metric
+- [x] đọc/cập nhật allergy
+- [x] đọc/cập nhật favorite ingredient
+- [x] đọc ingredient catalog nếu backend bổ sung endpoint
+- [x] Chốt có cần `axios` instance/interceptor chung cho `401` và lỗi mạng hay không. `[Cần bạn làm rõ]` **Có**
 
 #### Profile screen
 
@@ -192,11 +192,11 @@ Phạm vi `profile` trong tài liệu này bao gồm:
 
 #### Onboarding
 
-- [ ] Chốt user mới sau login sẽ vào onboarding bắt buộc hay vẫn vào app rồi hoàn thiện profile sau. `[Cần bạn làm rõ]` **Hiện tại sẽ bắt buộc hoàn thiện onboarding trước**
+- [x] Chốt user mới sau login sẽ vào onboarding bắt buộc hay vẫn vào app rồi hoàn thiện profile sau. `[Cần bạn làm rõ]` **Hiện tại sẽ bắt buộc hoàn thiện onboarding trước**
 - [ ] Nối các màn onboarding với options thật từ backend.
 - [ ] Nối submit cuối onboarding với backend create/update profile.
-- [ ] Quyết định trạng thái hoàn thành onboarding lấy từ local state hay derive từ server profile completeness. `[Cần bạn làm rõ]` **Derive từ server thông qua field explicit `isOnboardingCompleted`; rule hiện tại để backend tính field này là user đã có `gender`, `dateOfBirth` và `profile` row.**
-- [ ] Nếu profile chưa hoàn chỉnh, chốt có chặn các tab khác hay không. `[Cần bạn làm rõ]` **Có, chặn toàn bộ tabs cho đến khi server xác nhận onboarding complete**
+- [x] Quyết định trạng thái hoàn thành onboarding lấy từ local state hay derive từ server profile completeness. `[Cần bạn làm rõ]` **Derive từ server thông qua field explicit `isOnboardingCompleted`; rule hiện tại để backend tính field này là user đã có `gender`, `dateOfBirth` và `profile` row.**
+- [x] Nếu profile chưa hoàn chỉnh, chốt có chặn các tab khác hay không. `[Cần bạn làm rõ]` **Có, chặn toàn bộ tabs cho đến khi server xác nhận onboarding complete**
 
 ## Checklist kiểm thử
 

@@ -1184,6 +1184,641 @@
           "Menu"
         ]
       }
+    },
+    "/api/v1/meal-templates": {
+      "post": {
+        "operationId": "MealTemplateController_createTemplate",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "My Template"
+                  },
+                  "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "example": "Optional description"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Tạo meal template thành công"
+          },
+          "400": {
+            "description": "Invalid payload"
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Tạo mới Meal Template",
+        "tags": [
+          "Meal Template"
+        ]
+      },
+      "get": {
+        "operationId": "MealTemplateController_getTemplates",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Trả về danh sách meal template"
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Lấy danh sách Meal Template của user",
+        "tags": [
+          "Meal Template"
+        ]
+      }
+    },
+    "/api/v1/meal-templates/{id}": {
+      "get": {
+        "operationId": "MealTemplateController_getTemplateDetail",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Trả về chi tiết meal template"
+          },
+          "400": {
+            "description": "Invalid id"
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          },
+          "403": {
+            "description": "You do not have access to this template."
+          },
+          "404": {
+            "description": "Meal template not found."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Xem chi tiết cấu trúc Meal Template",
+        "tags": [
+          "Meal Template"
+        ]
+      },
+      "patch": {
+        "operationId": "MealTemplateController_updateTemplate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "Updated Template Name"
+                  },
+                  "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "example": "Updated description"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cập nhật meal template thành công"
+          },
+          "400": {
+            "description": "Invalid id or payload"
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          },
+          "403": {
+            "description": "You do not have access to this template."
+          },
+          "404": {
+            "description": "Meal template not found."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Cập nhật thông tin chung của Meal Template",
+        "tags": [
+          "Meal Template"
+        ]
+      },
+      "delete": {
+        "operationId": "MealTemplateController_deleteTemplate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Xóa meal template thành công"
+          },
+          "400": {
+            "description": "Invalid id"
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          },
+          "403": {
+            "description": "You do not have access to this template."
+          },
+          "404": {
+            "description": "Meal template not found."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Xóa Meal Template",
+        "tags": [
+          "Meal Template"
+        ]
+      }
+    },
+    "/api/v1/meal-templates/{id}/days/{dayNumber}": {
+      "put": {
+        "operationId": "MealTemplateController_upsertDay",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dayNumber",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "meals"
+                ],
+                "properties": {
+                  "meals": {
+                    "type": "object",
+                    "properties": {
+                      "BREAKFAST": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "mealId",
+                            "portionSize"
+                          ],
+                          "properties": {
+                            "mealId": {
+                              "type": "integer",
+                              "format": "int32",
+                              "example": 1
+                            },
+                            "portionSize": {
+                              "type": "number",
+                              "example": 1
+                            }
+                          }
+                        }
+                      },
+                      "LUNCH": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "mealId",
+                            "portionSize"
+                          ],
+                          "properties": {
+                            "mealId": {
+                              "type": "integer",
+                              "format": "int32",
+                              "example": 2
+                            },
+                            "portionSize": {
+                              "type": "number",
+                              "example": 1
+                            }
+                          }
+                        }
+                      },
+                      "DINNER": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "mealId",
+                            "portionSize"
+                          ],
+                          "properties": {
+                            "mealId": {
+                              "type": "integer",
+                              "format": "int32",
+                              "example": 3
+                            },
+                            "portionSize": {
+                              "type": "number",
+                              "example": 1
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Upsert ngày thành công"
+          },
+          "400": {
+            "description": "Invalid id or payload"
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          },
+          "403": {
+            "description": "You do not have access to this template."
+          },
+          "404": {
+            "description": "Meal template not found."
+          },
+          "409": {
+            "description": "Duplicate mealId in request."
+          },
+          "422": {
+            "description": "dayNumber must be a positive integer"
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Ghi đè/Upsert toàn bộ các bữa của 1 ngày trong Template",
+        "tags": [
+          "Meal Template"
+        ]
+      },
+      "delete": {
+        "operationId": "MealTemplateController_deleteDay",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dayNumber",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Xóa ngày khỏi template thành công"
+          },
+          "400": {
+            "description": "Invalid id"
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          },
+          "403": {
+            "description": "You do not have access to this template."
+          },
+          "404": {
+            "description": "Template day or template not found."
+          },
+          "422": {
+            "description": "dayNumber must be a positive integer"
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Xóa cả 1 ngày khỏi Template",
+        "tags": [
+          "Meal Template"
+        ]
+      }
+    },
+    "/api/v1/meal-templates/{id}/items": {
+      "post": {
+        "operationId": "MealTemplateController_addItem",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "dayNumber",
+                  "mealId",
+                  "mealTime",
+                  "portionSize"
+                ],
+                "properties": {
+                  "dayNumber": {
+                    "type": "integer",
+                    "format": "int32",
+                    "example": 1
+                  },
+                  "mealId": {
+                    "type": "integer",
+                    "format": "int32",
+                    "example": 1
+                  },
+                  "mealTime": {
+                    "type": "string",
+                    "enum": [
+                      "BREAKFAST",
+                      "LUNCH",
+                      "DINNER"
+                    ],
+                    "example": "BREAKFAST"
+                  },
+                  "portionSize": {
+                    "type": "number",
+                    "example": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Thêm món vào template thành công"
+          },
+          "400": {
+            "description": "Invalid id"
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          },
+          "403": {
+            "description": "You do not have access to this template."
+          },
+          "404": {
+            "description": "Meal template or meal not found."
+          },
+          "409": {
+            "description": "TEMPLATE_ITEM_CONFLICT"
+          },
+          "422": {
+            "description": "Invalid payload"
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Thêm 1 món vào 1 ngày của Template",
+        "tags": [
+          "Meal Template"
+        ]
+      }
+    },
+    "/api/v1/meal-templates/{id}/items/{itemId}": {
+      "patch": {
+        "operationId": "MealTemplateController_updateItem",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "itemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "portionSize"
+                ],
+                "properties": {
+                  "portionSize": {
+                    "type": "number",
+                    "example": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cập nhật món trong template thành công"
+          },
+          "400": {
+            "description": "Invalid id or itemId"
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          },
+          "403": {
+            "description": "You do not have access to this template."
+          },
+          "404": {
+            "description": "Template item not found."
+          },
+          "422": {
+            "description": "Invalid payload"
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Sửa portion size của 1 món trong Template",
+        "tags": [
+          "Meal Template"
+        ]
+      },
+      "delete": {
+        "operationId": "MealTemplateController_deleteItem",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "itemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Xóa món khỏi template thành công"
+          },
+          "400": {
+            "description": "Invalid id or itemId"
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          },
+          "403": {
+            "description": "You do not have access to this template."
+          },
+          "404": {
+            "description": "Template item not found."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Xóa 1 món khỏi Template",
+        "tags": [
+          "Meal Template"
+        ]
+      }
     }
   },
   "info": {

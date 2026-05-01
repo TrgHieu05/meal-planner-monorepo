@@ -8,8 +8,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import {
-  ApiBody,
   ApiBearerAuth,
+  ApiBody,
   ApiOperation,
   ApiResponse,
   ApiTags,
@@ -59,18 +59,16 @@ export class AllergyController {
   })
   @ApiResponse({ status: 500, description: 'Internal server error.' })
   @ApiBody({
-    description: 'Allergy update payload',
     schema: {
       type: 'object',
       required: ['ingredientIds'],
       properties: {
         ingredientIds: {
           type: 'array',
-          items: { type: 'integer', minimum: 1 },
-          example: [1, 2, 5],
+          items: { type: 'integer', format: 'int32' },
+          example: [1, 2, 3],
         },
       },
-      additionalProperties: false,
     },
   })
   updateAllergy(@Req() request: AuthenticatedRequest, @Body() body: unknown) {

@@ -44,7 +44,6 @@ model UserProvider {
 
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([provider, providerId], map: "user_providers_provider_provider_id_key")
   @@map("user_providers")
 }
 
@@ -194,8 +193,6 @@ model Menu {
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   items          MenuItem[]
 
-  @@unique([userId, date], map: "menus_user_id_date_key")
-
   @@map("menus")
 }
 
@@ -209,8 +206,6 @@ model MenuItem {
 
   menu           Menu         @relation(fields: [menuId], references: [id], onDelete: Cascade)
   meal           Meal         @relation(fields: [mealId], references: [id])
-
-  @@unique([menuId, mealId, mealTime], map: "menu_items_menu_id_meal_id_meal_time_key")
 
   @@map("menu_items")
 }
@@ -284,6 +279,7 @@ model MealTemplateDay {
   template       MealTemplate           @relation(fields: [templateId], references: [id], onDelete: Cascade)
   items          MealTemplateDayItem[]
 
+  @@unique([templateId, dayNumber])
   @@map("meal_template_days")
 }
 

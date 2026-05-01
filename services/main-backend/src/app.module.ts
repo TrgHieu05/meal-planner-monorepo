@@ -12,6 +12,7 @@ import { OptionsModule } from './options/options.module';
 import { ProfileModule } from './profile/profile.module';
 import { UserModule } from './user/user.module';
 import { JwtAuthOptInGuard } from './auth/jwt-auth.guard';
+import { MealTemplateModule } from './meal-template/meal-template.module';
 import { MealSearchModule } from './meal-search/meal-search.module';
 import { MenuModule } from './menu/menu.module';
 import { IngredientModule } from './ingredient/ingredient.module';
@@ -31,6 +32,7 @@ import { IngredientModule } from './ingredient/ingredient.module';
     MetricModule,
     ProfileModule,
     IngredientModule,
+    MealTemplateModule,
     MealSearchModule,
     MenuModule,
   ],

@@ -88,8 +88,10 @@ export default function ProfileScreen() {
                             <SizableText ff="$heading" fos="$h4" fow="$bold" col="$text">
                                 Favorite Ingredients
                             </SizableText>
-                            <Link href="/profile/edit-preference" asChild>
-                                <Pencil size={20} col="$textPrimary" />
+                            <Link href="/profile/edit-favorite-ingredient" asChild>
+                                <XStack p="$xs" pressStyle={{ opacity: 0.7 }}>
+                                    <Pencil size={20} col="$textPrimary" />
+                                </XStack>
                             </Link>
                         </XStack>
                         <XStack flexWrap="wrap" gap="$space.sm">
@@ -106,8 +108,10 @@ export default function ProfileScreen() {
                             <SizableText ff="$heading" fos="$h4" fow="$bold" col="$text">
                                 Allergies
                             </SizableText>
-                            <Link href="/profile/edit-preference" asChild>
-                                <Pencil size={20} col="$textPrimary" />
+                            <Link href="/profile/edit-allergy" asChild>
+                                <XStack p="$xs" pressStyle={{ opacity: 0.7 }}>
+                                    <Pencil size={20} col="$textPrimary" />
+                                </XStack>
                             </Link>
                         </XStack>
                         <XStack flexWrap="wrap" gap="$space.sm">

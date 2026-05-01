@@ -163,12 +163,18 @@ const themes = {
         primary: tokens.color.jade6,
         primaryHover: tokens.color.jade7,
         primaryPress: tokens.color.jade8,
+
         softPrimary: tokens.color.jade1,
+        softPrimaryHover: tokens.color.jade2,
+        softPrimaryPress: tokens.color.jade3,
 
         danger: tokens.color.red6,
         dangerHover: tokens.color.red7,
         dangerPress: tokens.color.red8,
+
         softDanger: tokens.color.red1,
+        softDangerHover: tokens.color.red2,
+        softDangerPress: tokens.color.red3,
 
         text: tokens.color.gray15,
         textSubtle: tokens.color.gray10,
@@ -189,12 +195,18 @@ const themes = {
         primary: tokens.color.jade6,
         primaryHover: tokens.color.jade7,
         primaryPress: tokens.color.jade8,
+
         softPrimary: tokens.color.jade2,
+        softPrimaryHover: tokens.color.jade3,
+        softPrimaryPress: tokens.color.jade4,
 
         danger: tokens.color.red6,
         dangerHover: tokens.color.red7,
         dangerPress: tokens.color.red8,
+
         softDanger: tokens.color.red2,
+        softDangerHover: tokens.color.red3,
+        softDangerPress: tokens.color.red4,
 
         text: tokens.color.gray1,
         textSubtle: tokens.color.gray7,

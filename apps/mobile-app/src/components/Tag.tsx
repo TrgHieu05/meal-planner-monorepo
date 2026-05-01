@@ -1,9 +1,16 @@
 import React from 'react'
 import { IconProps } from '@tamagui/helpers-icon'
-import { GetProps, XStack, Text, styled } from 'tamagui'
+import { GetProps, XStack, Text, styled, createStyledContext, withStaticProperties } from 'tamagui'
+
+const TagContext = createStyledContext({
+  status: 'brand',
+  color: '$primary',
+})
+
 
 export const TagFrame = styled(XStack, {
   name: 'Tag',
+  context: TagContext,
 
   flexDirection: 'row',
   alignSelf: 'flex-start',
@@ -17,9 +24,11 @@ export const TagFrame = styled(XStack, {
     status: {
       brand: {
         bg: "$softPrimary",
+        color: '$primary',
       },
       danger: {
         bg: "$softDanger",
+        color: '$danger',
       },
     },
   } as const,
@@ -29,29 +38,27 @@ export const TagFrame = styled(XStack, {
   },
 })
 
-type TagStatus = GetProps<typeof TagFrame>['status']
+export const TagText = styled(Text, {
+  name: 'TagText',
+  context: TagContext,
+  ff: '$body',
+  fos: '$md',
+  fow: '$semiBold',
 
-interface TagProps {
-  children: string
-  icon?: React.ElementType<IconProps>
-  status?: TagStatus
+  variants: {
+    status: {
+      brand: { color: '$primary', },
+      danger: { color: '$danger', },
+    },
+  } as const,
+})
+
+export const TagIcon = ({icon: IconComponent, ...props} : {icon: React.ElementType<IconProps>} & IconProps) => {
+  const { color } = TagContext.useStyledContext()
+  return <IconComponent color={ color } size={16} {...props} />
 }
 
-const getContentColor = (status: TagStatus) => {
-  switch (status) {    
-    case 'brand': return '$primary'
-    case 'danger': return '$danger'
-    default: return '$blue10'
-  }
-}
-
-export const Tag = ({ icon: Icon, status = 'brand', children, ...props }: TagProps) => {
-  const contentColor = getContentColor(status)
-
-  return (
-    <TagFrame status={status} {...props}>
-      {Icon && <Icon size={16} color={contentColor} strokeWidth={2.5}/>}
-      <Text color={contentColor} ff="$body" fos="$md" fow="$semiBold">{children}</Text>
-    </TagFrame>
-  )
-}
+export const Tag = withStaticProperties(TagFrame, {
+  Text: TagText,
+  Icon: TagIcon,
+})

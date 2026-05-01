@@ -1,0 +1,300 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                 String               @id @default(uuid()) @db.Uuid
+  email              String               @unique @db.VarChar(254)
+  userName           String               @map("user_name") @db.VarChar(50)
+  gender             String               @db.VarChar(1)
+  dateOfBirth        DateTime?            @map("date_of_birth") @db.Date // Khong bat buoc (nullable) theo schema
+  createdAt          DateTime             @default(now()) @map("created_at") @db.Timestamp()
+  updatedAt          DateTime             @updatedAt @map("updated_at") @db.Timestamp()
+
+  // Quan hệ (Relations)
+  providers          UserProvider[]
+  profile            Profile?
+  metrics            Metric[]
+  allergies          Allergy[]
+  favoriteIngredients FavoriteIngredient[]
+  menus              Menu[]
+  mealTemplates      MealTemplate[]
+
+  @@map("users")
+}
+
+model UserProvider {
+  id             String       @id @default(uuid()) @db.Uuid
+  userId         String       @map("user_id") @db.Uuid
+  provider       ProviderEnum
+  providerId     String       @map("provider_id") // Đổi từ DATE sang String vì đây là ID của provider
+  passwordHash   String?      @map("password_hash") @db.VarChar(255)
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamp()
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamp()
+
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_providers")
+}
+
+enum ProviderEnum {
+  LOCAL    @map("local")
+  GOOGLE   @map("google")
+  FACEBOOK @map("facebook")
+}
+
+model Profile {
+  id             String         @id @default(uuid()) @db.Uuid
+  userId         String         @unique @map("user_id") @db.Uuid
+  dietTypeId     Int            @map("diet_type")
+  goalId         Int            @map("goal")
+  cuisineTypeId  Int            @map("cuisine_type")
+  targetCalories Float?         @map("target_calories")
+  activityLevel  ActivityLevel? @map("activity_level")
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamp()
+  updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamp()
+
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dietType       DietType       @relation(fields: [dietTypeId], references: [id])
+  goal           Goal           @relation(fields: [goalId], references: [id])
+  cuisineType    CuisineType    @relation(fields: [cuisineTypeId], references: [id])
+
+  @@map("profiles")
+}
+
+enum ActivityLevel {
+  HIGH     @map("high")
+  AVERAGE  @map("average")
+  LOW      @map("low")
+}
+
+model Metric {
+  id             Int          @id @default(autoincrement())
+  userId         String       @map("user_id") @db.Uuid
+  heightCm       Float        @map("height_cm")
+  weightKg       Float        @map("weight_kg")
+  bmi            Float
+  recordedAt     DateTime     @map("recorded_at") @db.Timestamp()
+
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("metrics")
+}
+
+model Ingredient {
+  id             Int                 @id @default(autoincrement())
+  name           String                 @unique @db.VarChar(150)
+  calories       Float
+  protein        Float
+  fat            Float
+  fiber          Float
+  hasGluten      Boolean                @map("has_gluten")
+  isVegetarian   Boolean                @map("is_vegetarian")
+  createdAt      DateTime               @default(now()) @map("created_at") @db.Timestamp()
+  updatedAt      DateTime               @updatedAt @map("updated_at") @db.Timestamp()
+
+  allergies      Allergy[]
+  favoritedBy    FavoriteIngredient[]
+  meals          MealIngredient[]
+
+  @@map("ingredients")
+}
+
+model Allergy {
+  userId         String       @map("user_id") @db.Uuid
+  ingredientId   Int       @map("ingredient_id")
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamp()
+
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ingredient     Ingredient   @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  // Khóa chính hỗn hợp (Composite Primary Key)
+  @@id([userId, ingredientId])
+  @@map("allergies")
+}
+
+model FavoriteIngredient {
+  userId         String       @map("user_id") @db.Uuid
+  ingredientId   Int       @map("ingredient_id")
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamp()
+
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ingredient     Ingredient   @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  @@id([userId, ingredientId])
+  @@map("favorite_ingredients")
+}
+
+model Meal {
+  id             Int       @id @default(autoincrement())
+  name           String       @db.VarChar(255)
+  mealImageKey   String?      @map("meal_image_key")
+  description    String
+  cuisineTypeId  Int       @map("cuisine_type_id")
+  difficulty     Difficulty
+  cookTimeMins   Int          @map("cook_time_mins")
+  totalCalories  Float        @map("total_calories")
+  totalProtein   Float        @map("total_protein")
+  totalFat       Float        @map("total_fat")
+  totalFiber     Float        @map("total_fiber")
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamp()
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamp()
+
+  cuisineType    CuisineType           @relation(fields: [cuisineTypeId], references: [id])
+  ingredients    MealIngredient[]
+  menuItems      MenuItem[]
+  templateItems  MealTemplateDayItem[]
+
+  @@map("meals")
+}
+
+enum Difficulty {
+  LEVEL_1 @map("1")
+  LEVEL_2 @map("2")
+  LEVEL_3 @map("3")
+  LEVEL_4 @map("4")
+  LEVEL_5 @map("5")
+}
+
+model MealIngredient {
+  id             Int       @id @default(autoincrement())
+  mealId         Int       @map("meal_id")
+  ingredientId   Int       @map("ingredient_id")
+  quantity       Float
+
+  meal           Meal         @relation(fields: [mealId], references: [id], onDelete: Cascade)
+  ingredient     Ingredient   @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  @@map("meal_ingredients")
+}
+
+model Menu {
+  id             Int       @id @default(autoincrement())
+  userId         String       @map("user_id") @db.Uuid
+  date           DateTime     @db.Date
+  note           String?
+  totalCalories  Float        @map("total_calories")
+  totalProtein   Float        @map("total_protein")
+  totalFat       Float        @map("total_fat")
+  totalFiber     Float        @map("total_fiber")
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamp()
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamp()
+
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items          MenuItem[]
+
+  @@map("menus")
+}
+
+model MenuItem {
+  id             Int       @id @default(autoincrement())
+  menuId         Int       @map("menu_id")
+  mealId         Int       @map("meal_id")
+  mealTime       MealTime     @map("meal_time")
+  eated          Boolean
+  portionSize    Float        @map("portion_size")
+
+  menu           Menu         @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  meal           Meal         @relation(fields: [mealId], references: [id])
+
+  @@map("menu_items")
+}
+
+enum MealTime {
+  BREAKFAST @map("breakfast")
+  LUNCH     @map("lunch")
+  DINNER    @map("dinner")
+}
+
+model DietType {
+  id             Int       @id @default(autoincrement())
+  name           String       @db.VarChar(100)
+  description    String?
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamp()
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamp()
+
+  profiles       Profile[]
+
+  @@map("diet_types")
+}
+
+model Goal {
+  id             Int       @id @default(autoincrement())
+  name           String       @db.VarChar(100)
+  description    String?
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamp()
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamp()
+
+  profiles       Profile[]
+
+  @@map("goals")
+}
+
+model CuisineType {
+  id             Int       @id @default(autoincrement())
+  name           String       @db.VarChar(100)
+  description    String?
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamp()
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamp()
+
+  profiles       Profile[]
+  meals          Meal[]
+
+  @@map("cuisine_types")
+}
+
+model MealTemplate {
+  id               String                 @id @default(uuid()) @db.Uuid
+  userId           String                 @map("user_id") @db.Uuid
+  templateImageKey String?                @map("template_image_key")
+  name             String                 @db.VarChar(100)
+  description      String?
+  createdAt        DateTime               @default(now()) @map("created_at") @db.Timestamp()
+  updatedAt        DateTime               @updatedAt @map("updated_at") @db.Timestamp()
+
+  user             User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  days             MealTemplateDay[]
+
+  @@map("meal_templates")
+}
+
+model MealTemplateDay {
+  id             String                 @id @default(uuid()) @db.Uuid
+  templateId     String                 @map("template_id") @db.Uuid
+  dayNumber      Int                    @map("day_number")
+  note           String?
+  createdAt      DateTime               @default(now()) @map("created_at") @db.Timestamp()
+  updatedAt      DateTime               @updatedAt @map("updated_at") @db.Timestamp()
+
+  template       MealTemplate           @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  items          MealTemplateDayItem[]
+
+  @@unique([templateId, dayNumber])
+  @@map("meal_template_days")
+}
+
+model MealTemplateDayItem {
+  id             String                 @id @default(uuid()) @db.Uuid
+  dayId          String                 @map("day_id") @db.Uuid
+  mealId         Int                 @map("meal_id")
+  mealTime       MealTime               @map("meal_time")
+  portionSize    Float                  @map("portion_size")
+  createdAt      DateTime               @default(now()) @map("created_at") @db.Timestamp()
+  updatedAt      DateTime               @updatedAt @map("updated_at") @db.Timestamp()
+
+  day            MealTemplateDay        @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  meal           Meal                   @relation(fields: [mealId], references: [id])
+
+  @@map("meal_template_day_items")
+}
+

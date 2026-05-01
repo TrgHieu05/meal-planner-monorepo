@@ -363,7 +363,7 @@ export function IngredientSelectionScreen({
 
 							{!isLoadingMore && !hasMoreCatalogItems && catalogItems.length > 0 ? (
 								<SizableText ff="$body" fos="$sm" col="$textSubtle" ta="center" py="$sm">
-									No more ingredient to load.
+									No more ingredients to load.
 								</SizableText>
 							) : null}
 						</YStack>

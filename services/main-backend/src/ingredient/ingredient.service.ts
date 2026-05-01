@@ -38,7 +38,7 @@ export class IngredientService {
     const response = {
       items,
       page,
-      pageSize: 30,
+      pageSize,
       total,
       hasMore: skip + items.length < total,
     };

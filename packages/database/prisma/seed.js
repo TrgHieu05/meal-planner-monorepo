@@ -237,7 +237,7 @@ function getRequiredMealIngredients(ingredientsByName) {
       const ingredient = ingredientsByName.get(ingredientName);
 
       if (!ingredient) {
-        throw new Error(`Required ingredient not found in ingredient.seed.ts: ${ingredientName}`);
+        throw new Error(`Required ingredient not found in ingredient.seed.js: ${ingredientName}`);
       }
 
       return [key, ingredient];

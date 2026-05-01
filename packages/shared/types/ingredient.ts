@@ -7,7 +7,7 @@ export const IngredientSchema = z.object({
   calories: z.number(),
   protein: z.number(),
   fat: z.number(),
-  fiber: z.number(), 
+  fiber: z.number(),
   hasGluten: z.boolean(),
   isVegetarian: z.boolean(),
 });

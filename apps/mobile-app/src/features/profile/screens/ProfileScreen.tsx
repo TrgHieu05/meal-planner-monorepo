@@ -104,7 +104,12 @@ export default function ProfileScreen() {
         );
     }
 
-    const genderIcon = profileData.basicInfo.gender === 'Female' ? Venus : Mars;
+    const genderIcon =
+        profileData.basicInfo.gender === 'Female'
+            ? Venus
+            : profileData.basicInfo.gender === 'Male'
+                ? Mars
+                : Earth;
     const dateOfBirthLabel = profileData.basicInfo.dob
         ? profileData.basicInfo.dob.toLocaleDateString('en-CA')
         : 'Not set';

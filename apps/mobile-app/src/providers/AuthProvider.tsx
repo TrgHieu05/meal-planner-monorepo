@@ -24,6 +24,8 @@ const AUTH_STORAGE_KEY = 'auth.session.accessToken';
 type AuthContextValue = {
   session: AuthSession | null;
   isLoading: boolean;
+  isAuthenticated: boolean;
+  isOnboardingCompleted: boolean;
   signInWithToken: (accessToken: string) => Promise<AuthSession>;
   signInWithGoogleIdToken: (idToken: string) => Promise<AuthSession>;
   signOut: () => Promise<void>;
@@ -39,6 +41,8 @@ type AuthProviderProps = {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [session, setSession] = useState<AuthSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const isAuthenticated = Boolean(session?.accessToken);
+  const isOnboardingCompleted = Boolean(session?.user.isOnboardingCompleted);
 
   const persistSession = useCallback(async (nextSession: AuthSession | null) => {
     setSession(nextSession);
@@ -146,13 +150,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return {
       session,
       isLoading,
+      isAuthenticated,
+      isOnboardingCompleted,
       signInWithToken,
       signInWithGoogleIdToken,
       signOut,
       refreshSession,
     };
   }, [
+    isAuthenticated,
     isLoading,
+    isOnboardingCompleted,
     refreshSession,
     session,
     signInWithGoogleIdToken,

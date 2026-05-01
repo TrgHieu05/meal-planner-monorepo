@@ -94,7 +94,7 @@ describe('User API (e2e)', () => {
     await request(app.getHttpServer())
       .patch('/api/v1/users')
       .set('Authorization', `Bearer ${token}`)
-      .send({ userName: 'John Updated' })
+      .send({ userName: '  John Updated  ' })
       .expect(200);
 
     expect(userService.updateUser).toHaveBeenCalledWith(userId, {
@@ -115,6 +115,16 @@ describe('User API (e2e)', () => {
       .set('Authorization', `Bearer ${token}`)
       .send({ gender: 'X' })
       .expect(422);
+  });
+
+  it('PATCH /api/v1/users should return 422 for blank userName', async () => {
+    await request(app.getHttpServer())
+      .patch('/api/v1/users')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ userName: '   ' })
+      .expect(422);
+
+    expect(userService.updateUser).not.toHaveBeenCalled();
   });
 
   it('PATCH /api/v1/users should return 422 for invalid dateOfBirth format', async () => {

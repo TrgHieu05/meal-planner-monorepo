@@ -10,6 +10,7 @@ import { PrismaService } from '../database/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 
 import { Prisma, ProviderEnum } from '@meal/database';
+import { toGoogleIdTokenExchangeResponse } from './auth-user.mapper';
 
 @Injectable()
 export class AuthService {
@@ -28,15 +29,11 @@ export class AuthService {
       const user = await this.findOrCreateGoogleUser(googleIdentity);
       const accessToken = this.issueAccessToken(user);
 
-      return {
+      return toGoogleIdTokenExchangeResponse({
         message: 'Xác thực Google thành công',
-        user: {
-          id: user.id,
-          email: user.email,
-          userName: user.userName,
-        },
+        user,
         accessToken,
-      };
+      });
     } catch (error) {
       if (
         error instanceof UnauthorizedException ||
@@ -119,6 +116,11 @@ export class AuthService {
         user: {
           include: {
             providers: true,
+            profile: {
+              select: {
+                userId: true,
+              },
+            },
           },
         },
       },
@@ -130,7 +132,14 @@ export class AuthService {
 
     let user = await this.prisma.user.findUnique({
       where: { email: identity.email },
-      include: { providers: true },
+      include: {
+        providers: true,
+        profile: {
+          select: {
+            userId: true,
+          },
+        },
+      },
     });
 
     if (!user) {
@@ -138,7 +147,7 @@ export class AuthService {
         data: {
           email: identity.email,
           userName: this.buildGoogleUserName(identity),
-          gender: 'U',
+          gender: null,
           providers: {
             create: {
               provider: ProviderEnum.GOOGLE,
@@ -146,7 +155,14 @@ export class AuthService {
             },
           },
         },
-        include: { providers: true },
+        include: {
+          providers: true,
+          profile: {
+            select: {
+              userId: true,
+            },
+          },
+        },
       });
     }
 
@@ -185,7 +201,14 @@ export class AuthService {
   private async reloadUserOrFail(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      include: { providers: true },
+      include: {
+        providers: true,
+        profile: {
+          select: {
+            userId: true,
+          },
+        },
+      },
     });
 
     if (!user) {

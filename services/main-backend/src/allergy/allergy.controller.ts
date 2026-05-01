@@ -8,13 +8,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import {
-<<<<<<< HEAD
   ApiBearerAuth,
   ApiBody,
-=======
-  ApiBody,
-  ApiBearerAuth,
->>>>>>> e982cb573a5011b40e1a20685c697c440b658343
   ApiOperation,
   ApiResponse,
   ApiTags,
@@ -56,7 +51,7 @@ export class AllergyController {
   @ApiResponse({ status: 404, description: 'User or ingredient not found.' })
   @ApiResponse({
     status: 409,
-    description: 'Ingredient conflict with favorite list.',
+    description: 'Ingredient conflict with favorite list, including structured conflict metadata.',
   })
   @ApiResponse({
     status: 422,
@@ -64,28 +59,16 @@ export class AllergyController {
   })
   @ApiResponse({ status: 500, description: 'Internal server error.' })
   @ApiBody({
-<<<<<<< HEAD
-=======
-    description: 'Allergy update payload',
->>>>>>> e982cb573a5011b40e1a20685c697c440b658343
     schema: {
       type: 'object',
       required: ['ingredientIds'],
       properties: {
         ingredientIds: {
           type: 'array',
-<<<<<<< HEAD
           items: { type: 'integer', format: 'int32' },
           example: [1, 2, 3],
         },
       },
-=======
-          items: { type: 'integer', minimum: 1 },
-          example: [1, 2, 5],
-        },
-      },
-      additionalProperties: false,
->>>>>>> e982cb573a5011b40e1a20685c697c440b658343
     },
   })
   updateAllergy(@Req() request: AuthenticatedRequest, @Body() body: unknown) {

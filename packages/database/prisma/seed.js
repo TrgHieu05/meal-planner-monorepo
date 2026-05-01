@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 const { PrismaClient, Difficulty, MealTime } = require('@prisma/client');
 const { PrismaPg } = require('@prisma/adapter-pg');
+const ingredientCatalogSeed = require('./ingredient.seed');
 
 if (!process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL is required to run seed.');
@@ -19,121 +20,64 @@ const SEED_USER = {
   dateOfBirth: new Date('1998-01-15T00:00:00.000Z'),
 };
 
-const SEED_CUISINE = {
-  name: 'Seed Cuisine',
-  description: 'Cuisine type used by menu seed data',
-};
+const SEED_DIET_TYPES = [
+  {
+    name: 'Balanced',
+    description: 'A varied eating pattern that combines lean protein, whole grains, fruits, and vegetables.',
+  },
+  {
+    name: 'Vegetarian',
+    description: 'Plant-forward meals that may include dairy and eggs while excluding meat and seafood.',
+  },
+  {
+    name: 'High Protein',
+    description: 'Meals designed to increase protein intake while keeping carbs and fats balanced.',
+  },
+];
 
-const SEED_INGREDIENTS = {
-  rolledOats: {
-    name: 'Seed Rolled Oats',
-    calories: 389,
-    protein: 16.9,
-    fat: 6.9,
-    fiber: 10.6,
-    hasGluten: false,
-    isVegetarian: true,
+const SEED_GOALS = [
+  {
+    name: 'Weight Loss',
+    description: 'Supports a calorie deficit with satisfying meals that emphasize nutrient density.',
   },
-  greekYogurt: {
-    name: 'Seed Greek Yogurt',
-    calories: 97,
-    protein: 9,
-    fat: 5,
-    fiber: 0,
-    hasGluten: false,
-    isVegetarian: true,
+  {
+    name: 'Maintenance',
+    description: 'Keeps energy intake stable for users focused on maintaining their current weight.',
   },
-  chiaSeeds: {
-    name: 'Seed Chia Seeds',
-    calories: 486,
-    protein: 16.5,
-    fat: 30.7,
-    fiber: 34.4,
-    hasGluten: false,
-    isVegetarian: true,
+  {
+    name: 'Muscle Gain',
+    description: 'Prioritizes higher protein intake and sufficient calories to support lean mass growth.',
   },
-  blueberry: {
-    name: 'Seed Blueberry',
-    calories: 57,
-    protein: 0.7,
-    fat: 0.3,
-    fiber: 2.4,
-    hasGluten: false,
-    isVegetarian: true,
+];
+
+const SEED_CUISINE_TYPES = [
+  {
+    name: 'Mediterranean',
+    description: 'Olive oil, vegetables, legumes, seafood, and whole grains inspired by coastal Mediterranean cooking.',
   },
-  chickenBreast: {
-    name: 'Seed Chicken Breast',
-    calories: 165,
-    protein: 31,
-    fat: 3.6,
-    fiber: 0,
-    hasGluten: false,
-    isVegetarian: false,
+  {
+    name: 'Japanese',
+    description: 'Light, balanced dishes centered on rice, fish, soy, seaweed, and seasonal vegetables.',
   },
-  romaineLettuce: {
-    name: 'Seed Romaine Lettuce',
-    calories: 17,
-    protein: 1.2,
-    fat: 0.3,
-    fiber: 2.1,
-    hasGluten: false,
-    isVegetarian: true,
+  {
+    name: 'Vietnamese',
+    description: 'Fresh herbs, broths, rice noodles, and bright sweet-sour-salty flavors from Vietnamese cuisine.',
   },
-  avocado: {
-    name: 'Seed Avocado',
-    calories: 160,
-    protein: 2,
-    fat: 14.7,
-    fiber: 6.7,
-    hasGluten: false,
-    isVegetarian: true,
+  {
+    name: 'Korean',
+    description: 'Savory meals with fermented ingredients, rice, vegetables, and grilled proteins.',
   },
-  tomato: {
-    name: 'Seed Tomato',
-    calories: 18,
-    protein: 0.9,
-    fat: 0.2,
-    fiber: 1.2,
-    hasGluten: false,
-    isVegetarian: true,
+  {
+    name: 'Indian',
+    description: 'Spice-forward dishes built around legumes, vegetables, grains, and slow-cooked proteins.',
   },
-  salmonFillet: {
-    name: 'Seed Salmon Fillet',
-    calories: 208,
-    protein: 20,
-    fat: 13,
-    fiber: 0,
-    hasGluten: false,
-    isVegetarian: false,
+  {
+    name: 'Mexican',
+    description: 'Meals featuring beans, corn, chiles, herbs, and grilled meats or vegetables.',
   },
-  quinoaCooked: {
-    name: 'Seed Quinoa Cooked',
-    calories: 120,
-    protein: 4.4,
-    fat: 1.9,
-    fiber: 2.8,
-    hasGluten: false,
-    isVegetarian: true,
-  },
-  broccoli: {
-    name: 'Seed Broccoli',
-    calories: 34,
-    protein: 2.8,
-    fat: 0.4,
-    fiber: 2.6,
-    hasGluten: false,
-    isVegetarian: true,
-  },
-  oliveOil: {
-    name: 'Seed Olive Oil',
-    calories: 884,
-    protein: 0,
-    fat: 100,
-    fiber: 0,
-    hasGluten: false,
-    isVegetarian: true,
-  },
-};
+];
+
+const MENU_SEED_CUISINE_NAME = 'Mediterranean';
 
 function toBusinessDayStartUtc(date) {
   return new Date(`${date}T00:00:00.000+07:00`);
@@ -146,7 +90,7 @@ function roundTo2(value) {
 async function ensureCuisineType(tx) {
   const existing = await tx.cuisineType.findFirst({
     where: {
-      name: SEED_CUISINE.name,
+      name: MENU_SEED_CUISINE_NAME,
     },
   });
 
@@ -154,14 +98,52 @@ async function ensureCuisineType(tx) {
     return tx.cuisineType.update({
       where: { id: existing.id },
       data: {
-        description: SEED_CUISINE.description,
+        description:
+          SEED_CUISINE_TYPES.find((item) => item.name === MENU_SEED_CUISINE_NAME)
+            ?.description ?? existing.description,
       },
     });
   }
 
   return tx.cuisineType.create({
-    data: SEED_CUISINE,
+    data:
+      SEED_CUISINE_TYPES.find((item) => item.name === MENU_SEED_CUISINE_NAME) ?? {
+        name: MENU_SEED_CUISINE_NAME,
+        description: null,
+      },
   });
+}
+
+async function ensureNamedOption(delegate, optionInput) {
+  const existing = await delegate.findFirst({
+    where: {
+      name: optionInput.name,
+    },
+  });
+
+  if (existing) {
+    return delegate.update({
+      where: { id: existing.id },
+      data: {
+        description: optionInput.description,
+      },
+    });
+  }
+
+  return delegate.create({
+    data: optionInput,
+  });
+}
+
+async function seedNamedOptions(delegate, optionSeed) {
+  const seededOptions = [];
+
+  for (const optionInput of optionSeed) {
+    const seededOption = await ensureNamedOption(delegate, optionInput);
+    seededOptions.push(seededOption);
+  }
+
+  return seededOptions;
 }
 
 async function ensureMeal(tx, mealInput) {
@@ -216,6 +198,51 @@ async function ensureIngredient(tx, ingredientInput) {
   return tx.ingredient.create({
     data: ingredientInput,
   });
+}
+
+async function seedIngredientCatalog(tx) {
+  const ingredientIds = [];
+  const ingredientsByName = new Map();
+
+  for (const ingredient of ingredientCatalogSeed) {
+    const seededIngredient = await ensureIngredient(tx, ingredient);
+    ingredientIds.push(seededIngredient.id);
+    ingredientsByName.set(seededIngredient.name, seededIngredient);
+  }
+
+  return {
+    ingredientIds,
+    ingredientsByName,
+  };
+}
+
+function getRequiredMealIngredients(ingredientsByName) {
+  const requiredIngredients = {
+    rolledOats: 'Rolled Oats',
+    greekYogurt: 'Greek Yogurt Plain',
+    chiaSeeds: 'Chia Seeds',
+    blueberry: 'Blueberry',
+    chickenBreast: 'Chicken Breast',
+    romaineLettuce: 'Romaine Lettuce',
+    avocado: 'Avocado',
+    tomato: 'Tomato',
+    salmon: 'Salmon',
+    quinoaCooked: 'Quinoa Cooked',
+    broccoli: 'Broccoli',
+    oliveOil: 'Olive Oil',
+  };
+
+  return Object.fromEntries(
+    Object.entries(requiredIngredients).map(([key, ingredientName]) => {
+      const ingredient = ingredientsByName.get(ingredientName);
+
+      if (!ingredient) {
+        throw new Error(`Required ingredient not found in ingredient.seed.js: ${ingredientName}`);
+      }
+
+      return [key, ingredient];
+    }),
+  );
 }
 
 async function replaceMealIngredients(tx, mealId, items) {
@@ -333,6 +360,15 @@ async function upsertMenuWithItems(tx, input) {
 
 async function seedMenuFeatureData() {
   return prisma.$transaction(async (tx) => {
+    const { ingredientIds: catalogIngredientIds, ingredientsByName } =
+      await seedIngredientCatalog(tx);
+    const seededDietTypes = await seedNamedOptions(tx.dietType, SEED_DIET_TYPES);
+    const seededGoals = await seedNamedOptions(tx.goal, SEED_GOALS);
+    const seededCuisineTypes = await seedNamedOptions(
+      tx.cuisineType,
+      SEED_CUISINE_TYPES,
+    );
+
     const user = await tx.user.upsert({
       where: {
         email: SEED_USER.email,
@@ -383,20 +419,7 @@ async function seedMenuFeatureData() {
       totalFiber: 7,
     });
 
-    const ingredients = {
-      rolledOats: await ensureIngredient(tx, SEED_INGREDIENTS.rolledOats),
-      greekYogurt: await ensureIngredient(tx, SEED_INGREDIENTS.greekYogurt),
-      chiaSeeds: await ensureIngredient(tx, SEED_INGREDIENTS.chiaSeeds),
-      blueberry: await ensureIngredient(tx, SEED_INGREDIENTS.blueberry),
-      chickenBreast: await ensureIngredient(tx, SEED_INGREDIENTS.chickenBreast),
-      romaineLettuce: await ensureIngredient(tx, SEED_INGREDIENTS.romaineLettuce),
-      avocado: await ensureIngredient(tx, SEED_INGREDIENTS.avocado),
-      tomato: await ensureIngredient(tx, SEED_INGREDIENTS.tomato),
-      salmonFillet: await ensureIngredient(tx, SEED_INGREDIENTS.salmonFillet),
-      quinoaCooked: await ensureIngredient(tx, SEED_INGREDIENTS.quinoaCooked),
-      broccoli: await ensureIngredient(tx, SEED_INGREDIENTS.broccoli),
-      oliveOil: await ensureIngredient(tx, SEED_INGREDIENTS.oliveOil),
-    };
+    const ingredients = getRequiredMealIngredients(ingredientsByName);
 
     await replaceMealIngredients(tx, breakfastMeal.id, [
       { ingredientId: ingredients.rolledOats.id, quantity: 60 },
@@ -414,7 +437,7 @@ async function seedMenuFeatureData() {
     ]);
 
     await replaceMealIngredients(tx, dinnerMeal.id, [
-      { ingredientId: ingredients.salmonFillet.id, quantity: 170 },
+      { ingredientId: ingredients.salmon.id, quantity: 170 },
       { ingredientId: ingredients.quinoaCooked.id, quantity: 150 },
       { ingredientId: ingredients.broccoli.id, quantity: 120 },
       { ingredientId: ingredients.oliveOil.id, quantity: 10 },
@@ -471,6 +494,10 @@ async function seedMenuFeatureData() {
       menuIds: [menuOneId, menuTwoId],
       mealIds: [breakfastMeal.id, lunchMeal.id, dinnerMeal.id],
       ingredientIds: Object.values(ingredients).map((ingredient) => ingredient.id),
+      catalogIngredientCount: catalogIngredientIds.length,
+      dietTypeCount: seededDietTypes.length,
+      goalCount: seededGoals.length,
+      cuisineTypeCount: seededCuisineTypes.length,
       cuisineTypeId: cuisineType.id,
     };
   });
@@ -532,6 +559,10 @@ async function main() {
   console.log('Seed completed successfully.');
   console.log(`User: ${SEED_USER.email} (${result.userId})`);
   console.log(`CuisineType ID: ${result.cuisineTypeId}`);
+  console.log(`Catalog ingredients seeded: ${result.catalogIngredientCount}`);
+  console.log(`Diet types seeded: ${result.dietTypeCount}`);
+  console.log(`Goals seeded: ${result.goalCount}`);
+  console.log(`Cuisine types seeded: ${result.cuisineTypeCount}`);
   console.log(`Meal IDs: ${result.mealIds.join(', ')}`);
   console.log(`Ingredient IDs: ${result.ingredientIds.join(', ')}`);
 

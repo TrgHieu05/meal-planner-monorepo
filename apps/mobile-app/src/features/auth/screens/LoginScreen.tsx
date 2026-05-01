@@ -62,8 +62,10 @@ export default function LoginScreen() {
 
         try {
             const idToken = await signInForIdToken();
-            await signInWithGoogleIdToken(idToken);
-            router.replace('/');
+            const nextSession = await signInWithGoogleIdToken(idToken);
+            router.replace(
+                nextSession.user.isOnboardingCompleted ? '/' : '/onboarding/step-1',
+            );
         } catch (error) {
             setGoogleSignInError(getGoogleSignInErrorMessage(error));
         } finally {

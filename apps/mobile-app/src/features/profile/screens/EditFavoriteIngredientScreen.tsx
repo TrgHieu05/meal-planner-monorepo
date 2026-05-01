@@ -1,16 +1,24 @@
 import { FavoriteIngredientConflictModal } from './FavoriteIngredientConflictModal'
 import { IngredientSelectionScreen } from './IngredientSelectionScreen'
 
-const FAVORITE_INGREDIENTS = ['Chicken', 'Rice', 'Beef', 'Broccoli', 'Salmon']
-const AVAILABLE_INGREDIENTS = ['Cherry', 'Apple', 'Banana', 'Bean']
+import {
+	fetchAllergies,
+	fetchFavoriteIngredients,
+	updateAllergies,
+	updateFavoriteIngredients,
+} from '../api/profile.api'
 
 export default function EditFavoriteIngredientScreen() {
 	return (
 		<IngredientSelectionScreen
 			title="Edit Favorite Ingredient"
 			selectedTone="brand"
-			selectedIngredients={FAVORITE_INGREDIENTS}
-			availableIngredients={AVAILABLE_INGREDIENTS}
+			loadSelectedIngredients={(accessToken) =>
+				fetchFavoriteIngredients({ accessToken })
+			}
+			loadConflictingIngredients={(accessToken) => fetchAllergies({ accessToken })}
+			saveSelectedIngredients={updateFavoriteIngredients}
+			saveConflictingIngredients={updateAllergies}
 			ConflictModal={FavoriteIngredientConflictModal}
 		/>
 	)

@@ -12,12 +12,10 @@ import { OptionsModule } from './options/options.module';
 import { ProfileModule } from './profile/profile.module';
 import { UserModule } from './user/user.module';
 import { JwtAuthOptInGuard } from './auth/jwt-auth.guard';
-<<<<<<< HEAD
 import { MealTemplateModule } from './meal-template/meal-template.module';
-=======
 import { MealSearchModule } from './meal-search/meal-search.module';
 import { MenuModule } from './menu/menu.module';
->>>>>>> e982cb573a5011b40e1a20685c697c440b658343
+import { IngredientModule } from './ingredient/ingredient.module';
 
 @Module({
   imports: [
@@ -33,12 +31,10 @@ import { MenuModule } from './menu/menu.module';
     UserModule,
     MetricModule,
     ProfileModule,
-<<<<<<< HEAD
+    IngredientModule,
     MealTemplateModule,
-=======
     MealSearchModule,
     MenuModule,
->>>>>>> e982cb573a5011b40e1a20685c697c440b658343
   ],
   controllers: [AppController],
   providers: [

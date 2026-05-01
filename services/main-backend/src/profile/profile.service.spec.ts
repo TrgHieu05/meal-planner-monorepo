@@ -9,7 +9,7 @@ describe('ProfileService', () => {
   let service: ProfileService;
   let prisma: {
     user: { findUnique: jest.Mock };
-    profile: { findUnique: jest.Mock; update: jest.Mock };
+    profile: { findUnique: jest.Mock; create: jest.Mock; update: jest.Mock };
     allergy: { findMany: jest.Mock };
     favoriteIngredient: { findMany: jest.Mock };
     metric: { findFirst: jest.Mock };
@@ -23,7 +23,7 @@ describe('ProfileService', () => {
   beforeEach(() => {
     prisma = {
       user: { findUnique: jest.fn() },
-      profile: { findUnique: jest.fn(), update: jest.fn() },
+      profile: { findUnique: jest.fn(), create: jest.fn(), update: jest.fn() },
       allergy: { findMany: jest.fn() },
       favoriteIngredient: { findMany: jest.fn() },
       metric: { findFirst: jest.fn() },
@@ -100,6 +100,33 @@ describe('ProfileService', () => {
       expect(result.preferences.dietTypeId).toBe(1);
       expect(result.allergies.list).toEqual([{ id: 2, name: 'Milk' }]);
       expect(result.favoriteIngredients.list).toEqual([{ id: 1, name: 'Egg' }]);
+    });
+
+    it('should return full profile with null latest metric when no metric exists', async () => {
+      prisma.user.findUnique
+        .mockResolvedValueOnce({ id: userId })
+        .mockResolvedValueOnce({
+          email: 'user@example.com',
+          userName: 'John',
+          gender: 'M',
+          dateOfBirth: null,
+        });
+      prisma.profile.findUnique.mockResolvedValue({
+        id: userId,
+        userId,
+        dietTypeId: 1,
+        goalId: 2,
+        cuisineTypeId: 3,
+        targetCalories: null,
+        activityLevel: null,
+      });
+      prisma.allergy.findMany.mockResolvedValue([]);
+      prisma.favoriteIngredient.findMany.mockResolvedValue([]);
+      prisma.metric.findFirst.mockResolvedValue(null);
+
+      const result = await service.getFullProfile(userId);
+
+      expect(result.latestMetric).toBeNull();
     });
 
     it('should throw InternalServerErrorException when user mapping is invalid', async () => {

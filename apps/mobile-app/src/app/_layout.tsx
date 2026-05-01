@@ -1,18 +1,89 @@
-import { Stack } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
+import { useEffect } from 'react';
 
 import { AppProviders } from '@/providers/AppProviders';
-import { useAuthStore } from '@store/authStore';
+import { useSession } from '@/providers/AuthProvider';
+
+const AUTH_ROUTE_NAMES = new Set([
+	'login',
+	'signup',
+	'forgot-password',
+	'verify-otp',
+	'reset-password',
+]);
 
 export default function RootLayout() {
-	const { isLoggedIn } = useAuthStore();
 	return (
 		<AppProviders>
+			<RootNavigator />
+		</AppProviders>
+	);
+}
+
+function RootNavigator() {
+	const {
+		isAuthenticated,
+		isLoading,
+		isOnboardingCompleted,
+	} = useSession();
+	const router = useRouter();
+	const segments = useSegments();
+	const topLevelRoute = typeof segments[0] === 'string' ? segments[0] : null;
+	const isAuthRoute = topLevelRoute != null && AUTH_ROUTE_NAMES.has(topLevelRoute);
+	const isOnboardingRoute = topLevelRoute === 'onboarding';
+	const isProtectedAppRoute =
+		topLevelRoute === '(tabs)' || topLevelRoute === 'profile';
+
+	useEffect(() => {
+		if (isLoading) {
+			return;
+		}
+
+		if (!isAuthenticated) {
+			if (!isAuthRoute) {
+				router.replace('/login');
+			}
+			return;
+		}
+
+		if (!isOnboardingCompleted) {
+			if (!isOnboardingRoute) {
+				router.replace('/onboarding/step-1');
+			}
+			return;
+		}
+
+		if (!isProtectedAppRoute) {
+			router.replace('/');
+		}
+	}, [
+		isAuthRoute,
+		isAuthenticated,
+		isLoading,
+		isOnboardingCompleted,
+		isOnboardingRoute,
+		isProtectedAppRoute,
+		router,
+	]);
+
+	if (isLoading) {
+		return null;
+	}
+
+	return (
 			<Stack screenOptions={{ headerShown: false }}>
-				<Stack.Protected guard={isLoggedIn}>
+				<Stack.Protected guard={isAuthenticated && isOnboardingCompleted}>
 					<Stack.Screen name="(tabs)" />
+					<Stack.Screen name="profile/edit-user-info" />
+					<Stack.Screen name="profile/edit-preference" />
+					<Stack.Screen name="profile/edit-metric" />
+					<Stack.Screen name="profile/edit-allergy" />
+					<Stack.Screen name="profile/edit-favorite-ingredient" />
+				</Stack.Protected>
+				<Stack.Protected guard={isAuthenticated && !isOnboardingCompleted}>
 					<Stack.Screen name="onboarding" />
 				</Stack.Protected>
-				<Stack.Protected guard={!isLoggedIn}>
+				<Stack.Protected guard={!isAuthenticated}>
 					<Stack.Screen name="login" />
 					<Stack.Screen name="signup" />
 					<Stack.Screen name="forgot-password" />
@@ -20,6 +91,5 @@ export default function RootLayout() {
 					<Stack.Screen name="reset-password" />
 				</Stack.Protected>
 			</Stack>
-		</AppProviders>
 	);
 }

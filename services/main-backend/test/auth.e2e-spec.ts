@@ -46,6 +46,9 @@ describe('Auth API (e2e)', () => {
             id: userId,
             email: 'user@example.com',
             userName: 'John',
+            gender: null,
+            dateOfBirth: null,
+            profile: null,
           }),
         },
       })
@@ -70,6 +73,7 @@ describe('Auth API (e2e)', () => {
         id: userId,
         email: 'user@example.com',
         userName: 'John',
+        isOnboardingCompleted: false,
       },
       accessToken: 'jwt-token-here',
     });
@@ -100,6 +104,7 @@ describe('Auth API (e2e)', () => {
         id: userId,
         email: 'user@example.com',
         userName: 'John',
+        isOnboardingCompleted: false,
       });
   });
 

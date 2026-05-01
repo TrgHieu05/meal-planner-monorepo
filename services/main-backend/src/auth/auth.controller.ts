@@ -60,6 +60,7 @@ export class AuthController {
           id: '63914c9d-3f89-4a60-a67d-be0d29b5e623',
           email: 'quytvo2626@gmail.com',
           userName: 'quý võ',
+          isOnboardingCompleted: false,
         },
         accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
       },
@@ -91,6 +92,7 @@ export class AuthController {
         id: '63914c9d-3f89-4a60-a67d-be0d29b5e623',
         email: 'quytvo2626@gmail.com',
         userName: 'quý võ',
+        isOnboardingCompleted: false,
       },
     },
   })

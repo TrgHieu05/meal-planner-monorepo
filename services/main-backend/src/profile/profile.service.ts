@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -7,17 +8,37 @@ import { PrismaService } from '../database/prisma.service';
 import {
   AllergyResponseSchema,
   FavoriteIngredientResponseSchema,
+  ProfileCreate,
   ProfileOverviewResponseSchema,
   ProfileResponseSchema,
   ProfileUpdate,
 } from '@meal/shared';
 import { Uuid } from '@meal/shared/types/common';
-import { MetricResponseSchema } from '@meal/shared/types/metric';
+import { LatestMetricResponseSchema } from '@meal/shared/types/metric';
 import { UserResponseSchema } from '@meal/shared/types/user';
 
 @Injectable()
 export class ProfileService {
   constructor(private readonly prisma: PrismaService) {}
+
+  async createProfile(userId: Uuid, payload: ProfileCreate) {
+    await this.assertUserExists(userId);
+    await this.assertProfileDoesNotExist(userId);
+    await this.assertProfileReferenceExists(payload);
+
+    const profile = await this.prisma.profile.create({
+      data: {
+        userId,
+        ...payload,
+      },
+    });
+    const parsedProfile = ProfileResponseSchema.safeParse(profile);
+    if (!parsedProfile.success) {
+      throw new InternalServerErrorException('Failed to map created profile data.');
+    }
+
+    return parsedProfile.data;
+  }
 
   async getFullProfile(userId: Uuid) {
     await this.assertUserExists(userId);
@@ -96,7 +117,7 @@ export class ProfileService {
         recordedAt: 'desc',
       },
     });
-    const parsedMetric = MetricResponseSchema.safeParse(metric);
+    const parsedMetric = LatestMetricResponseSchema.safeParse(metric);
     if (!parsedMetric.success) {
       throw new InternalServerErrorException(
         'Failed to map latest metric data.',
@@ -174,7 +195,17 @@ export class ProfileService {
     }
   }
 
-  private async assertProfileReferenceExists(payload: ProfileUpdate) {
+  private async assertProfileDoesNotExist(userId: Uuid) {
+    const profile = await this.prisma.profile.findUnique({
+      where: { userId },
+      select: { userId: true },
+    });
+    if (profile) {
+      throw new ConflictException('Profile already exists for the current user.');
+    }
+  }
+
+  private async assertProfileReferenceExists(payload: ProfileCreate | ProfileUpdate) {
     if (payload.dietTypeId != null) {
       const dietType = await this.prisma.dietType.findUnique({
         where: { id: payload.dietTypeId },

@@ -6,25 +6,16 @@
   "types": "index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-<<<<<<< HEAD
     "db:seed": "ts-node-script prisma/seed.ts"
   },
   "prisma": {
     "seed": "ts-node-script prisma/seed.ts"
-=======
-    "seed": "prisma db seed",
-    "seed:run": "node prisma/seed.js"
-  },
-  "prisma": {
-    "seed": "node prisma/seed.js"
->>>>>>> e982cb573a5011b40e1a20685c697c440b658343
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.30.3",
   "dependencies": {
-<<<<<<< HEAD
     "@prisma/client": "^7.4.2",
     "pg": "^8.20.0",
     "prisma": "^7.4.2"
@@ -34,10 +25,5 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.0.0",
     "@types/node": "^20.0.0"
-=======
-    "@prisma/adapter-pg": "^7.5.0",
-    "@prisma/client": "^7.4.2",
-    "prisma": "^7.4.2"
->>>>>>> e982cb573a5011b40e1a20685c697c440b658343
   }
 }

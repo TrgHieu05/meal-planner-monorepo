@@ -8,7 +8,6 @@ const InputSearchFrame = styled(XStack, {
 	w: '100%',
 	h: 52,
 	br: '$md',
-	bw: 0,
 	px: '$md',
 	gap: '$sm',
 	ai: 'center',
@@ -18,14 +17,14 @@ const InputSearchFrame = styled(XStack, {
 	variants: {
 		error: {
 			true: {
-				outlineWidth: 1.5,
-				outlineColor: '$danger',
+				borderWidth: 1.5,
+				borderColor: '$danger',
 			},
 		},
 		focused: {
 			true: {
-				outlineWidth: 1.5,
-				outlineColor: '$primary',
+				borderWidth: 1.5,
+				borderColor: '$primary',
 			},
 		},
 	} as const,

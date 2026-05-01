@@ -1,5 +1,6 @@
 import { ChevronLeft, X } from '@tamagui/lucide-icons-2'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { ActivityIndicator, ScrollView, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { SizableText, XStack, YStack, useTheme } from 'tamagui'
 import { useRouter } from 'expo-router'
@@ -41,6 +42,9 @@ type IngredientSelectionScreenProps = {
 	ConflictModal: React.ComponentType<IngredientConflictModalProps>
 }
 
+const INGREDIENT_CATALOG_PAGE_SIZE = 30
+const LOAD_MORE_THRESHOLD = 120
+
 export function IngredientSelectionScreen({
 	title,
 	selectedTone,
@@ -60,6 +64,9 @@ export function IngredientSelectionScreen({
 	const [searchValue, setSearchValue] = useState('')
 	const [selectedItems, setSelectedItems] = useState<IngredientSummary[]>([])
 	const [catalogItems, setCatalogItems] = useState<IngredientSummary[]>([])
+	const [catalogPage, setCatalogPage] = useState(1)
+	const [hasMoreCatalogItems, setHasMoreCatalogItems] = useState(false)
+	const [isLoadingMore, setIsLoadingMore] = useState(false)
 	const [conflictItems, setConflictItems] = useState<IngredientSummary[]>([])
 
 	const loadInitialData = useCallback(async () => {
@@ -79,13 +86,15 @@ export function IngredientSelectionScreen({
 					query: {
 						q: '',
 						page: 1,
-						pageSize: 30,
+						pageSize: INGREDIENT_CATALOG_PAGE_SIZE,
 					},
 				}),
 			])
 
 			setSelectedItems(selectedResponse.list)
 			setCatalogItems(catalogResponse.items)
+			setCatalogPage(catalogResponse.page)
+			setHasMoreCatalogItems(catalogResponse.hasMore)
 		} catch (error) {
 			setScreenError(resolveApiErrorMessage(error, 'Unable to load ingredients.'))
 		} finally {
@@ -102,16 +111,19 @@ export function IngredientSelectionScreen({
 		const timeoutId = setTimeout(() => {
 			void (async () => {
 				try {
+					setScreenError(null)
 					const response = await fetchIngredientCatalog({
 						query: {
 							q: searchValue.trim(),
 							page: 1,
-							pageSize: 30,
+							pageSize: INGREDIENT_CATALOG_PAGE_SIZE,
 						},
 					})
 
 					if (isActive) {
 						setCatalogItems(response.items)
+						setCatalogPage(response.page)
+						setHasMoreCatalogItems(response.hasMore)
 					}
 				} catch (error) {
 					if (isActive) {
@@ -147,6 +159,48 @@ export function IngredientSelectionScreen({
 				: [...currentItems, ingredient],
 		)
 	}
+
+	const loadMoreCatalogItems = useCallback(async () => {
+		if (isLoading || isLoadingMore || !hasMoreCatalogItems) {
+			return
+		}
+
+		setIsLoadingMore(true)
+
+		try {
+			const response = await fetchIngredientCatalog({
+				query: {
+					q: searchValue.trim(),
+					page: catalogPage + 1,
+					pageSize: INGREDIENT_CATALOG_PAGE_SIZE,
+				},
+			})
+
+			setCatalogItems((currentItems) => mergeIngredientItems(currentItems, response.items))
+			setCatalogPage(response.page)
+			setHasMoreCatalogItems(response.hasMore)
+		} catch (error) {
+			setScreenError(resolveApiErrorMessage(error, 'Unable to load more ingredients.'))
+		} finally {
+			setIsLoadingMore(false)
+		}
+	}, [catalogPage, hasMoreCatalogItems, isLoading, isLoadingMore, searchValue])
+
+	const handleCatalogScroll = useCallback(
+		(event: NativeSyntheticEvent<NativeScrollEvent>) => {
+			const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent
+			const isNearBottom =
+				layoutMeasurement.height + contentOffset.y >=
+				contentSize.height - LOAD_MORE_THRESHOLD
+
+			if (!isNearBottom) {
+				return
+			}
+
+			void loadMoreCatalogItems()
+		},
+		[loadMoreCatalogItems],
+	)
 
 	const saveSelection = useCallback(async () => {
 		if (!session?.accessToken) {
@@ -256,44 +310,64 @@ export function IngredientSelectionScreen({
 						</SizableText>
 					</XStack>
 
-					<YStack f={1} gap="$lg">
-						<InputSearch
-							placeholder="Search ingredients..."
-							value={searchValue}
-							onChangeText={setSearchValue}
-						/>
+					<ScrollView
+						style={{ flex: 1 }}
+						contentContainerStyle={{ paddingBottom: 16 }}
+						scrollEventThrottle={16}
+						keyboardShouldPersistTaps="handled"
+						onScroll={handleCatalogScroll}
+					>
+						<YStack gap="$lg">
+							<InputSearch
+								placeholder="Search ingredients..."
+								value={searchValue}
+								onChangeText={setSearchValue}
+							/>
 
-						{screenError ? (
-							<SizableText ff="$body" fos="$sm" col="$danger">
-								{screenError}
-							</SizableText>
-						) : null}
-
-						<XStack flexWrap="wrap" gap="$sm">
-							{visibleSelectedItems.map((ingredient) => (
-								<Chip key={ingredient.id} tone={selectedTone} onPress={() => handleToggleIngredient(ingredient)}>
-									<Chip.Text>{ingredient.name}</Chip.Text>
-									<Chip.Icon icon={X} />
-								</Chip>
-							))}
-						</XStack>
-
-						<Divider label="Ingredients" />
-
-						<XStack flexWrap="wrap" gap="$sm">
-							{visibleAvailableItems.length > 0 ? (
-								visibleAvailableItems.map((ingredient) => (
-									<Chip key={ingredient.id} tone="neutral" onPress={() => handleToggleIngredient(ingredient)}>
-										<Chip.Text>{ingredient.name}</Chip.Text>
-									</Chip>
-								))
-							) : (
-								<SizableText ff="$body" fos="$md" col="$textSubtle">
-									No ingredients found.
+							{screenError ? (
+								<SizableText ff="$body" fos="$sm" col="$danger">
+									{screenError}
 								</SizableText>
-							)}
-						</XStack>
-					</YStack>
+							) : null}
+
+							<XStack flexWrap="wrap" gap="$sm">
+								{visibleSelectedItems.map((ingredient) => (
+									<Chip key={ingredient.id} tone={selectedTone} onPress={() => handleToggleIngredient(ingredient)}>
+										<Chip.Text>{ingredient.name}</Chip.Text>
+										<Chip.Icon icon={X} />
+									</Chip>
+								))}
+							</XStack>
+
+							<Divider label="Ingredients" />
+
+							<XStack flexWrap="wrap" gap="$sm">
+								{visibleAvailableItems.length > 0 ? (
+									visibleAvailableItems.map((ingredient) => (
+										<Chip key={ingredient.id} tone="neutral" onPress={() => handleToggleIngredient(ingredient)}>
+											<Chip.Text>{ingredient.name}</Chip.Text>
+										</Chip>
+									))
+								) : (
+									<SizableText ff="$body" fos="$md" col="$textSubtle">
+										No ingredients found.
+									</SizableText>
+								)}
+							</XStack>
+
+							{isLoadingMore ? (
+								<XStack ai="center" jc="center" py="$md">
+									<ActivityIndicator color={theme.primary.val} />
+								</XStack>
+							) : null}
+
+							{!isLoadingMore && !hasMoreCatalogItems && catalogItems.length > 0 ? (
+								<SizableText ff="$body" fos="$sm" col="$textSubtle" ta="center" py="$sm">
+									No more ingredient to load.
+								</SizableText>
+							) : null}
+						</YStack>
+					</ScrollView>
 				</YStack>
 
 				<YStack px="$md" pb="$lg" pt="$sm">
@@ -311,4 +385,23 @@ export function IngredientSelectionScreen({
 			</YStack>
 		</SafeAreaView>
 	)
+}
+
+function mergeIngredientItems(
+	currentItems: IngredientSummary[],
+	nextItems: IngredientSummary[],
+) {
+	const mergedItems = [...currentItems]
+	const existingIds = new Set(currentItems.map((item) => item.id))
+
+	for (const item of nextItems) {
+		if (existingIds.has(item.id)) {
+			continue
+		}
+
+		existingIds.add(item.id)
+		mergedItems.push(item)
+	}
+
+	return mergedItems
 }

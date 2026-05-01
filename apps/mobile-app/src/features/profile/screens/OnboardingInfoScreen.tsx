@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useRouter } from 'expo-router'
 import { YStack, SizableText, XStack } from 'tamagui'
 
@@ -6,9 +6,12 @@ import { Button, InputDate, InputSelect } from '@components'
 
 import { useOnboardingProfile } from '../onboarding/OnboardingProfileProvider'
 
+import { useSession } from '@/providers/AuthProvider'
+
 
 export default function OnboardingInfoScreen() {
     const router = useRouter()
+    const { signOut } = useSession()
     const { draft, updateDraft } = useOnboardingProfile()
     const genderOptions = useMemo(
         () => [
@@ -18,6 +21,10 @@ export default function OnboardingInfoScreen() {
         [],
     )
     const canContinue = draft.gender !== null && draft.dateOfBirth !== null
+    const handleBackToLogin = useCallback(async () => {
+        await signOut()
+        router.replace('/login')
+    }, [router, signOut])
 
 
     return (
@@ -43,7 +50,12 @@ export default function OnboardingInfoScreen() {
             </YStack>
 
             <XStack gap="$space.md" w="100%" alignItems="center" justifyContent="flex-end">
-                <Button color="secondary" size="large" w={120} onPress={() => router.back()}>
+                <Button
+                    color="secondary"
+                    size="large"
+                    w={120}
+                    onPress={() => void handleBackToLogin()}
+                >
                     <Button.Text>Back</Button.Text>
                 </Button>
                 <Button

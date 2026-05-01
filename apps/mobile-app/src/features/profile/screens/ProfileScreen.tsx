@@ -117,7 +117,7 @@ export default function ProfileScreen() {
     const metricHeightLabel =
         profileData.metrics.height == null ? 'Not set' : `${profileData.metrics.height} cm`;
     const metricBmiLabel =
-        profileData.metrics.bmi == null ? 'Not set' : `${profileData.metrics.bmi}`;
+        profileData.metrics.bmi == null ? 'Not set' : profileData.metrics.bmi.toFixed(1);
 
     return (
         <ScrollView contentInsetAdjustmentBehavior="automatic">

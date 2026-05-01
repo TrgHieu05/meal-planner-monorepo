@@ -60,6 +60,8 @@ import {
   createAuthenticatedApiClient,
 } from '@/services/api/http-client';
 
+import { formatDateOnly, resolveGenderLabel } from '../utils/profile-form';
+
 import type { ProfileScreenData } from '../types';
 
 type OptionItem = DietType | Goal | CuisineType;
@@ -103,11 +105,6 @@ export type ProfileOptions = {
   dietTypes: DietType[];
   goals: Goal[];
   cuisineTypes: CuisineType[];
-};
-
-const GENDER_LABEL_BY_CODE: Record<string, string> = {
-  M: 'Male',
-  F: 'Female',
 };
 
 const ACTIVITY_LEVEL_LABEL_BY_CODE: Record<string, string> = {
@@ -195,10 +192,7 @@ const mapProfileOverviewToScreenData = (
     basicInfo: {
       userName: overview.basic.userName,
       email: overview.basic.email,
-      gender:
-        normalizedGender == null
-          ? null
-          : GENDER_LABEL_BY_CODE[normalizedGender] ?? overview.basic.gender,
+      gender: resolveGenderLabel(normalizedGender),
       dob: overview.basic.dateOfBirth,
     },
     preferences: {
@@ -505,16 +499,4 @@ function serializeUserUpdatePayload(payload: UserUpdate) {
   }
 
   return serializedPayload;
-}
-
-function formatDateOnly(date: Date) {
-  if (Number.isNaN(date.getTime())) {
-    throw new Error('dateOfBirth must be a valid Date instance.');
-  }
-
-  const year = date.getFullYear();
-  const month = `${date.getMonth() + 1}`.padStart(2, '0');
-  const day = `${date.getDate()}`.padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
 }

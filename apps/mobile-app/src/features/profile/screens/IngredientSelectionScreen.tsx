@@ -11,7 +11,10 @@ import {
 	fetchIngredientCatalog,
 	getIngredientConflictResponse,
 } from '../api/profile.api'
-import { resolveApiErrorMessage } from '../utils/profile-form'
+import {
+	resolveApiErrorMessage,
+	summarizeConflictIngredientNames,
+} from '../utils/profile-form'
 
 import type { IngredientConflictModalProps } from './IngredientConflictModalBase'
 
@@ -225,15 +228,7 @@ export function IngredientSelectionScreen({
 	])
 
 	const visibleConflictLabels = useMemo(() => {
-		if (conflictItems.length <= 2) {
-			return conflictItems.map((item) => item.name)
-		}
-
-		return [
-			conflictItems[0].name,
-			conflictItems[1].name,
-			`+ ${conflictItems.length - 2} others`,
-		]
+		return summarizeConflictIngredientNames(conflictItems)
 	}, [conflictItems])
 
 	if (isLoading) {

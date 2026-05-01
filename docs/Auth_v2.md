@@ -20,16 +20,20 @@ Tài liệu này mô tả:
 
 1. Mobile app khởi động, `AuthProvider` đọc `accessToken` từ `SecureStore` hoặc `localStorage`.
 2. Nếu có token, mobile gọi `GET /auth/profile` để kiểm tra token còn hợp lệ hay không.
-3. Nếu hợp lệ, app khôi phục `session` gồm `accessToken` và thông tin `user`.
+3. Nếu hợp lệ, app khôi phục `session` gồm `accessToken` và thông tin `user`, trong đó `user` có thêm field `isOnboardingCompleted` do backend trả về.
 4. Nếu chưa đăng nhập, người dùng đi vào nhóm màn hình `(auth)`.
 5. Khi đăng nhập bằng Google, mobile lấy `Google ID token` qua `expo-auth-session`.
 6. Mobile gửi `idToken` lên `POST /auth/google/exchange`.
-7. Backend xác minh `Google ID token`, tìm hoặc tạo user nội bộ, rồi phát hành `accessToken` của hệ thống.
-8. Mobile lưu `accessToken` vào storage và dùng token này để gọi các API protected về sau.
+7. Backend xác minh `Google ID token`, tìm hoặc tạo user nội bộ, rồi phát hành `accessToken` của hệ thống cùng auth payload có `isOnboardingCompleted`.
+8. Mobile lưu `accessToken` vào storage, sau đó route guard quyết định đưa user vào onboarding bắt buộc hay app chính dựa trên `isOnboardingCompleted`.
+9. Khi user hoàn thành onboarding, mobile refresh session từ `GET /auth/profile` để lấy lại trạng thái hoàn chỉnh do server tính toán.
 
 ### Authorization flow
 
-- Ở mobile, authorization hiện tại chỉ là `route protection` theo trạng thái `session`.
+- Ở mobile, authorization hiện tại là `route protection` theo cả `session` và `isOnboardingCompleted`.
+- User chưa đăng nhập chỉ được vào auth screens.
+- User đã đăng nhập nhưng chưa onboarding complete bị chặn toàn bộ `(tabs)` và bị ép vào `/onboarding/step-1`.
+- User chỉ vào app chính khi backend xác nhận `isOnboardingCompleted = true`.
 - Ở backend, các endpoint protected dùng `JwtAuthGuard` hoặc `@RequireAuth()`.
 - `JwtStrategy` giải mã JWT, lấy `payload.sub`, truy vấn user trong database và gắn `req.user`.
 - Nếu token hợp lệ và user tồn tại thì request được đi tiếp.
@@ -39,6 +43,7 @@ Tài liệu này mô tả:
 - Hệ thống đang dùng `stateless access token` làm token chính.
 - Google chỉ được dùng để xác minh danh tính ban đầu.
 - Sau login, app chỉ dùng JWT nội bộ do backend cấp.
+- Backend auth response hiện đã mang thêm `isOnboardingCompleted` để mobile route guard dùng làm nguồn sự thật.
 - `signOut()` ở mobile hiện chỉ xóa token phía client.
 - Chưa có `refresh token`, chưa có `server-side logout`, chưa có `revoke token`.
 - Authorization mới dừng ở mức “đã đăng nhập hay chưa”, chưa có `RBAC` hoặc `permission-based authorization`.

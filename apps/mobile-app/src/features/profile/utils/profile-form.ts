@@ -11,6 +11,61 @@ export const ACTIVITY_LEVEL_OPTIONS = [
   { label: 'Low', value: 'LOW' },
 ] as const;
 
+export function resolveGenderLabel(code: string | null | undefined) {
+  const normalizedCode =
+    typeof code === 'string' && code.trim().length > 0
+      ? code.trim().toUpperCase()
+      : null;
+
+  if (!normalizedCode) {
+    return null;
+  }
+
+  return (
+    GENDER_OPTIONS.find((option) => option.value === normalizedCode)?.label ??
+    normalizedCode
+  );
+}
+
+export function resolveGenderCode(label: string | null | undefined) {
+  const normalizedLabel =
+    typeof label === 'string' && label.trim().length > 0
+      ? label.trim().toLowerCase()
+      : null;
+
+  if (!normalizedLabel) {
+    return null;
+  }
+
+  return (
+    GENDER_OPTIONS.find(
+      (option) => option.label.toLowerCase() === normalizedLabel,
+    )?.value ?? null
+  );
+}
+
+export function formatDateOnly(date: Date) {
+  if (Number.isNaN(date.getTime())) {
+    throw new Error('dateOfBirth must be a valid Date instance.');
+  }
+
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
+
+export function summarizeConflictIngredientNames(
+  items: ReadonlyArray<{ name: string }>,
+) {
+  if (items.length <= 2) {
+    return items.map((item) => item.name);
+  }
+
+  return [items[0].name, items[1].name, `+ ${items.length - 2} others`];
+}
+
 export function resolveApiErrorMessage(
   error: unknown,
   fallbackMessage: string,

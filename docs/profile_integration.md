@@ -42,7 +42,7 @@ Phạm vi `profile` trong tài liệu này bao gồm:
 ### 1. Thống nhất `gender` domain
 
 - [ ] Thống nhất domain của `gender` giữa database, backend, shared schema và mobile UI.
-- [ ] Chốt rõ hệ thống có cho phép giá trị `U` / `UNKNOWN` / `Prefer not to say` hay không. `[Cần bạn làm rõ]` **Không cho phép các giá trị ngoài `M | F`, nhưng lưu ý rằng chưa khởi tạo trường gender ngay khi tạo user mới mà cần phải cập nhật qua luồng onboardng**
+- [ ] Chốt rõ hệ thống có cho phép giá trị `U` / `UNKNOWN` / `Prefer not to say` hay không. `[Cần bạn làm rõ]` **Không cho phép các giá trị ngoài `M | F`. Trước onboarding, `user.gender` phải nullable ở database/shared schema/backend; giá trị này sẽ được cập nhật qua luồng onboarding.**
 - [ ] Nếu chỉ cho phép `M | F`, cập nhật luồng tạo user Google để không sinh giá trị ngoài schema.
 - [ ] Nếu cho phép thêm giá trị mới, cập nhật đồng bộ Prisma schema, shared schema, backend validation và mobile mapping.
 - [ ] Bổ sung test cho trường hợp user mới đăng nhập Google rồi gọi `GET /api/v1/users/me` và `GET /api/v1/profile/overview`.
@@ -94,19 +94,20 @@ Phạm vi `profile` trong tài liệu này bao gồm:
 #### Auth
 
 - [ ] Cập nhật `auth.service.ts` để luồng tạo user Google tương thích với schema cuối cùng.
-- [ ] Nếu cần, tạo luôn `profile` khi user được tạo lần đầu.
-- [ ] Nếu không auto-create profile, đảm bảo backend trả trạng thái rõ ràng để mobile điều hướng onboarding đúng cách.
+- [ ] Không tạo `profile` khi user được tạo lần đầu; chỉ khởi tạo sau khi hoàn thành onboarding.
+- [ ] Trả explicit field `isOnboardingCompleted` trong `POST /api/auth/google/exchange` và `GET /api/auth/profile` để mobile route guard dùng làm nguồn sự thật.
 
 #### User
 
 - [ ] Giữ contract cập nhật user nhất quán cho `userName`, `gender`, `dateOfBirth`.
+- [ ] Cho phép `gender` nullable trước onboarding; khi field này có giá trị thì chỉ chấp nhận `M | F`.
 - [ ] Chốt payload `dateOfBirth` theo format `YYYY-MM-DD` và ghi rõ trong mobile adapter.
 - [ ] Đảm bảo shared schema parse được dữ liệu thật mà backend trả ra.
 
 #### Profile Preferences
 
 - [ ] Hoàn thiện contract cho `GET /api/v1/profile`, `GET /api/v1/profile/overview`, `PATCH /api/v1/profile`.
-- [ ] Nếu cần tạo profile, bổ sung `POST /api/v1/profile` hoặc logic tương đương.
+- [ ] Bổ sung `POST /api/v1/profile` để onboarding tạo profile lần đầu theo onboarding-driven bootstrap.
 - [ ] Chốt cách backend xử lý field optional/null trong update payload.
 
 #### Metric
@@ -124,6 +125,9 @@ Phạm vi `profile` trong tài liệu này bao gồm:
 #### Ingredient Catalog
 
 - [ ] Tạo controller/service cho ingredient catalog nếu đây là hướng được chọn.
+- [ ] Khóa contract endpoint: `GET /api/v1/ingredients?q=&page=1&pageSize=30`.
+- [ ] Khi `q` rỗng, endpoint trả danh sách browse mặc định; khi `q` có giá trị, endpoint trả kết quả search theo tên.
+- [ ] Khóa response shape: `items`, `page`, `pageSize`, `total`, `hasMore`; mỗi item tối thiểu gồm `id`, `name`.
 - [ ] Nếu dùng search, hỗ trợ query string nhất quán cho mobile.
 - [ ] Ghi rõ trong OpenAPI response và error contract.
 
@@ -133,6 +137,7 @@ Phạm vi `profile` trong tài liệu này bao gồm:
 
 - [ ] Chuẩn hóa toàn bộ profile API calls để dùng `session.accessToken` từ `AuthProvider`.
 - [ ] Giảm hoặc loại bỏ dependency vào `EXPO_PUBLIC_PROFILE_ACCESS_TOKEN` trong luồng UI chính.
+- [ ] Dùng explicit field `isOnboardingCompleted` từ backend để route guard quyết định vào `onboarding` hay `(tabs)`, không tự suy luận từ nhiều request rời rạc ở client.
 - [ ] Tạo API functions riêng cho:
 - [ ] đọc profile overview
 - [ ] cập nhật user
@@ -190,7 +195,7 @@ Phạm vi `profile` trong tài liệu này bao gồm:
 - [ ] Chốt user mới sau login sẽ vào onboarding bắt buộc hay vẫn vào app rồi hoàn thiện profile sau. `[Cần bạn làm rõ]` **Hiện tại sẽ bắt buộc hoàn thiện onboarding trước**
 - [ ] Nối các màn onboarding với options thật từ backend.
 - [ ] Nối submit cuối onboarding với backend create/update profile.
-- [ ] Quyết định trạng thái hoàn thành onboarding lấy từ local state hay derive từ server profile completeness. `[Cần bạn làm rõ]` **Derive từ server nhưng ở mức rule hoàn thành là user đã có gender, dateOfBirth và profile row.**
+- [ ] Quyết định trạng thái hoàn thành onboarding lấy từ local state hay derive từ server profile completeness. `[Cần bạn làm rõ]` **Derive từ server thông qua field explicit `isOnboardingCompleted`; rule hiện tại để backend tính field này là user đã có `gender`, `dateOfBirth` và `profile` row.**
 - [ ] Nếu profile chưa hoàn chỉnh, chốt có chặn các tab khác hay không. `[Cần bạn làm rõ]` **Có, chặn toàn bộ tabs cho đến khi server xác nhận onboarding complete**
 
 ## Checklist kiểm thử
@@ -226,23 +231,20 @@ Phạm vi `profile` trong tài liệu này bao gồm:
 - [ ] Nếu thay đổi env vars hoặc flow mobile, cập nhật `.env.example`.
 - [ ] Nếu onboarding/profile completeness thay đổi route flow, cập nhật tài liệu mobile architecture liên quan.
 
-## Các quyết định đã chốt trước khi triển khai
+## Các điểm cần bạn làm rõ trước khi triển khai
 
-- [x] `gender` chỉ cho phép `M | F`; user mới chưa khởi tạo `gender` ở thời điểm tạo account và sẽ cập nhật qua onboarding.
-- [x] `profile` không được tạo tự động khi user login lần đầu; chỉ tạo sau khi hoàn thành onboarding.
-- [x] Default values cho `dietTypeId`, `goalId`, `cuisineTypeId`, `targetCalories`, `activityLevel` không áp dụng trong v1 vì không dùng auto-bootstrap profile.
-- [x] `cuisineType` là single-select để giữ schema và UI đơn giản.
-- [x] `notificationsEnabled` không thuộc scope profile v1 và cần loại bỏ nếu còn tồn tại trong mobile types hoặc UI.
-- [x] `bodyFatPercent` không thuộc scope profile/metric v1 và cần loại bỏ nếu còn tồn tại trong mobile types hoặc UI.
-- [x] Ingredient selector dùng 1 endpoint duy nhất hỗ trợ cả browse mặc định và search: khi `q` rỗng trả danh sách mặc định, khi `q` có giá trị trả kết quả search.
-- [x] Ingredient selector dùng pagination 30 items mỗi request, debounce 500ms và chỉ hỗ trợ search theo tên, không có bộ lọc bổ sung.
-- [x] Sau khi lưu metric, mobile sẽ re-fetch `profile overview` thay vì dựa trực tiếp vào response của `POST /api/v1/metrics`.
-- [x] `409 Conflict` cho allergy/favorite ingredient phải trả metadata có cấu trúc để UI render được danh sách item xung đột.
-- [x] UI conflict modal phải hiển thị danh sách item xung đột; nếu nhiều hơn 2 item thì hiển thị theo dạng `+ x others` như thiết kế hiện tại.
-- [x] Mobile cần `axios` instance/interceptor chung để xử lý `401` và lỗi mạng trong scope feature này.
-- [x] User mới sau login bắt buộc phải hoàn thành onboarding trước khi vào app chính.
-- [x] Trạng thái hoàn thành onboarding được derive từ server; rule hiện tại là user đã có `gender`, `dateOfBirth` và `profile` row.
-- [x] Nếu profile/onboarding chưa hoàn chỉnh thì phải chặn toàn bộ tabs cho đến khi server xác nhận onboarding complete.
+- [ ] `gender` cuối cùng là `M/F` hay cần thêm `Unknown/Other/Prefer not to say`? `[Cần bạn làm rõ]` **Chốt: chỉ cho phép `M | F`; trước onboarding thì `user.gender` phải nullable.**
+- [ ] `profile` có được tạo tự động khi user login lần đầu không? `[Cần bạn làm rõ]` **Chốt: không auto-create; chỉ tạo sau khi hoàn thành onboarding.**
+- [ ] Nếu auto-create profile, default values hợp lệ cho các foreign key là gì? `[Cần bạn làm rõ]` **Chốt: không áp dụng trong v1 vì không dùng auto-bootstrap profile.**
+- [ ] `cuisineType` là single-select hay multi-select? `[Cần bạn làm rõ]` **Chốt: single-select.**
+- [ ] `notificationsEnabled` có nằm trong scope feature profile hiện tại không? `[Cần bạn làm rõ]` **Chốt: không thuộc scope v1.**
+- [ ] `bodyFatPercent` có nằm trong scope metric/profile hiện tại không? `[Cần bạn làm rõ]` **Chốt: không thuộc scope v1.**
+- [ ] Ingredient selector cần full list, search-only, hay list + search? `[Cần bạn làm rõ]` **Chốt: dùng 1 endpoint duy nhất hỗ trợ cả browse mặc định và search theo tên.**
+- [ ] Contract của ingredient endpoint sẽ được khóa như thế nào? `[Cần bạn làm rõ]` **Chốt: `GET /api/v1/ingredients?q=&page=1&pageSize=30` trả response dạng `{ items, page, pageSize, total, hasMore }`, mỗi item tối thiểu gồm `{ id, name }`.**
+- [ ] Backend có trả tín hiệu explicit cho onboarding status hay để mobile tự suy luận? `[Cần bạn làm rõ]` **Chốt: backend trả explicit field `isOnboardingCompleted`; mobile route guard dùng field này làm nguồn sự thật.**
+- [ ] Sau login lần đầu, user nên vào onboarding bắt buộc hay vào thẳng app? `[Cần bạn làm rõ]` **Chốt: bắt buộc hoàn thiện onboarding trước.**
+- [ ] Khi profile chưa hoàn chỉnh, app có chặn các feature khác hay không? `[Cần bạn làm rõ]` **Chốt: chặn toàn bộ tabs cho đến khi server xác nhận onboarding complete.**
+- [ ] Mobile có cần interceptor tự refresh/retry khi gặp `401` trong phạm vi task này không? `[Cần bạn làm rõ]` **Chốt: có.**
 
 Hiện tại phần này không còn câu hỏi nghiệp vụ mở. Phần còn lại là chuyển các quyết định trên thành giải pháp kỹ thuật cụ thể trong schema, backend contract, mobile data layer và route guard.
 

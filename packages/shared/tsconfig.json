@@ -9,6 +9,10 @@
     "target": "es2017",
     "sourceMap": true,
     "outDir": "./dist",
+<<<<<<< HEAD
+    "baseUrl": "./",
+=======
+>>>>>>> e982cb573a5011b40e1a20685c697c440b658343
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": false,

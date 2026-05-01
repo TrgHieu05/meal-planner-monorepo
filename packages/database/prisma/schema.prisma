@@ -44,7 +44,10 @@ model UserProvider {
 
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+<<<<<<< HEAD
+=======
   @@unique([provider, providerId], map: "user_providers_provider_provider_id_key")
+>>>>>>> e982cb573a5011b40e1a20685c697c440b658343
   @@map("user_providers")
 }
 
@@ -194,8 +197,11 @@ model Menu {
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   items          MenuItem[]
 
+<<<<<<< HEAD
+=======
   @@unique([userId, date], map: "menus_user_id_date_key")
 
+>>>>>>> e982cb573a5011b40e1a20685c697c440b658343
   @@map("menus")
 }
 
@@ -210,8 +216,11 @@ model MenuItem {
   menu           Menu         @relation(fields: [menuId], references: [id], onDelete: Cascade)
   meal           Meal         @relation(fields: [mealId], references: [id])
 
+<<<<<<< HEAD
+=======
   @@unique([menuId, mealId, mealTime], map: "menu_items_menu_id_meal_id_meal_time_key")
 
+>>>>>>> e982cb573a5011b40e1a20685c697c440b658343
   @@map("menu_items")
 }
 
@@ -284,6 +293,10 @@ model MealTemplateDay {
   template       MealTemplate           @relation(fields: [templateId], references: [id], onDelete: Cascade)
   items          MealTemplateDayItem[]
 
+<<<<<<< HEAD
+  @@unique([templateId, dayNumber])
+=======
+>>>>>>> e982cb573a5011b40e1a20685c697c440b658343
   @@map("meal_template_days")
 }
 

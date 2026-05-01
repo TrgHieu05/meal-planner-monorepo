@@ -1,12 +1,20 @@
 {
   "name": "mobile-app",
   "version": "1.0.0",
+<<<<<<< HEAD
+  "main": "index.ts",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+=======
   "main": "expo-router/entry",
   "scripts": {
     "start": "expo start --clear",
     "android": "expo run:android",
     "build:android": "eas build --profile development --platform android --local",
     "ios": "expo run:ios",
+>>>>>>> e982cb573a5011b40e1a20685c697c440b658343
     "web": "expo start --web",
     "test": "jest"
   },
@@ -17,6 +25,16 @@
     "@hookform/resolvers": "^5.2.2",
     "@meal/database": "workspace:*",
     "@meal/shared": "workspace:*",
+<<<<<<< HEAD
+    "axios": "^1.13.6",
+    "expo": "~55.0.5",
+    "expo-status-bar": "~55.0.4",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "react-hook-form": "^7.71.2",
+    "react-native": "0.83.2",
+    "react-native-web": "~0.19.13",
+=======
     "@react-native-google-signin/google-signin": "^16.1.2",
     "@tamagui/animations-moti": "2.0.0-rc.41",
     "@tamagui/animations-react-native": "2.0.0-rc.41",
@@ -46,10 +64,17 @@
     "react-native-web": "~0.21.2",
     "react-native-worklets": "0.7.4",
     "tamagui": "2.0.0-rc.41",
+>>>>>>> e982cb573a5011b40e1a20685c697c440b658343
     "zod": "^4.3.6",
     "zustand": "^5.0.11"
   },
   "devDependencies": {
+<<<<<<< HEAD
+    "@types/jest": "^29.5.14",
+    "@types/react": "~19.2.2",
+    "jest": "~29.7.0",
+    "jest-expo": "^55.0.9",
+=======
     "@tamagui/babel-plugin": "2.0.0-rc.41",
     "@tamagui/metro-plugin": "2.0.0-rc.41",
     "@types/jest": "^29.5.14",
@@ -57,6 +82,7 @@
     "jest": "~29.7.0",
     "jest-expo": "^55.0.16",
     "react-native-svg-transformer": "^1.5.3",
+>>>>>>> e982cb573a5011b40e1a20685c697c440b658343
     "react-test-renderer": "19.2.0",
     "typescript": "~5.9.2"
   },

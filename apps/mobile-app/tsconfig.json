@@ -1,6 +1,9 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
+<<<<<<< HEAD
+    "strict": true
+=======
     "strict": true,
     "paths": {
       "@/*": ["./src/*"],
@@ -11,5 +14,6 @@
       "@hooks/*": ["./src/hooks/*"],
       "@store/*": ["./src/store/*"],
     }
+>>>>>>> e982cb573a5011b40e1a20685c697c440b658343
   }
 }

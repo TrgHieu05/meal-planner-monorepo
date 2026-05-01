@@ -27,8 +27,13 @@ export class OptionsController {
   @Get('diet-types/:id')
   @Header('X-API-Version', 'v1')
   @Header('Cache-Control', 'public, max-age=300')
+<<<<<<< HEAD
+  @ApiOperation({ summary: 'Lấy chi tiết diet type theo id của diet type' })
+  @ApiResponse({ status: 200, description: 'Trả về diet type theo id của diet type' })
+=======
   @ApiOperation({ summary: 'Lấy chi tiết diet type theo id' })
   @ApiResponse({ status: 200, description: 'Trả về diet type theo id' })
+>>>>>>> e982cb573a5011b40e1a20685c697c440b658343
   @ApiResponse({ status: 404, description: 'Diet type not found.' })
   @ApiResponse({ status: 422, description: 'Invalid option id.' })
   @ApiResponse({ status: 500, description: 'Internal server error.' })
@@ -50,8 +55,13 @@ export class OptionsController {
   @Get('goals/:id')
   @Header('X-API-Version', 'v1')
   @Header('Cache-Control', 'public, max-age=300')
+<<<<<<< HEAD
+  @ApiOperation({ summary: 'Lấy chi tiết goal theo id của goal' })
+  @ApiResponse({ status: 200, description: 'Trả về goal theo id của goal' })
+=======
   @ApiOperation({ summary: 'Lấy chi tiết goal theo id' })
   @ApiResponse({ status: 200, description: 'Trả về goal theo id' })
+>>>>>>> e982cb573a5011b40e1a20685c697c440b658343
   @ApiResponse({ status: 404, description: 'Goal not found.' })
   @ApiResponse({ status: 422, description: 'Invalid option id.' })
   @ApiResponse({ status: 500, description: 'Internal server error.' })
@@ -73,8 +83,13 @@ export class OptionsController {
   @Get('cuisine-types/:id')
   @Header('X-API-Version', 'v1')
   @Header('Cache-Control', 'public, max-age=300')
+<<<<<<< HEAD
+  @ApiOperation({ summary: 'Lấy chi tiết cuisine type theo id của cuisine type' })
+  @ApiResponse({ status: 200, description: 'Trả về cuisine type theo id của cuisine type' })
+=======
   @ApiOperation({ summary: 'Lấy chi tiết cuisine type theo id' })
   @ApiResponse({ status: 200, description: 'Trả về cuisine type theo id' })
+>>>>>>> e982cb573a5011b40e1a20685c697c440b658343
   @ApiResponse({ status: 404, description: 'Cuisine type not found.' })
   @ApiResponse({ status: 422, description: 'Invalid option id.' })
   @ApiResponse({ status: 500, description: 'Internal server error.' })

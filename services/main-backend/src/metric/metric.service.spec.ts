@@ -137,7 +137,13 @@ describe('MetricService', () => {
       expect(createInput.data.heightCm).toBe(170);
       expect(createInput.data.weightKg).toBe(65);
       expect(createInput.data.bmi).toBeCloseTo(22.49134948096886, 10);
-      expect(result.userId).toBe(userId);
+      expect(result).toEqual({
+        id: 10,
+        heightCm: 170,
+        weightKg: 65,
+        bmi: createInput.data.bmi,
+        recordedAt: createInput.data.recordedAt,
+      });
       expect(result.bmi).toBeCloseTo(22.49134948096886, 10);
     });
 

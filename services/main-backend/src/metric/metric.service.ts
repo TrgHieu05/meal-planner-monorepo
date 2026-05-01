@@ -6,7 +6,7 @@ import {
 import { PrismaService } from '../database/prisma.service';
 import {
   MetricCreate,
-  MetricSchema,
+  MetricCreateResponseSchema,
   MetricResponseSchema,
 } from '@meal/shared/types/metric';
 import { Uuid } from '@meal/shared/types/common';
@@ -51,7 +51,7 @@ export class MetricService {
       },
     });
 
-    const parsed = MetricSchema.safeParse(metric);
+    const parsed = MetricCreateResponseSchema.safeParse(metric);
     if (!parsed.success) {
       throw new InternalServerErrorException('Invalid metric data');
     }

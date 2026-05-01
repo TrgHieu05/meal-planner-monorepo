@@ -13,7 +13,9 @@ const mockUser = {
   id: '63914c9d-3f89-4a60-a67d-be0d29b5e623',
   email: 'quytvo2626@gmail.com',
   userName: 'quý võ',
-  gender: 'U',
+  gender: null,
+  dateOfBirth: null,
+  profile: null,
   providers: [
     {
       provider: ProviderEnum.GOOGLE,
@@ -73,7 +75,7 @@ describe('AuthService', () => {
     it('should create a new user when the Google account signs in for the first time', async () => {
       const newUser = {
         ...mockUser,
-        id: 'new-user-id',
+        id: '123e4567-e89b-12d3-a456-426614174000',
         email: 'new@gmail.com',
         userName: 'New User',
         providers: [
@@ -99,12 +101,22 @@ describe('AuthService', () => {
       const result = await service.exchangeGoogleIdToken('google-id-token');
 
       expect(mockPrisma.user.create).toHaveBeenCalledTimes(1);
+      expect(mockPrisma.user.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            email: 'new@gmail.com',
+            userName: 'New User',
+            gender: null,
+          }),
+        }),
+      );
       expect(result).toMatchObject({
         message: 'Xác thực Google thành công',
         user: {
-          id: 'new-user-id',
+          id: '123e4567-e89b-12d3-a456-426614174000',
           email: 'new@gmail.com',
           userName: 'New User',
+          isOnboardingCompleted: false,
         },
         accessToken: 'mocked-jwt-token',
       });
@@ -132,6 +144,7 @@ describe('AuthService', () => {
           id: mockUser.id,
           email: mockUser.email,
           userName: mockUser.userName,
+          isOnboardingCompleted: false,
         },
         accessToken: 'mocked-jwt-token',
       });

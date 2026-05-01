@@ -3,6 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
+import { toAuthUser } from './auth-user.mapper';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -25,6 +26,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         id: true,
         email: true,
         userName: true,
+        gender: true,
+        dateOfBirth: true,
+        profile: {
+          select: {
+            userId: true,
+          },
+        },
       },
     });
 
@@ -34,6 +42,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       );
     }
 
-    return user;
+    return toAuthUser(user);
   }
 }

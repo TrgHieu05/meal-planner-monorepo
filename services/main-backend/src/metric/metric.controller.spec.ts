@@ -56,7 +56,6 @@ describe('MetricController', () => {
       const payload = { heightCm: 170, weightKg: 65 };
       metricService.createMetric.mockResolvedValue({
         id: 1,
-        userId,
         ...payload,
         bmi: 22.49,
         recordedAt: new Date(),

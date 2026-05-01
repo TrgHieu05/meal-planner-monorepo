@@ -51,7 +51,7 @@ export class AllergyController {
   @ApiResponse({ status: 404, description: 'User or ingredient not found.' })
   @ApiResponse({
     status: 409,
-    description: 'Ingredient conflict with favorite list.',
+    description: 'Ingredient conflict with favorite list, including structured conflict metadata.',
   })
   @ApiResponse({
     status: 422,

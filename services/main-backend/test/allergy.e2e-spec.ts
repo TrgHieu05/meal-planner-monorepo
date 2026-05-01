@@ -120,16 +120,27 @@ describe('Allergy API (e2e)', () => {
 
   it('PATCH /api/v1/allergies should return 409 for conflict', async () => {
     allergyService.updateAllergy.mockRejectedValue(
-      new ConflictException(
-        'Allergy update conflicts with favorite ingredients: 2.',
-      ),
+      new ConflictException({
+        statusCode: 409,
+        message: 'Ingredient selection conflicts with favorite ingredients.',
+        code: 'INGREDIENT_LIST_CONFLICT',
+        conflictWith: 'favoriteIngredients',
+        items: [{ id: 2, name: 'Milk' }],
+      }),
     );
 
     await request(app.getHttpServer())
       .patch('/api/v1/allergies')
       .set('Authorization', `Bearer ${token}`)
       .send({ ingredientIds: [2] })
-      .expect(409);
+      .expect(409)
+      .expect({
+        statusCode: 409,
+        message: 'Ingredient selection conflicts with favorite ingredients.',
+        code: 'INGREDIENT_LIST_CONFLICT',
+        conflictWith: 'favoriteIngredients',
+        items: [{ id: 2, name: 'Milk' }],
+      });
   });
 
   it('PATCH /api/v1/allergies should return 404 when ingredient is not found', async () => {

@@ -38,9 +38,20 @@ export const IngredientCatalogResponseSchema = z.object({
   hasMore: z.boolean(),
 });
 
+export const IngredientListConflictResponseSchema = z.object({
+  statusCode: z.literal(409),
+  message: z.string().min(1),
+  code: z.literal('INGREDIENT_LIST_CONFLICT'),
+  conflictWith: z.enum(['allergies', 'favoriteIngredients']),
+  items: z.array(IngredientSummarySchema),
+});
+
 export type Ingredient = z.infer<typeof IngredientSchema>;
 export type IngredientSummary = z.infer<typeof IngredientSummarySchema>;
 export type IngredientCatalogQuery = z.infer<typeof IngredientCatalogQuerySchema>;
 export type IngredientCatalogResponse = z.infer<
   typeof IngredientCatalogResponseSchema
+>;
+export type IngredientListConflictResponse = z.infer<
+  typeof IngredientListConflictResponseSchema
 >;

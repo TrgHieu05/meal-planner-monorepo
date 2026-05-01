@@ -75,16 +75,16 @@ Phạm vi `profile` trong tài liệu này bao gồm:
 
 ### A. `packages/shared`
 
-- [ ] Rà soát và thống nhất lại các schema trong `packages/shared/types/user.ts`.
-- [ ] Rà soát `packages/shared/types/profile.ts` để phản ánh đúng model profile cuối cùng.
-- [ ] Thống nhất response schema cho metric để `GET latest` và `POST create` không bị lệch shape.
-- [ ] Nếu thêm ingredient API, tạo schema response riêng trong `packages/shared/types/ingredient.ts` hoặc file liên quan.
+- [x] Rà soát và thống nhất lại các schema trong `packages/shared/types/user.ts`.
+- [x] Rà soát `packages/shared/types/profile.ts` để phản ánh đúng model profile cuối cùng.
+- [x] Thống nhất response schema cho metric để `GET latest` và `POST create` không bị lệch shape.
+- [x] Nếu thêm ingredient API, tạo schema response riêng trong `packages/shared/types/ingredient.ts` hoặc file liên quan.
 - [ ] Đảm bảo mobile không phải đoán enum/code từ text label.
 
 ### B. `packages/database`
 
-- [ ] Cập nhật `packages/database/prisma/schema.prisma` theo quyết định cuối cùng về `gender`, `profile bootstrap`, và `cuisine type`.
-- [ ] Tạo migration Prisma cho mọi thay đổi schema cần thiết.
+- [x] Cập nhật `packages/database/prisma/schema.prisma` theo quyết định cuối cùng về `gender`, `profile bootstrap`, và `cuisine type`.
+- [x] Tạo migration Prisma cho mọi thay đổi schema cần thiết.
 - [ ] Cập nhật seed data để có dữ liệu kiểm thử phù hợp cho profile flow.
 - [ ] Thêm seed cho user mới nếu cần kiểm thử first-time onboarding/profile bootstrap.
 - [ ] Nếu thêm ingredient catalog endpoint có search, xem lại index hoặc unique constraint cần thiết cho bảng `Ingredient`.
@@ -93,43 +93,43 @@ Phạm vi `profile` trong tài liệu này bao gồm:
 
 #### Auth
 
-- [ ] Cập nhật `auth.service.ts` để luồng tạo user Google tương thích với schema cuối cùng.
-- [ ] Không tạo `profile` khi user được tạo lần đầu; chỉ khởi tạo sau khi hoàn thành onboarding.
-- [ ] Trả explicit field `isOnboardingCompleted` trong `POST /api/auth/google/exchange` và `GET /api/auth/profile` để mobile route guard dùng làm nguồn sự thật.
+- [x] Cập nhật `auth.service.ts` để luồng tạo user Google tương thích với schema cuối cùng.
+- [x] Không tạo `profile` khi user được tạo lần đầu; chỉ khởi tạo sau khi hoàn thành onboarding.
+- [x] Trả explicit field `isOnboardingCompleted` trong `POST /api/auth/google/exchange` và `GET /api/auth/profile` để mobile route guard dùng làm nguồn sự thật.
 
 #### User
 
-- [ ] Giữ contract cập nhật user nhất quán cho `userName`, `gender`, `dateOfBirth`.
-- [ ] Cho phép `gender` nullable trước onboarding; khi field này có giá trị thì chỉ chấp nhận `M | F`.
+- [x] Giữ contract cập nhật user nhất quán cho `userName`, `gender`, `dateOfBirth`.
+- [x] Cho phép `gender` nullable trước onboarding; khi field này có giá trị thì chỉ chấp nhận `M | F`.
 - [ ] Chốt payload `dateOfBirth` theo format `YYYY-MM-DD` và ghi rõ trong mobile adapter.
-- [ ] Đảm bảo shared schema parse được dữ liệu thật mà backend trả ra.
+- [x] Đảm bảo shared schema parse được dữ liệu thật mà backend trả ra.
 
 #### Profile Preferences
 
-- [ ] Hoàn thiện contract cho `GET /api/v1/profile`, `GET /api/v1/profile/overview`, `PATCH /api/v1/profile`.
-- [ ] Bổ sung `POST /api/v1/profile` để onboarding tạo profile lần đầu theo onboarding-driven bootstrap.
-- [ ] Chốt cách backend xử lý field optional/null trong update payload.
+- [x] Hoàn thiện contract cho `GET /api/v1/profile`, `GET /api/v1/profile/overview`, `PATCH /api/v1/profile`.
+- [x] Bổ sung `POST /api/v1/profile` để onboarding tạo profile lần đầu theo onboarding-driven bootstrap.
+- [x] Chốt cách backend xử lý field optional/null trong update payload.
 
 #### Metric
 
-- [ ] Thống nhất response của `POST /api/v1/metrics` với response model dùng ở client.
+- [x] Thống nhất response của `POST /api/v1/metrics` với response model dùng ở client.
 - [ ] Chốt xem client sẽ dùng response của `POST /metrics` ngay hay luôn re-fetch overview sau khi save. `[Cần bạn làm rõ]` **Refetch overview sau khi save metric để đảm bảo dữ liệu luôn đồng bộ và có latestMetric mới nhất trong profile overview**
 - [ ] Nếu re-fetch overview là chiến lược chính, document rõ để mobile đơn giản hóa state sync.
 
 #### Allergy và Favorite Ingredient
 
-- [ ] Giữ contract `PATCH` theo `ingredientIds` nhất quán.
-- [ ] Bảo toàn behavior `409 Conflict` cho danh sách xung đột.
-- [ ] Nếu cần, trả thêm metadata để UI hiển thị conflict thân thiện hơn. `[Cần bạn làm rõ]` **Có, backend phải trả metadata có cấu trúc.**
+- [x] Giữ contract `PATCH` theo `ingredientIds` nhất quán.
+- [x] Bảo toàn behavior `409 Conflict` cho danh sách xung đột.
+- [x] Nếu cần, trả thêm metadata để UI hiển thị conflict thân thiện hơn. `[Cần bạn làm rõ]` **Có, backend phải trả metadata có cấu trúc.**
 
 #### Ingredient Catalog
 
-- [ ] Tạo controller/service cho ingredient catalog nếu đây là hướng được chọn.
-- [ ] Khóa contract endpoint: `GET /api/v1/ingredients?q=&page=1&pageSize=30`.
-- [ ] Khi `q` rỗng, endpoint trả danh sách browse mặc định; khi `q` có giá trị, endpoint trả kết quả search theo tên.
-- [ ] Khóa response shape: `items`, `page`, `pageSize`, `total`, `hasMore`; mỗi item tối thiểu gồm `id`, `name`.
-- [ ] Nếu dùng search, hỗ trợ query string nhất quán cho mobile.
-- [ ] Ghi rõ trong OpenAPI response và error contract.
+- [x] Tạo controller/service cho ingredient catalog nếu đây là hướng được chọn.
+- [x] Khóa contract endpoint: `GET /api/v1/ingredients?q=&page=1&pageSize=30`.
+- [x] Khi `q` rỗng, endpoint trả danh sách browse mặc định; khi `q` có giá trị, endpoint trả kết quả search theo tên.
+- [x] Khóa response shape: `items`, `page`, `pageSize`, `total`, `hasMore`; mỗi item tối thiểu gồm `id`, `name`.
+- [x] Nếu dùng search, hỗ trợ query string nhất quán cho mobile.
+- [x] Ghi rõ trong OpenAPI response và error contract.
 
 ### D. Mobile app `apps/mobile-app`
 
@@ -202,11 +202,11 @@ Phạm vi `profile` trong tài liệu này bao gồm:
 
 ### Backend tests
 
-- [ ] Thêm test cho first-time Google user.
-- [ ] Thêm test cho trường hợp user có token hợp lệ nhưng chưa có profile.
-- [ ] Thêm test cho create/bootstrap profile theo flow đã chọn.
-- [ ] Thêm test cho ingredient catalog endpoint nếu có.
-- [ ] Thêm test để bắt mismatch response shape của metrics.
+- [x] Thêm test cho first-time Google user.
+- [x] Thêm test cho trường hợp user có token hợp lệ nhưng chưa có profile.
+- [x] Thêm test cho create/bootstrap profile theo flow đã chọn.
+- [x] Thêm test cho ingredient catalog endpoint nếu có.
+- [x] Thêm test để bắt mismatch response shape của metrics.
 
 ### Mobile tests
 
@@ -226,7 +226,7 @@ Phạm vi `profile` trong tài liệu này bao gồm:
 
 ## Checklist tài liệu và vận hành
 
-- [ ] Cập nhật `services/main-backend/docs/openapi.json` sau khi đổi API contract.
+- [x] Cập nhật `services/main-backend/docs/openapi.json` sau khi đổi API contract.
 - [ ] Nếu thêm endpoint hoặc đổi schema, cập nhật tài liệu API liên quan.
 - [ ] Nếu thay đổi env vars hoặc flow mobile, cập nhật `.env.example`.
 - [ ] Nếu onboarding/profile completeness thay đổi route flow, cập nhật tài liệu mobile architecture liên quan.

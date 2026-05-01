@@ -14,6 +14,7 @@ import { UserModule } from './user/user.module';
 import { JwtAuthOptInGuard } from './auth/jwt-auth.guard';
 import { MealSearchModule } from './meal-search/meal-search.module';
 import { MenuModule } from './menu/menu.module';
+import { IngredientModule } from './ingredient/ingredient.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { MenuModule } from './menu/menu.module';
     UserModule,
     MetricModule,
     ProfileModule,
+    IngredientModule,
     MealSearchModule,
     MenuModule,
   ],

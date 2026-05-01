@@ -1,4 +1,4 @@
-import { InternalServerErrorException } from '@nestjs/common';
+import { InternalServerErrorException, Logger } from '@nestjs/common';
 import {
   AuthUser,
   AuthUserSchema,
@@ -15,15 +15,23 @@ type AuthUserSource = {
   profile?: { userId: string } | null;
 };
 
+const authUserMapperLogger = new Logger('AuthUserMapper');
+
 export function toAuthUser(source: AuthUserSource): AuthUser {
+  const normalizedUserName = normalizeAuthUserName(source);
   const parsed = AuthUserSchema.safeParse({
     id: source.id,
     email: source.email,
-    userName: source.userName,
+    userName: normalizedUserName,
     isOnboardingCompleted: hasCompletedOnboarding(source),
   });
 
   if (!parsed.success) {
+    authUserMapperLogger.error(
+      `Failed to map auth user ${source.id}: ${parsed.error.issues
+        .map((issue) => issue.message)
+        .join('; ')}`,
+    );
     throw new InternalServerErrorException('Failed to map auth user data.');
   }
 
@@ -52,4 +60,23 @@ export function toGoogleIdTokenExchangeResponse(payload: {
 
 function hasCompletedOnboarding(source: AuthUserSource) {
   return Boolean(source.gender && source.dateOfBirth && source.profile);
+}
+
+function normalizeAuthUserName(source: AuthUserSource) {
+  const normalizedUserName = source.userName.trim();
+  if (normalizedUserName.length > 0) {
+    return normalizedUserName;
+  }
+
+  const emailLocalPart = source.email.split('@')[0]?.trim();
+  const fallbackUserName =
+    emailLocalPart && emailLocalPart.length > 0
+      ? emailLocalPart
+      : `user-${source.id.slice(0, 8)}`;
+
+  authUserMapperLogger.warn(
+    `Recovered empty userName for auth user ${source.id}.`,
+  );
+
+  return fallbackUserName;
 }

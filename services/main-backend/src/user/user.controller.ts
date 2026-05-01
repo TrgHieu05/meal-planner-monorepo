@@ -65,7 +65,7 @@ export class UserController {
     schema: {
       type: 'object',
       properties: {
-        userName: { type: 'string', example: 'Nguyen Van A' },
+        userName: { type: 'string', minLength: 1, example: 'Nguyen Van A' },
         gender: { type: 'string', enum: ['M', 'F'], example: 'M' },
         dateOfBirth: {
           type: 'string',

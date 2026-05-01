@@ -2,30 +2,34 @@ import { z } from 'zod';
 import { UuidSchema } from './common';
 
 export const GenderSchema = z.enum(['M', 'F']);
+export const UserNameSchema = z.string().trim().min(1, {
+  message: 'userName must not be empty',
+});
+
 export const UserSchema = z.object({
   id: UuidSchema,
   email: z.email(),
-  userName: z.string(),
+  userName: UserNameSchema,
   gender: GenderSchema.nullable(),
   dateOfBirth: z.date().nullable(),
 });
 
 export const UserCreateSchema = z.object({
   email: z.email(),
-  userName: z.string(),
+  userName: UserNameSchema,
   gender: GenderSchema.nullable().optional(),
   dateOfBirth: z.date().nullable().optional(),
 });
 
 export const UserUpdateSchema = z.object({
-  userName: z.string().optional(),
+  userName: UserNameSchema.optional(),
   gender: GenderSchema.optional(),
   dateOfBirth: z.date().nullable().optional(),
 });
 
 export const UserResponseSchema = z.object({
   email: z.email(),
-  userName: z.string(),
+  userName: UserNameSchema,
   gender: GenderSchema.nullable(),
   dateOfBirth: z.date().nullable(),
 });

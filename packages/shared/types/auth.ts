@@ -1,11 +1,12 @@
 import { z } from 'zod';
 
 import { UuidSchema } from './common';
+import { UserNameSchema } from './user';
 
 export const AuthUserSchema = z.object({
   id: UuidSchema,
   email: z.email(),
-  userName: z.string().min(1),
+  userName: UserNameSchema,
   isOnboardingCompleted: z.boolean(),
 });
 

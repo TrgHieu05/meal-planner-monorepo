@@ -7,10 +7,10 @@ export type IngredientConflictModalProps = {
 	open: boolean
 	onOpenChange: (open: boolean) => void
 	onConfirm: () => void
+	ingredients: string[]
 }
 
 type IngredientConflictModalBaseProps = IngredientConflictModalProps & {
-	ingredients: string[]
 	description: string
 	tone: Extract<ChipTone, 'brand' | 'danger'>
 }

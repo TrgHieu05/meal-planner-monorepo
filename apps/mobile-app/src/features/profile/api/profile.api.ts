@@ -218,6 +218,9 @@ const mapProfileOverviewToScreenData = (
       bmi: latestMetric?.bmi ?? null,
       updatedAt: latestMetric?.recordedAt ?? null,
     },
+    allergies: overview.allergies.list,
+    favoriteIngredients: overview.favoriteIngredients.list,
+    isProfileIncomplete: preferences == null || latestMetric == null,
   };
 };
 

@@ -1,13 +1,19 @@
-import { useState } from 'react'
 import { useRouter } from 'expo-router'
 import { SizableText, XStack, YStack } from 'tamagui'
 
 import { Button, InputSelect } from '@components'
 
+import { useOnboardingProfile } from '../onboarding/OnboardingProfileProvider'
+
 export default function OnboardingDietTypeScreen() {
 	const router = useRouter()
-	const [selectedDietType, setSelectedDietType] = useState<string>()
-	const labels = ['Apple', 'Banana', 'Cherry', 'Date', 'Elderberry', 'Fig', 'Grape', 'Honeydew']
+	const { draft, options, isLoadingOptions, optionsError, reloadOptions, updateDraft } =
+		useOnboardingProfile()
+	const canContinue = draft.dietTypeId !== null && !isLoadingOptions
+	const dietOptions = options.dietTypes.map((dietType) => ({
+		label: dietType.name,
+		value: `${dietType.id}`,
+	}))
 
 	return (
 		<YStack w="100%" h="100%" p="$md" alignItems="center" justifyContent="space-between" py="$md" gap="$space.xl" bg="$background">
@@ -20,11 +26,24 @@ export default function OnboardingDietTypeScreen() {
 						Pick the diet pattern you want us to prioritize in your meal suggestions.
 					</SizableText>
 				</YStack>
+				{optionsError ? (
+					<YStack w="100%" gap="$space.sm">
+						<SizableText ff="$body" fos="$sm" col="$danger">
+							{optionsError}
+						</SizableText>
+						<Button color="secondary" size="medium" onPress={() => void reloadOptions()}>
+							<Button.Text>Retry</Button.Text>
+						</Button>
+					</YStack>
+				) : null}
 				<InputSelect
-					options={labels}
+					options={dietOptions}
 					placeholder="Select your diet type"
-					value={selectedDietType}
-					onValueChange={setSelectedDietType}
+					value={draft.dietTypeId == null ? undefined : `${draft.dietTypeId}`}
+					disabled={isLoadingOptions}
+					onValueChange={(value) =>
+						updateDraft({ dietTypeId: Number.parseInt(value, 10) })
+					}
 					w="100%"
 				/>
 			</YStack>
@@ -33,7 +52,13 @@ export default function OnboardingDietTypeScreen() {
 				<Button color="secondary" size="large" w={120} onPress={() => router.back()}>
 					<Button.Text>Back</Button.Text>
 				</Button>
-				<Button color="primary" size="large" w={120} onPress={() => router.push('/onboarding/step-3')}>
+				<Button
+					color="primary"
+					size="large"
+					w={120}
+					disabled={!canContinue}
+					onPress={() => router.push('/onboarding/step-3')}
+				>
 					<Button.Text>Next</Button.Text>
 				</Button>
 			</XStack>

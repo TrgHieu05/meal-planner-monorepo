@@ -1,15 +1,23 @@
-import { YStack, SizableText, XStack} from 'tamagui'
-import { Button } from '@components'
-import { useState } from 'react'
+import { useMemo } from 'react'
 import { useRouter } from 'expo-router'
-import { InputDate, InputSelect } from '@components'
+import { YStack, SizableText, XStack } from 'tamagui'
+
+import { Button, InputDate, InputSelect } from '@components'
+
+import { useOnboardingProfile } from '../onboarding/OnboardingProfileProvider'
 
 
 export default function OnboardingInfoScreen() {
-    const router = useRouter();
-    const genders = ["Male", "Female"];
-    const [selectedGender, setSelectedGender] = useState<string>()
-    const [selectedBirthDate, setSelectedBirthDate] = useState<Date>()
+    const router = useRouter()
+    const { draft, updateDraft } = useOnboardingProfile()
+    const genderOptions = useMemo(
+        () => [
+            { label: 'Male', value: 'M' },
+            { label: 'Female', value: 'F' },
+        ],
+        [],
+    )
+    const canContinue = draft.gender !== null && draft.dateOfBirth !== null
 
 
     return (
@@ -20,16 +28,16 @@ export default function OnboardingInfoScreen() {
                     <SizableText ff="$body" fos="$md" fow="$medium" col="$textSubtle" >We only need a few basics to personalize your meal plan and recommendations.</SizableText>
                 </YStack>
                 <InputSelect
-                    options={genders}
+                    options={genderOptions}
                     placeholder="Select your gender"
-                    value={selectedGender}
-                    onValueChange={setSelectedGender}
+                    value={draft.gender ?? undefined}
+                    onValueChange={(value) => updateDraft({ gender: value as 'M' | 'F' })}
                     w="100%"
                 />
                 <InputDate
                     placeholder="Select your birth date"
-                    value={selectedBirthDate}
-                    onValueChange={setSelectedBirthDate}
+                    value={draft.dateOfBirth}
+                    onValueChange={(value) => updateDraft({ dateOfBirth: value })}
                     w="100%"
                 />
             </YStack>
@@ -38,7 +46,13 @@ export default function OnboardingInfoScreen() {
                 <Button color="secondary" size="large" w={120} onPress={() => router.back()}>
                     <Button.Text>Back</Button.Text>
                 </Button>
-                <Button color="primary" size="large" w={120} onPress={() => router.push('/onboarding/step-2')}>
+                <Button
+                    color="primary"
+                    size="large"
+                    w={120}
+                    disabled={!canContinue}
+                    onPress={() => router.push('/onboarding/step-2')}
+                >
                     <Button.Text>Next</Button.Text>
                 </Button>
             </XStack>

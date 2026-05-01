@@ -150,51 +150,53 @@ Phạm vi `profile` trong tài liệu này bao gồm:
 
 #### Profile screen
 
-- [ ] Thay dữ liệu hardcoded trên màn profile bằng dữ liệu thật từ backend.
-- [ ] Thêm loading state.
-- [ ] Thêm error state.
-- [ ] Thêm empty state nếu user chưa có profile hoàn chỉnh.
-- [ ] Đảm bảo sau khi edit xong, màn profile được refresh dữ liệu đúng.
-- [ ] Sửa link edit metrics để điều hướng đúng màn `edit-metric`.
+- [x] Thay dữ liệu hardcoded trên màn profile bằng dữ liệu thật từ backend.
+- [x] Thêm loading state.
+- [x] Thêm error state.
+- [x] Thêm empty state nếu user chưa có profile hoàn chỉnh.
+- [x] Đảm bảo sau khi edit xong, màn profile được refresh dữ liệu đúng.
+- [x] Sửa link edit metrics để điều hướng đúng màn `edit-metric`.
 
 #### Edit User Info
 
-- [ ] Prefill form bằng dữ liệu thật hiện tại của user.
-- [ ] Map label giới tính của UI về code backend đúng chuẩn.
-- [ ] Submit `dateOfBirth` dưới dạng `YYYY-MM-DD`.
-- [ ] Hiển thị lỗi validation `422` theo field nếu backend reject payload.
-- [ ] Xóa các giá trị placeholder/hardcoded trong form.
+- [x] Prefill form bằng dữ liệu thật hiện tại của user.
+- [x] Map label giới tính của UI về code backend đúng chuẩn.
+- [x] Submit `dateOfBirth` dưới dạng `YYYY-MM-DD`.
+- [x] Hiển thị lỗi validation `422` theo field nếu backend reject payload.
+- [x] Xóa các giá trị placeholder/hardcoded trong form.
 
 #### Edit Preferences
 
-- [ ] Load options thật từ `/api/v1/options/diet-types`.
-- [ ] Load options thật từ `/api/v1/options/goals`.
-- [ ] Load options thật từ `/api/v1/options/cuisine-types`.
-- [ ] Submit `dietTypeId`, `goalId`, `cuisineTypeId` thay vì text label.
-- [ ] Đồng bộ `activityLevel` UI với enum backend: `HIGH`, `AVERAGE`, `LOW`.
-- [ ] Chốt lại UI select cho `cuisineType` theo quyết định single hay multi-select.
+- [x] Load options thật từ `/api/v1/options/diet-types`.
+- [x] Load options thật từ `/api/v1/options/goals`.
+- [x] Load options thật từ `/api/v1/options/cuisine-types`.
+- [x] Submit `dietTypeId`, `goalId`, `cuisineTypeId` thay vì text label.
+- [x] Đồng bộ `activityLevel` UI với enum backend: `HIGH`, `AVERAGE`, `LOW`.
+- [x] Chốt lại UI select cho `cuisineType` theo quyết định single hay multi-select.
 
 #### Edit Metric
 
-- [ ] Prefill metric hiện tại từ `latestMetric` hoặc endpoint riêng.
-- [ ] Gửi `POST /api/v1/metrics` khi user lưu.
-- [ ] Sau khi lưu, cập nhật lại màn profile theo chiến lược đã chốt.
-- [ ] Hiển thị lỗi validation nếu `height` hoặc `weight` không hợp lệ.
+- [x] Prefill metric hiện tại từ `latestMetric` hoặc endpoint riêng.
+- [x] Gửi `POST /api/v1/metrics` khi user lưu.
+- [x] Sau khi lưu, cập nhật lại màn profile theo chiến lược đã chốt.
+- [x] Hiển thị lỗi validation nếu `height` hoặc `weight` không hợp lệ.
 
 #### Edit Allergy và Favorite Ingredient
 
-- [ ] Thay danh sách ingredient hardcoded bằng dữ liệu thật từ backend.
-- [ ] Lưu state theo `ingredientId` thay vì chỉ theo tên ingredient.
-- [ ] Đồng bộ danh sách selected/current từ API hiện tại.
-- [ ] Submit `ingredientIds` về backend khi lưu.
-- [ ] Hiển thị lỗi `409 Conflict` theo UX đã thống nhất.
-- [ ] Chốt modal conflict chỉ để confirm hay còn phải hiển thị danh sách item xung đột cụ thể. `[Cần bạn làm rõ]` **Hiển thị danh sách item xung đột cụ thể, tuy nhiên nếu số lượng xung đột nhiều hơn 2 thì hiển thị "+ x others" như trong UI**
+- [x] Thay danh sách ingredient hardcoded bằng dữ liệu thật từ backend.
+- [x] Lưu state theo `ingredientId` thay vì chỉ theo tên ingredient.
+- [x] Đồng bộ danh sách selected/current từ API hiện tại.
+- [x] Submit `ingredientIds` về backend khi lưu.
+- [x] Hiển thị lỗi `409 Conflict` theo UX đã thống nhất.
+- [x] Chốt modal conflict chỉ để confirm hay còn phải hiển thị danh sách item xung đột cụ thể. `[Cần bạn làm rõ]` **Hiển thị danh sách item xung đột cụ thể, tuy nhiên nếu số lượng xung đột nhiều hơn 2 thì hiển thị "+ x others" như trong UI**
+
+**Chốt:** Toàn bộ profile tab và các màn chỉnh sửa liên quan hiện đã nối API thật, dùng session thật, và quay lại profile bằng cơ chế refresh theo focus để đồng bộ dữ liệu sau mỗi lần lưu.
 
 #### Onboarding
 
 - [x] Chốt user mới sau login sẽ vào onboarding bắt buộc hay vẫn vào app rồi hoàn thiện profile sau. `[Cần bạn làm rõ]` **Hiện tại sẽ bắt buộc hoàn thiện onboarding trước**
-- [ ] Nối các màn onboarding với options thật từ backend.
-- [ ] Nối submit cuối onboarding với backend create/update profile.
+- [x] Nối các màn onboarding với options thật từ backend.
+- [x] Nối submit cuối onboarding với backend create/update profile.
 - [x] Quyết định trạng thái hoàn thành onboarding lấy từ local state hay derive từ server profile completeness. `[Cần bạn làm rõ]` **Derive từ server thông qua field explicit `isOnboardingCompleted`; rule hiện tại để backend tính field này là user đã có `gender`, `dateOfBirth` và `profile` row.**
 - [x] Nếu profile chưa hoàn chỉnh, chốt có chặn các tab khác hay không. `[Cần bạn làm rõ]` **Có, chặn toàn bộ tabs cho đến khi server xác nhận onboarding complete**
 

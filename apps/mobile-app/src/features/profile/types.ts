@@ -29,8 +29,16 @@ export type ProfileMetrics = {
   updatedAt: Date | null;
 };
 
+export type ProfileIngredientTag = {
+  id: number;
+  name: string;
+};
+
 export type ProfileScreenData = {
   basicInfo: ProfileBasicInfo;
   preferences: ProfilePreferences;
   metrics: ProfileMetrics;
+  allergies: ProfileIngredientTag[];
+  favoriteIngredients: ProfileIngredientTag[];
+  isProfileIncomplete: boolean;
 };

@@ -5,7 +5,7 @@ export default function MealScreen() {
 	return (
 		<YStack>
 			<Text>Meal Screen</Text>
-			<Link href="/">Go to Home</Link>
+			<Link href="/" asChild><Text>Go to Home</Text></Link>
 		</YStack>
 	);
 }

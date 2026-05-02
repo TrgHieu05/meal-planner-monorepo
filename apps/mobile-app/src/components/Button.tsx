@@ -19,7 +19,7 @@ export const ButtonFrame = styled(View, {
 
 
     pressStyle: {
-        scale: 0.99,
+        scale: 0.98,
     },
     disabledStyle: {
         opacity: 0.6,

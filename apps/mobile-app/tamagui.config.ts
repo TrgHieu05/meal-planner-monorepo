@@ -230,7 +230,7 @@ const animations = createAnimations({
     },
     quick: {
       damping: 20,
-      mass: 1.2,
+      mass: 1,
       stiffness: 250,
     },
 })

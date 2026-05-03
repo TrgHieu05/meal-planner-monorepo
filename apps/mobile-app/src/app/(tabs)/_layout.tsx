@@ -17,11 +17,14 @@ export default function TabLayout() {
         screenOptions={{ 
           headerShown: false,
           tabBarActiveTintColor: theme.primary.get(),
-          tabBarInactiveTintColor: theme.gray9.get(),
+          tabBarActiveBackgroundColor: theme.softPrimary.get(),
+          tabBarInactiveTintColor: theme.gray8.get(),
           tabBarStyle: {
             backgroundColor: theme.background.get(),
-            height: 56,
-            borderTopWidth: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: 48,
+            paddingVertical: 8,
             elevation: 0,
           },
 

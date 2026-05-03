@@ -29,7 +29,7 @@ export default function HomeScreen() {
        
       
       <Link href="/meal-search" asChild>
-        <InputSearch placeholder="What do you want to eat ?" />
+        <InputSearch placeholder="Search for meals..." />
       </Link>
       
       <YStack ai="center" jc="center">

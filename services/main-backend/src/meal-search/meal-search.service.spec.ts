@@ -1,13 +1,14 @@
+import { NotFoundException } from '@nestjs/common';
 import { Difficulty } from '@meal/database';
 import { MealSearchService } from './meal-search.service';
 import { PrismaService } from '../database/prisma.service';
 
 describe('MealSearchService', () => {
   let service: MealSearchService;
-  let prisma: { meal: { findMany: jest.Mock } };
+  let prisma: { meal: { findMany: jest.Mock; findUnique: jest.Mock } };
 
   beforeEach(() => {
-    prisma = { meal: { findMany: jest.fn() } };
+    prisma = { meal: { findMany: jest.fn(), findUnique: jest.fn() } };
     service = new MealSearchService(prisma as unknown as PrismaService);
   });
 
@@ -64,5 +65,45 @@ describe('MealSearchService', () => {
     expect(result.list[0]?.score).toBeGreaterThanOrEqual(
       result.list[1]?.score ?? 0,
     );
+  });
+
+  it('throws 404 when meal does not exist', async () => {
+    prisma.meal.findUnique.mockResolvedValue(null);
+    await expect(service.getMealById(999)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+  });
+
+  it('maps meal entity to detail response', async () => {
+    prisma.meal.findUnique.mockResolvedValue({
+      id: 1,
+      name: 'Omelette',
+      mealImageKey: null,
+      description: 'Tasty',
+      cuisineType: { id: 1, name: 'French', description: null },
+      difficulty: Difficulty.LEVEL_1,
+      cookTimeMins: 25,
+      totalCalories: 300,
+      totalProtein: 20,
+      totalFat: 10,
+      totalFiber: 2,
+      ingredients: [{ ingredient: { id: 10, name: 'egg' }, quantity: 2 }],
+    });
+
+    const result = await service.getMealById(1);
+    expect(result).toEqual({
+      id: 1,
+      name: 'Omelette',
+      meal_image_key: null,
+      description: 'Tasty',
+      cuisine_type: { id: 1, name: 'French', description: null },
+      difficulty: 'easy',
+      cook_time_min: 25,
+      total_calories: 300,
+      total_protein: 20,
+      total_fat: 10,
+      total_fiber: 2,
+      ingredients: [{ id: 10, name: 'egg', quantity: 2 }],
+    });
   });
 });

@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import { IntSchema, DateStringSchema } from './common';
-
-export const MealTimeSchema = z.enum(['BREAKFAST', 'LUNCH', 'DINNER']);
+import { MealTimeSchema } from './meal-template';
 
 export const MenuItemSchema = z.object({
   id: IntSchema,
@@ -34,7 +33,6 @@ export const MenuItemResponseSchema = MenuItemSchema.omit({ menuId: true });
 export const MenuItemListSchema = z.array(MenuItemSchema);
 
 export type DateString = z.infer<typeof DateStringSchema>;
-export type MealTime = z.infer<typeof MealTimeSchema>;
 export type MenuItem = z.infer<typeof MenuItemSchema>;
 export type MenuItemCreate = z.infer<typeof MenuItemCreateSchema>;
 export type MenuItemUpdate = z.infer<typeof MenuItemUpdateSchema>;

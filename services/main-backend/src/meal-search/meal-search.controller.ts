@@ -4,6 +4,7 @@ import {
   Get,
   Header,
   InternalServerErrorException,
+  Param,
   Query,
 } from '@nestjs/common';
 import {
@@ -16,6 +17,7 @@ import {
   MealSearchQuery,
   MealSearchQuerySchema,
   MealSearchResponseSchema,
+  MealDetailResponseSchema,
 } from '@meal/shared';
 import { RequireAuth } from '../auth/jwt-auth.guard';
 import { MealSearchService } from './meal-search.service';
@@ -55,6 +57,33 @@ export class MealSearchController {
     const result = await this.service.search(normalized);
 
     const safe = MealSearchResponseSchema.safeParse(result);
+    if (!safe.success) {
+      throw new InternalServerErrorException({
+        error: 'Internal Server Error',
+        message: 'Response schema validation failed',
+        details: safe.error.flatten(),
+      });
+    }
+    return safe.data;
+  }
+
+  @Get(':id')
+  @RequireAuth()
+  @Header('X-API-Version', 'v1')
+  @ApiOperation({ summary: 'Lấy thông tin chi tiết 1 món ăn theo id' })
+  @ApiResponse({ status: 200, description: 'Trả về thông tin món ăn' })
+  @ApiResponse({ status: 400, description: 'Invalid id (must be a positive integer).' })
+  @ApiResponse({ status: 401, description: 'Token không hợp lệ hoặc đã hết hạn' })
+  @ApiResponse({ status: 404, description: 'Meal not found.' })
+  @ApiResponse({ status: 500, description: 'Internal server error.' })
+  async getMealById(@Param('id') idStr: string) {
+    const id = parseInt(idStr, 10);
+    if (isNaN(id) || id <= 0) {
+      throw new BadRequestException('Invalid id (must be a positive integer).');
+    }
+
+    const result = await this.service.getMealById(id);
+    const safe = MealDetailResponseSchema.safeParse(result);
     if (!safe.success) {
       throw new InternalServerErrorException({
         error: 'Internal Server Error',

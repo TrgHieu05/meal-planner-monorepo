@@ -1,11 +1,61 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Difficulty, Prisma } from '@meal/database';
 import { PrismaService } from '../database/prisma.service';
-import { MealSearchResultItem } from '@meal/shared';
+import { MealDetailResponse, MealSearchResultItem } from '@meal/shared';
 
 @Injectable()
 export class MealSearchService {
   constructor(private readonly prisma: PrismaService) {}
+
+  async getMealById(id: number): Promise<MealDetailResponse> {
+    const meal = await this.prisma.meal.findUnique({
+      where: { id },
+      include: {
+        cuisineType: true,
+        ingredients: {
+          include: {
+            ingredient: { select: { id: true, name: true } },
+          },
+        },
+      },
+    });
+
+    if (!meal) {
+      throw new NotFoundException('Meal not found.');
+    }
+
+    const difficulty = fromDbDifficulty(meal.difficulty);
+    if (!difficulty) {
+      throw new InternalServerErrorException('Invalid difficulty stored for meal');
+    }
+
+    return {
+      id: meal.id,
+      name: meal.name,
+      meal_image_key: meal.mealImageKey,
+      description: meal.description,
+      cuisine_type: {
+        id: meal.cuisineType.id,
+        name: meal.cuisineType.name,
+        description: meal.cuisineType.description,
+      },
+      difficulty,
+      cook_time_min: meal.cookTimeMins,
+      total_calories: meal.totalCalories,
+      total_protein: meal.totalProtein,
+      total_fat: meal.totalFat,
+      total_fiber: meal.totalFiber,
+      ingredients: meal.ingredients.map((mi) => ({
+        id: mi.ingredient.id,
+        name: mi.ingredient.name,
+        quantity: mi.quantity,
+      })),
+    };
+  }
 
   async search(params: {
     queryText: string;

@@ -40,7 +40,7 @@ const InputSearchFrame = styled(XStack, {
 
 const InputSearchField = styled(Input, {
 	name: 'InputSearchField',
-	f: 1,
+	w: '100%',
 	h: '100%',
 	bw: 0,
 	p: 0,

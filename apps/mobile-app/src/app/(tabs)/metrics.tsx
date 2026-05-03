@@ -7,16 +7,7 @@ export default function MealScreen() {
     return (
         <YStack>
             <Text>Meal Screen</Text>
-            <Link href="/">Go to Home</Link>
-            <XStack gap="$md" flexWrap="wrap">
-                <Tag status="brand" icon={KeyRound} >High Protein</Tag>
-                <Tag status="brand">Low Carbs</Tag>
-                <Tag status="danger">Low Carbs</Tag>
-                <Tag status="danger" icon={Clock}>15 mins</Tag>
-                <Tag status="danger" icon={Clock}>15 mins</Tag>
-                <Tag status="danger" icon={Clock}>15 mins</Tag>
-                <Tag status="danger" icon={Clock}>15 mins</Tag>
-            </XStack>
+            <Link href="/" asChild><Text>Go to Home</Text></Link>
         </YStack>
     );
 }

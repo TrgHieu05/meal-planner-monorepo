@@ -26056,10 +26056,14 @@
         "primaryHover": "#00A87C",
         "primaryPress": "#00916B",
         "softPrimary": "#B8EDDF",
+        "softPrimaryHover": "#8AE2CB",
+        "softPrimaryPress": "#5CD6B6",
         "danger": "#de3535",
         "dangerHover": "#C32F2F",
         "dangerPress": "#A92828",
         "softDanger": "#F6C6C6",
+        "softDangerHover": "#F0A2A2",
+        "softDangerPress": "#EA7E7E",
         "text": "#FAFAFA",
         "textSubtle": "#D7D7D7",
         "textPrimary": "#00bf8d",
@@ -26120,10 +26124,14 @@
         "primaryHover": "#00A87C",
         "primaryPress": "#00916B",
         "softPrimary": "#E6F9F4",
+        "softPrimaryHover": "#B8EDDF",
+        "softPrimaryPress": "#8AE2CB",
         "danger": "#de3535",
         "dangerHover": "#C32F2F",
         "dangerPress": "#A92828",
         "softDanger": "#FCEBEB",
+        "softDangerHover": "#F6C6C6",
+        "softDangerPress": "#F0A2A2",
         "text": "#2A2A2A",
         "textSubtle": "#A1A1A1",
         "textPrimary": "#00bf8d",
@@ -26133,23 +26141,41 @@
         "id": "light"
       }
     },
+    "animations": {
+      "isReactNative": true,
+      "inputStyle": "value",
+      "outputStyle": "inline",
+      "avoidReRenders": true,
+      "animations": {
+        "bouncy": {
+          "damping": 10,
+          "mass": 0.9,
+          "stiffness": 100
+        },
+        "lazy": {
+          "damping": 18,
+          "stiffness": 50
+        },
+        "quick": {
+          "damping": 20,
+          "mass": 1.2,
+          "stiffness": 250
+        }
+      },
+      "needsCustomComponent": true,
+      "View": "Component",
+      "Text": "Component",
+      "useAnimatedNumber": "Function",
+      "useAnimatedNumberReaction": "Function",
+      "useAnimatedNumberStyle": "Function",
+      "useAnimatedNumbersStyle": "Function",
+      "usePresence": "Function",
+      "ResetPresence": "Function",
+      "useAnimations": "Function"
+    },
     "settings": {
       "webContainerType": "inline-size",
       "allowedStyleValues": true
-    },
-    "animations": {
-      "isReactNative": false,
-      "inputStyle": "css",
-      "outputStyle": "css",
-      "isStub": true,
-      "animations": {},
-      "useAnimations": "Function",
-      "usePresence": "Function",
-      "ResetPresence": "Function",
-      "useAnimatedNumber": "Function",
-      "useAnimatedNumberStyle": "Function",
-      "useAnimatedNumbersStyle": "Function",
-      "useAnimatedNumberReaction": "Function"
     },
     "defaultProps": {},
     "inverseShorthands": {

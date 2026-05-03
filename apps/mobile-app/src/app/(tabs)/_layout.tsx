@@ -2,25 +2,29 @@ import { Tabs } from 'expo-router';
 import { StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, SizableText } from 'tamagui';
-import { useAppTheme } from '@/providers/AppProviders';
+import { useAppTheme } from '../../providers/AppProviders';
 import { Home, Utensils, BarChart3, User} from '@tamagui/lucide-icons-2';
 
 export default function TabLayout() {
   const theme = useTheme();
-  const { themeName, toggleTheme } = useAppTheme();
+  const { themeName } = useAppTheme();
   const isDark = themeName === 'dark';
 
   return (
-    <SafeAreaView style={[{flex: 1}, { backgroundColor: theme.background.val }]}>
+    <SafeAreaView style={[{ width: '100%', height: '100%' }, { backgroundColor: theme.background.val }]}>
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
       <Tabs 
         screenOptions={{ 
           headerShown: false,
           tabBarActiveTintColor: theme.primary.get(),
-          tabBarInactiveTintColor: theme.gray9.get(),
+          tabBarActiveBackgroundColor: theme.softPrimary.get(),
+          tabBarInactiveTintColor: theme.gray8.get(),
           tabBarStyle: {
             backgroundColor: theme.background.get(),
-            height: 56,
-            borderTopWidth: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: 48,
+            paddingVertical: 8,
             elevation: 0,
           },
 
@@ -35,10 +39,10 @@ export default function TabLayout() {
             title: 'Home',
           }}
         />
-        <Tabs.Screen name="meals"
+        <Tabs.Screen name="menu"
           options={{
             tabBarIcon: ({ color, size }) => <Utensils color={color} size={size} />,
-            title: 'Meals',
+            title: 'Menu',
           }}
         />
         <Tabs.Screen name="metrics"

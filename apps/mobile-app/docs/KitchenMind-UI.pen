@@ -484,29 +484,30 @@
                       "children": [
                         {
                           "type": "frame",
-                          "id": "eLWVt",
-                          "name": "bfHeadLeft",
-                          "gap": 12,
+                          "id": "g4aPV",
+                          "name": "Frame 5",
+                          "gap": "$space.md",
+                          "justifyContent": "center",
                           "alignItems": "center",
                           "children": [
                             {
-                              "type": "text",
-                              "id": "lxIRd",
-                              "fill": "$textPrimary",
-                              "content": "Lunch",
-                              "fontFamily": "Bricolage Grotesque",
-                              "fontSize": "$font.size.h4",
-                              "fontWeight": "700"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "nNXI2",
-                          "name": "bfHeadRight",
-                          "gap": 12,
-                          "alignItems": "center",
-                          "children": [
+                              "type": "frame",
+                              "id": "eLWVt",
+                              "name": "bfHeadLeft",
+                              "gap": 12,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "lxIRd",
+                                  "fill": "$textPrimary",
+                                  "content": "Lunch",
+                                  "fontFamily": "Bricolage Grotesque",
+                                  "fontSize": "$font.size.h4",
+                                  "fontWeight": "700"
+                                }
+                              ]
+                            },
                             {
                               "type": "frame",
                               "id": "ThWge",
@@ -534,29 +535,29 @@
                                   "fontWeight": "600"
                                 }
                               ]
-                            },
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "zLiQJ",
+                          "name": "bfAddBtn",
+                          "width": 32,
+                          "height": 32,
+                          "fill": "#00000000",
+                          "cornerRadius": 16,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
                             {
-                              "type": "frame",
-                              "id": "zLiQJ",
-                              "name": "bfAddBtn",
-                              "width": 32,
-                              "height": 32,
-                              "fill": "#00000000",
-                              "cornerRadius": 16,
-                              "justifyContent": "center",
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "icon_font",
-                                  "id": "ls26B",
-                                  "width": 20,
-                                  "height": 20,
-                                  "iconFontName": "keyboard_arrow_up",
-                                  "iconFontFamily": "Material Symbols Outlined",
-                                  "weight": 300,
-                                  "fill": "$textPrimary"
-                                }
-                              ]
+                              "type": "icon_font",
+                              "id": "ls26B",
+                              "width": 20,
+                              "height": 20,
+                              "iconFontName": "keyboard_arrow_down",
+                              "iconFontFamily": "Material Symbols Outlined",
+                              "weight": 300,
+                              "fill": "$textPrimary"
                             }
                           ]
                         }
@@ -1812,38 +1813,19 @@
                       "type": "text",
                       "id": "XbOWC",
                       "fill": "#1A1A1A",
-                      "content": "1,078",
+                      "content": "1,078 kcal",
                       "fontFamily": "Bricolage Grotesque",
-                      "fontSize": 32,
+                      "fontSize": 24,
                       "fontWeight": "800"
                     },
                     {
-                      "type": "frame",
-                      "id": "OOyKp",
-                      "name": "calsRight",
-                      "layout": "vertical",
-                      "gap": 4,
-                      "alignItems": "end",
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "M2cJT",
-                          "fill": "#6B7280",
-                          "content": "1122 left",
-                          "fontFamily": "DM Sans",
-                          "fontSize": 11,
-                          "fontWeight": "600"
-                        },
-                        {
-                          "type": "text",
-                          "id": "q49zQ",
-                          "fill": "#9CA3AF",
-                          "content": "0 BURNED",
-                          "fontFamily": "DM Sans",
-                          "fontSize": 11,
-                          "fontWeight": "600"
-                        }
-                      ]
+                      "type": "text",
+                      "id": "M2cJT",
+                      "fill": "#6B7280",
+                      "content": "1122 left",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 11,
+                      "fontWeight": "600"
                     }
                   ]
                 },
@@ -1877,21 +1859,62 @@
                   "fill": "#E5E7EB"
                 },
                 {
-                  "type": "text",
-                  "id": "pqZEN",
-                  "fill": "#6B7280",
-                  "content": "MACRONUTRIENTS",
-                  "fontFamily": "DM Sans",
-                  "fontSize": 11,
-                  "fontWeight": "600"
-                },
-                {
                   "type": "frame",
                   "id": "MK4BI",
                   "name": "macrosRow",
                   "width": "fill_container",
                   "justifyContent": "space_between",
                   "children": [
+                    {
+                      "type": "frame",
+                      "id": "lP9Ib",
+                      "name": "macroProtein",
+                      "layout": "vertical",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "QYeH5",
+                          "fill": "#1A1A1A",
+                          "content": "Protein",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 13,
+                          "fontWeight": "500"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "GGMSN",
+                          "name": "proteinBarBg",
+                          "width": 80,
+                          "height": 6,
+                          "fill": "#FFFFFF",
+                          "cornerRadius": 3,
+                          "layout": "none",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "IAlx9",
+                              "x": 0,
+                              "y": 0,
+                              "width": 40,
+                              "height": 6,
+                              "fill": "#6366F1",
+                              "cornerRadius": 3
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "Qykrx",
+                          "fill": "#6B7280",
+                          "content": "36 / 71 g",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 11,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
                     {
                       "type": "frame",
                       "id": "MiK9d",
@@ -1986,56 +2009,6 @@
                           "id": "AxZnm",
                           "fill": "#6B7280",
                           "content": "53 / 107 g",
-                          "fontFamily": "DM Sans",
-                          "fontSize": 11,
-                          "fontWeight": "600"
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "lP9Ib",
-                      "name": "macroProtein",
-                      "layout": "vertical",
-                      "gap": 8,
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "QYeH5",
-                          "fill": "#1A1A1A",
-                          "content": "Protein",
-                          "fontFamily": "DM Sans",
-                          "fontSize": 13,
-                          "fontWeight": "500"
-                        },
-                        {
-                          "type": "frame",
-                          "id": "GGMSN",
-                          "name": "proteinBarBg",
-                          "width": 80,
-                          "height": 6,
-                          "fill": "#FFFFFF",
-                          "cornerRadius": 3,
-                          "layout": "none",
-                          "children": [
-                            {
-                              "type": "frame",
-                              "id": "IAlx9",
-                              "x": 0,
-                              "y": 0,
-                              "width": 40,
-                              "height": 6,
-                              "fill": "#6366F1",
-                              "cornerRadius": 3
-                            }
-                          ]
-                        },
-                        {
-                          "type": "text",
-                          "id": "Qykrx",
-                          "fill": "#6B7280",
-                          "content": "36 / 71 g",
                           "fontFamily": "DM Sans",
                           "fontSize": 11,
                           "fontWeight": "600"
@@ -7711,7 +7684,7 @@
                     {
                       "type": "text",
                       "id": "IEEe8",
-                      "fill": "#9CA3AF",
+                      "fill": "#00bf8dff",
                       "content": "W",
                       "fontFamily": "DM Sans",
                       "fontSize": 13,
@@ -7963,13 +7936,52 @@
                   "name": "macRowDay",
                   "width": "fill_container",
                   "gap": 16,
+                  "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
+                      "id": "XYUXZ",
+                      "name": "protsDay",
+                      "gap": "$space.xs",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "B3Ik6",
+                          "name": "ipDay",
+                          "width": 8,
+                          "height": 8,
+                          "fill": "#6366F1",
+                          "cornerRadius": 4
+                        },
+                        {
+                          "type": "text",
+                          "id": "CzCAs",
+                          "name": "tpDay",
+                          "fill": "#6B7280",
+                          "content": "Protein",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "PzWeI",
+                          "name": "vpDay",
+                          "fill": "#1A1A1A",
+                          "content": "120 g",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
                       "id": "i5veb",
                       "name": "carbsDay",
-                      "gap": 6,
+                      "gap": "$space.xs",
                       "alignItems": "center",
                       "children": [
                         {
@@ -8007,7 +8019,7 @@
                       "type": "frame",
                       "id": "elJmg",
                       "name": "fatsDay",
-                      "gap": 6,
+                      "gap": "$space.xs",
                       "alignItems": "center",
                       "children": [
                         {
@@ -8035,44 +8047,6 @@
                           "name": "vfDay",
                           "fill": "#1A1A1A",
                           "content": "80 g",
-                          "fontFamily": "DM Sans",
-                          "fontSize": 13,
-                          "fontWeight": "600"
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "XYUXZ",
-                      "name": "protsDay",
-                      "gap": 6,
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "frame",
-                          "id": "B3Ik6",
-                          "name": "ipDay",
-                          "width": 8,
-                          "height": 8,
-                          "fill": "#6366F1",
-                          "cornerRadius": 4
-                        },
-                        {
-                          "type": "text",
-                          "id": "CzCAs",
-                          "name": "tpDay",
-                          "fill": "#6B7280",
-                          "content": "Protein",
-                          "fontFamily": "DM Sans",
-                          "fontSize": 13,
-                          "fontWeight": "600"
-                        },
-                        {
-                          "type": "text",
-                          "id": "PzWeI",
-                          "name": "vpDay",
-                          "fill": "#1A1A1A",
-                          "content": "120 g",
                           "fontFamily": "DM Sans",
                           "fontSize": 13,
                           "fontWeight": "600"

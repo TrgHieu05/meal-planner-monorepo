@@ -11,7 +11,6 @@ export const ButtonFrame = styled(View, {
     context: ButtonContext,
     flexDirection: 'row',
 
-    w: '100%',
     gap: '$space.sm',
     borderRadius: '$radius.md',
     alignItems: 'center',
@@ -52,12 +51,14 @@ export const ButtonFrame = styled(View, {
       
       size: {
         large: {
-            py: '$space.md',
+            h: 54,
+            px: '$space.lg',
             iconSize: 20,
         },
 
         medium: {
-            py: '$space.sm',
+            h: 36,
+            px: '$space.md',
             iconSize: 16,
         },
     

@@ -32,7 +32,10 @@ function RootNavigator() {
 	const isAuthRoute = topLevelRoute != null && AUTH_ROUTE_NAMES.has(topLevelRoute);
 	const isOnboardingRoute = topLevelRoute === 'onboarding';
 	const isProtectedAppRoute =
-		topLevelRoute === '(tabs)' || topLevelRoute === 'profile' || topLevelRoute === 'meal-search';
+		topLevelRoute === '(tabs)' ||
+		topLevelRoute === 'profile' ||
+		topLevelRoute === 'meal-search' ||
+		topLevelRoute === 'template';
 
 	useEffect(() => {
 		if (isLoading) {
@@ -81,6 +84,7 @@ function RootNavigator() {
 					<Stack.Screen name="profile/edit-favorite-ingredient" />
 					<Stack.Screen name="meal-search/index" />
 					<Stack.Screen name="meal-search/[mealId]" />
+					<Stack.Screen name="template" />
 				</Stack.Protected>
 				<Stack.Protected guard={isAuthenticated && !isOnboardingCompleted}>
 					<Stack.Screen name="onboarding" />

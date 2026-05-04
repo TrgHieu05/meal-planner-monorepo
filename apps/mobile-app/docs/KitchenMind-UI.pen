@@ -176,9 +176,15 @@
                   "type": "frame",
                   "id": "ko475",
                   "name": "bfCard",
+                  "clip": true,
                   "width": "fill_container",
-                  "fill": "#f9f9f9",
+                  "fill": "#00000000",
                   "cornerRadius": 16,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 2,
+                    "fill": "#00BF8D"
+                  },
                   "effect": {
                     "type": "shadow",
                     "shadowType": "outer",
@@ -191,7 +197,10 @@
                       "type": "frame",
                       "id": "smhMi",
                       "name": "bfHeader",
+                      "clip": true,
                       "width": "fill_container",
+                      "fill": "#E6F9F4",
+                      "cornerRadius": 16,
                       "stroke": {
                         "thickness": {
                           "bottom": 1
@@ -242,7 +251,7 @@
                                 {
                                   "type": "text",
                                   "id": "ZUSKd",
-                                  "fill": "#1A1A1A",
+                                  "fill": "#00BF8D",
                                   "content": "Breakfast",
                                   "fontFamily": "Bricolage Grotesque",
                                   "fontSize": 18,
@@ -315,7 +324,7 @@
                                   "iconFontName": "keyboard_arrow_up",
                                   "iconFontFamily": "Material Symbols Outlined",
                                   "weight": 300,
-                                  "fill": "#1A1A1A"
+                                  "fill": "#00BF8D"
                                 }
                               ]
                             }
@@ -375,7 +384,7 @@
                                   "type": "text",
                                   "id": "2evXq",
                                   "fill": "#6B7280",
-                                  "content": "380 kcal · 12g P",
+                                  "content": "380 kcal · 12p · 14c · 16f",
                                   "fontFamily": "DM Sans",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -432,7 +441,7 @@
                                   "type": "text",
                                   "id": "G62Xd",
                                   "fill": "#6B7280",
-                                  "content": "290 kcal · 22g P",
+                                  "content": "290 kcal · 22p · 24c · 3f",
                                   "fontFamily": "DM Sans",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -505,34 +514,6 @@
                                   "fontFamily": "Bricolage Grotesque",
                                   "fontSize": "$font.size.h4",
                                   "fontWeight": "700"
-                                }
-                              ]
-                            },
-                            {
-                              "type": "frame",
-                              "id": "ThWge",
-                              "name": "bfKcal",
-                              "gap": 4,
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "icon_font",
-                                  "id": "jW9Cc",
-                                  "width": 16,
-                                  "height": 16,
-                                  "iconFontName": "local_fire_department",
-                                  "iconFontFamily": "Material Symbols Outlined",
-                                  "weight": 300,
-                                  "fill": "#00BF8D"
-                                },
-                                {
-                                  "type": "text",
-                                  "id": "c54Px",
-                                  "fill": "#00BF8D",
-                                  "content": "670",
-                                  "fontFamily": "DM Sans",
-                                  "fontSize": 15,
-                                  "fontWeight": "600"
                                 }
                               ]
                             }
@@ -615,7 +596,7 @@
                                   "type": "text",
                                   "id": "PVsCX",
                                   "fill": "#6B7280",
-                                  "content": "380 kcal · 12g P",
+                                  "content": "380 kcal · 12p · 14c · 16f",
                                   "fontFamily": "DM Sans",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -672,7 +653,7 @@
                                   "type": "text",
                                   "id": "rBQWj",
                                   "fill": "#6B7280",
-                                  "content": "290 kcal · 22g P",
+                                  "content": "290 kcal · 22p · 24c · 3f",
                                   "fontFamily": "DM Sans",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -689,9 +670,15 @@
                   "type": "frame",
                   "id": "UU1hm",
                   "name": "dinnerCard",
+                  "clip": true,
                   "width": "fill_container",
-                  "fill": "#F6F7F8",
+                  "fill": "#00000000",
                   "cornerRadius": 16,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 2,
+                    "fill": "#00BF8D"
+                  },
                   "effect": {
                     "type": "shadow",
                     "shadowType": "outer",
@@ -704,7 +691,10 @@
                       "type": "frame",
                       "id": "IjWkb",
                       "name": "bfHeader",
+                      "clip": true,
                       "width": "fill_container",
+                      "fill": "#E6F9F4",
+                      "cornerRadius": 16,
                       "stroke": {
                         "thickness": {
                           "bottom": 1
@@ -755,7 +745,7 @@
                                 {
                                   "type": "text",
                                   "id": "eIuKU",
-                                  "fill": "#1A1A1A",
+                                  "fill": "#00BF8D",
                                   "content": "Dinner",
                                   "fontFamily": "Bricolage Grotesque",
                                   "fontSize": 18,
@@ -828,7 +818,7 @@
                                   "iconFontName": "keyboard_arrow_up",
                                   "iconFontFamily": "Material Symbols Outlined",
                                   "weight": 300,
-                                  "fill": "#1A1A1A"
+                                  "fill": "#00BF8D"
                                 }
                               ]
                             }
@@ -888,7 +878,7 @@
                                   "type": "text",
                                   "id": "2CU5m",
                                   "fill": "#6B7280",
-                                  "content": "380 kcal · 12g P",
+                                  "content": "380 kcal · 12p · 14c · 16f",
                                   "fontFamily": "DM Sans",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -945,7 +935,7 @@
                                   "type": "text",
                                   "id": "cSSjJ",
                                   "fill": "#6B7280",
-                                  "content": "290 kcal · 22g P",
+                                  "content": "290 kcal · 22p · 24c · 3f",
                                   "fontFamily": "DM Sans",
                                   "fontSize": 13,
                                   "fontWeight": "normal"
@@ -2023,9 +2013,15 @@
               "type": "frame",
               "id": "I5YFV",
               "name": "bfCard",
+              "clip": true,
               "width": "fill_container",
-              "fill": "#F6F7F8",
+              "fill": "#00000000",
               "cornerRadius": 16,
+              "stroke": {
+                "align": "inside",
+                "thickness": 2,
+                "fill": "#00BF8D"
+              },
               "effect": {
                 "type": "shadow",
                 "shadowType": "outer",
@@ -2038,7 +2034,10 @@
                   "type": "frame",
                   "id": "cp2sS",
                   "name": "bfHeader",
+                  "clip": true,
                   "width": "fill_container",
+                  "fill": "#E6F9F4",
+                  "cornerRadius": 16,
                   "stroke": {
                     "thickness": {
                       "bottom": 1
@@ -2089,7 +2088,7 @@
                             {
                               "type": "text",
                               "id": "xlXgh",
-                              "fill": "#1A1A1A",
+                              "fill": "#00BF8D",
                               "content": "Breakfast",
                               "fontFamily": "Bricolage Grotesque",
                               "fontSize": 18,
@@ -2182,7 +2181,6 @@
                     "fill": "#E5E7EB"
                   },
                   "padding": 16,
-                  "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
                     {
@@ -2222,35 +2220,12 @@
                               "type": "text",
                               "id": "KQjUe",
                               "fill": "#6B7280",
-                              "content": "380 kcal · 12g P",
+                              "content": "380 kcal · 12p · 14c · 16f",
                               "fontFamily": "DM Sans",
                               "fontSize": 13,
                               "fontWeight": "normal"
                             }
                           ]
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "DkaJM",
-                      "name": "bfDelBtn1",
-                      "width": 24,
-                      "height": 24,
-                      "fill": "#FFFFFF",
-                      "cornerRadius": 12,
-                      "justifyContent": "center",
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "icon_font",
-                          "id": "SvKES",
-                          "width": 14,
-                          "height": 14,
-                          "iconFontName": "close",
-                          "iconFontFamily": "Material Symbols Outlined",
-                          "weight": 300,
-                          "fill": "#9CA3AF"
                         }
                       ]
                     }
@@ -2262,7 +2237,6 @@
                   "name": "bfItem2",
                   "width": "fill_container",
                   "padding": 16,
-                  "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
                     {
@@ -2302,35 +2276,12 @@
                               "type": "text",
                               "id": "Mcv8l",
                               "fill": "#6B7280",
-                              "content": "290 kcal · 22g P",
+                              "content": "290 kcal · 22p · 24c · 3f",
                               "fontFamily": "DM Sans",
                               "fontSize": 13,
                               "fontWeight": "normal"
                             }
                           ]
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "JuTvC",
-                      "name": "bfDelBtn2",
-                      "width": 24,
-                      "height": 24,
-                      "fill": "#FFFFFF",
-                      "cornerRadius": 12,
-                      "justifyContent": "center",
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "icon_font",
-                          "id": "3KR8o",
-                          "width": 14,
-                          "height": 14,
-                          "iconFontName": "close",
-                          "iconFontFamily": "Material Symbols Outlined",
-                          "weight": 300,
-                          "fill": "#9CA3AF"
                         }
                       ]
                     }
@@ -2342,9 +2293,15 @@
               "type": "frame",
               "id": "EHR2D",
               "name": "lunchCard",
+              "clip": true,
               "width": "fill_container",
-              "fill": "#F6F7F8",
+              "fill": "#00000000",
               "cornerRadius": 16,
+              "stroke": {
+                "align": "inside",
+                "thickness": 2,
+                "fill": "#00BF8D"
+              },
               "effect": {
                 "type": "shadow",
                 "shadowType": "outer",
@@ -2357,7 +2314,10 @@
                   "type": "frame",
                   "id": "OH4os",
                   "name": "lunchHeader",
+                  "clip": true,
                   "width": "fill_container",
+                  "fill": "#E6F9F4",
+                  "cornerRadius": 16,
                   "stroke": {
                     "thickness": {
                       "bottom": 1
@@ -2408,7 +2368,7 @@
                             {
                               "type": "text",
                               "id": "zybmh",
-                              "fill": "#1A1A1A",
+                              "fill": "#00BF8D",
                               "content": "Lunch",
                               "fontFamily": "Bricolage Grotesque",
                               "fontSize": 18,
@@ -2509,9 +2469,15 @@
               "type": "frame",
               "id": "LTy9K",
               "name": "dinnerCard",
+              "clip": true,
               "width": "fill_container",
-              "fill": "#F6F7F8",
+              "fill": "#00000000",
               "cornerRadius": 16,
+              "stroke": {
+                "align": "inside",
+                "thickness": 2,
+                "fill": "#00BF8D"
+              },
               "effect": {
                 "type": "shadow",
                 "shadowType": "outer",
@@ -2524,7 +2490,10 @@
                   "type": "frame",
                   "id": "8NTt3",
                   "name": "dinnerHeader",
+                  "clip": true,
                   "width": "fill_container",
+                  "fill": "#E6F9F4",
+                  "cornerRadius": 16,
                   "stroke": {
                     "thickness": {
                       "bottom": 1
@@ -2575,7 +2544,7 @@
                             {
                               "type": "text",
                               "id": "cWROF",
-                              "fill": "#1A1A1A",
+                              "fill": "#00BF8D",
                               "content": "Dinner",
                               "fontFamily": "Bricolage Grotesque",
                               "fontSize": 18,
@@ -6876,9 +6845,15 @@
               "type": "frame",
               "id": "H6rbN",
               "name": "bfCard",
+              "clip": true,
               "width": "fill_container",
-              "fill": "#F6F7F8",
+              "fill": "#00000000",
               "cornerRadius": 16,
+              "stroke": {
+                "align": "inside",
+                "thickness": 2,
+                "fill": "#00BF8D"
+              },
               "effect": {
                 "type": "shadow",
                 "shadowType": "outer",
@@ -6891,7 +6866,10 @@
                   "type": "frame",
                   "id": "BVh1A",
                   "name": "bfHeader",
+                  "clip": true,
                   "width": "fill_container",
+                  "fill": "#E6F9F4",
+                  "cornerRadius": 16,
                   "stroke": {
                     "thickness": {
                       "bottom": 1
@@ -6942,7 +6920,7 @@
                             {
                               "type": "text",
                               "id": "XSf3d",
-                              "fill": "#1A1A1A",
+                              "fill": "#00BF8D",
                               "content": "Breakfast",
                               "fontFamily": "Bricolage Grotesque",
                               "fontSize": 18,
@@ -7052,7 +7030,7 @@
                               "type": "text",
                               "id": "19y7q",
                               "fill": "#6B7280",
-                              "content": "380 kcal · 12g P",
+                              "content": "380 kcal · 12p · 14c · 16f",
                               "fontFamily": "DM Sans",
                               "fontSize": 13,
                               "fontWeight": "normal"
@@ -7109,7 +7087,7 @@
                               "type": "text",
                               "id": "sQv1D",
                               "fill": "#6B7280",
-                              "content": "290 kcal · 22g P",
+                              "content": "290 kcal · 22p · 24c · 3f",
                               "fontFamily": "DM Sans",
                               "fontSize": 13,
                               "fontWeight": "normal"
@@ -7126,9 +7104,15 @@
               "type": "frame",
               "id": "MTuXf",
               "name": "lunchCard",
+              "clip": true,
               "width": "fill_container",
-              "fill": "#F6F7F8",
+              "fill": "#00000000",
               "cornerRadius": 16,
+              "stroke": {
+                "align": "inside",
+                "thickness": 2,
+                "fill": "#00BF8D"
+              },
               "effect": {
                 "type": "shadow",
                 "shadowType": "outer",
@@ -7141,7 +7125,10 @@
                   "type": "frame",
                   "id": "dLxyC",
                   "name": "lunchHeader",
+                  "clip": true,
                   "width": "fill_container",
+                  "fill": "#E6F9F4",
+                  "cornerRadius": 16,
                   "stroke": {
                     "thickness": {
                       "bottom": 1
@@ -7192,7 +7179,7 @@
                             {
                               "type": "text",
                               "id": "Hm69b",
-                              "fill": "#1A1A1A",
+                              "fill": "#00BF8D",
                               "content": "Lunch",
                               "fontFamily": "Bricolage Grotesque",
                               "fontSize": 18,
@@ -7243,9 +7230,15 @@
               "type": "frame",
               "id": "7LHVn",
               "name": "dinnerCard",
+              "clip": true,
               "width": "fill_container",
-              "fill": "#F6F7F8",
+              "fill": "#00000000",
               "cornerRadius": 16,
+              "stroke": {
+                "align": "inside",
+                "thickness": 2,
+                "fill": "#00BF8D"
+              },
               "effect": {
                 "type": "shadow",
                 "shadowType": "outer",
@@ -7258,7 +7251,10 @@
                   "type": "frame",
                   "id": "BMtDI",
                   "name": "dinnerHeader",
+                  "clip": true,
                   "width": "fill_container",
+                  "fill": "#E6F9F4",
+                  "cornerRadius": 16,
                   "stroke": {
                     "thickness": {
                       "bottom": 1
@@ -7309,7 +7305,7 @@
                             {
                               "type": "text",
                               "id": "akDLw",
-                              "fill": "#1A1A1A",
+                              "fill": "#00BF8D",
                               "content": "Dinner",
                               "fontFamily": "Bricolage Grotesque",
                               "fontSize": 18,
@@ -8061,9 +8057,15 @@
               "type": "frame",
               "id": "FzpjP",
               "name": "bfCard",
+              "clip": true,
               "width": "fill_container",
-              "fill": "#F6F7F8",
+              "fill": "#00000000",
               "cornerRadius": 16,
+              "stroke": {
+                "align": "inside",
+                "thickness": 2,
+                "fill": "#00BF8D"
+              },
               "effect": {
                 "type": "shadow",
                 "shadowType": "outer",
@@ -8076,7 +8078,10 @@
                   "type": "frame",
                   "id": "9mGMi",
                   "name": "bfHeader",
+                  "clip": true,
                   "width": "fill_container",
+                  "fill": "#E6F9F4",
+                  "cornerRadius": 16,
                   "stroke": {
                     "thickness": {
                       "bottom": 1
@@ -8127,7 +8132,7 @@
                             {
                               "type": "text",
                               "id": "05eMY",
-                              "fill": "#1A1A1A",
+                              "fill": "#00BF8D",
                               "content": "Breakfast",
                               "fontFamily": "Bricolage Grotesque",
                               "fontSize": 18,
@@ -8220,7 +8225,6 @@
                     "fill": "#E5E7EB"
                   },
                   "padding": 16,
-                  "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
                     {
@@ -8260,35 +8264,12 @@
                               "type": "text",
                               "id": "mUQVE",
                               "fill": "#6B7280",
-                              "content": "380 kcal · 12g P",
+                              "content": "380 kcal · 12p · 14c · 16f",
                               "fontFamily": "DM Sans",
                               "fontSize": 13,
                               "fontWeight": "normal"
                             }
                           ]
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "n7Hnl",
-                      "name": "bfDelBtn1",
-                      "width": 24,
-                      "height": 24,
-                      "fill": "#FFFFFF",
-                      "cornerRadius": 12,
-                      "justifyContent": "center",
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "icon_font",
-                          "id": "pBcZn",
-                          "width": 14,
-                          "height": 14,
-                          "iconFontName": "close",
-                          "iconFontFamily": "Material Symbols Outlined",
-                          "weight": 300,
-                          "fill": "#9CA3AF"
                         }
                       ]
                     }
@@ -8300,7 +8281,6 @@
                   "name": "bfItem2",
                   "width": "fill_container",
                   "padding": 16,
-                  "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
                     {
@@ -8340,35 +8320,12 @@
                               "type": "text",
                               "id": "IxvcI",
                               "fill": "#6B7280",
-                              "content": "290 kcal · 22g P",
+                              "content": "290 kcal · 22p · 24c · 3f",
                               "fontFamily": "DM Sans",
                               "fontSize": 13,
                               "fontWeight": "normal"
                             }
                           ]
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "QJG7n",
-                      "name": "bfDelBtn2",
-                      "width": 24,
-                      "height": 24,
-                      "fill": "#FFFFFF",
-                      "cornerRadius": 12,
-                      "justifyContent": "center",
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "icon_font",
-                          "id": "tm5lp",
-                          "width": 14,
-                          "height": 14,
-                          "iconFontName": "close",
-                          "iconFontFamily": "Material Symbols Outlined",
-                          "weight": 300,
-                          "fill": "#9CA3AF"
                         }
                       ]
                     }
@@ -8380,9 +8337,15 @@
               "type": "frame",
               "id": "9k9QX",
               "name": "lunchCard",
+              "clip": true,
               "width": "fill_container",
-              "fill": "#F6F7F8",
+              "fill": "#00000000",
               "cornerRadius": 16,
+              "stroke": {
+                "align": "inside",
+                "thickness": 2,
+                "fill": "#00BF8D"
+              },
               "effect": {
                 "type": "shadow",
                 "shadowType": "outer",
@@ -8395,7 +8358,10 @@
                   "type": "frame",
                   "id": "OAqXu",
                   "name": "lunchHeader",
+                  "clip": true,
                   "width": "fill_container",
+                  "fill": "#E6F9F4",
+                  "cornerRadius": 16,
                   "stroke": {
                     "thickness": {
                       "bottom": 1
@@ -8446,7 +8412,7 @@
                             {
                               "type": "text",
                               "id": "J0zDm",
-                              "fill": "#1A1A1A",
+                              "fill": "#00BF8D",
                               "content": "Lunch",
                               "fontFamily": "Bricolage Grotesque",
                               "fontSize": 18,
@@ -8547,9 +8513,15 @@
               "type": "frame",
               "id": "FlXtG",
               "name": "dinnerCard",
+              "clip": true,
               "width": "fill_container",
-              "fill": "#F6F7F8",
+              "fill": "#00000000",
               "cornerRadius": 16,
+              "stroke": {
+                "align": "inside",
+                "thickness": 2,
+                "fill": "#00BF8D"
+              },
               "effect": {
                 "type": "shadow",
                 "shadowType": "outer",
@@ -8562,7 +8534,10 @@
                   "type": "frame",
                   "id": "d7x3G",
                   "name": "dinnerHeader",
+                  "clip": true,
                   "width": "fill_container",
+                  "fill": "#E6F9F4",
+                  "cornerRadius": 16,
                   "stroke": {
                     "thickness": {
                       "bottom": 1
@@ -8613,7 +8588,7 @@
                             {
                               "type": "text",
                               "id": "xkYhH",
-                              "fill": "#1A1A1A",
+                              "fill": "#00BF8D",
                               "content": "Dinner",
                               "fontFamily": "Bricolage Grotesque",
                               "fontSize": 18,
@@ -11243,7 +11218,7 @@
               "ref": "ZGjNb",
               "name": "chipD",
               "fill": "$softPrimary",
-              "x": 191.01,
+              "x": 191.01000000000002,
               "y": 0,
               "width": "fit_content",
               "height": "fit_content",
@@ -11794,7 +11769,7 @@
               "ref": "ZGjNb",
               "name": "chipD",
               "fill": "$softDanger",
-              "x": 190.01,
+              "x": 190.01000000000002,
               "width": "fit_content",
               "height": "fit_content",
               "y": 0,
@@ -13804,6 +13779,50 @@
         },
         {
           "type": "frame",
+          "id": "36te9",
+          "name": "portionSection",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 8,
+          "children": [
+            {
+              "type": "text",
+              "id": "FGMF4",
+              "name": "pLabel",
+              "fill": "#6B7280",
+              "content": "Portion size",
+              "fontFamily": "DM Sans",
+              "fontSize": 14,
+              "fontWeight": "600"
+            },
+            {
+              "type": "frame",
+              "id": "pQue5",
+              "name": "portionControl",
+              "width": "fill_container",
+              "height": 52,
+              "fill": "#F6F7F8",
+              "cornerRadius": 16,
+              "padding": 8,
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "6EG4Y",
+                  "name": "pVal",
+                  "fill": "#1A1A1A",
+                  "content": "3",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 16,
+                  "fontWeight": "600"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
           "id": "hVAFS",
           "name": "mealSection",
           "width": "fill_container",
@@ -13935,116 +13954,56 @@
         },
         {
           "type": "frame",
-          "id": "36te9",
-          "name": "portionSection",
+          "id": "Hl7L9",
+          "name": "dpFoot",
           "width": "fill_container",
-          "layout": "vertical",
-          "gap": 8,
-          "children": [
-            {
-              "type": "text",
-              "id": "FGMF4",
-              "name": "pLabel",
-              "fill": "#6B7280",
-              "content": "Portion size",
-              "fontFamily": "DM Sans",
-              "fontSize": 14,
-              "fontWeight": "600"
-            },
-            {
-              "type": "frame",
-              "id": "pQue5",
-              "name": "portionControl",
-              "width": "fill_container",
-              "fill": "#F6F7F8",
-              "cornerRadius": 16,
-              "padding": 8,
-              "justifyContent": "space_between",
-              "alignItems": "center",
-              "children": [
-                {
-                  "type": "frame",
-                  "id": "mnmfo",
-                  "name": "pMin",
-                  "width": 40,
-                  "height": 40,
-                  "cornerRadius": 12,
-                  "gap": 12,
-                  "padding": 16,
-                  "justifyContent": "center",
-                  "alignItems": "center",
-                  "children": [
-                    {
-                      "type": "icon_font",
-                      "id": "W9FdX",
-                      "width": 24,
-                      "height": 24,
-                      "iconFontName": "remove",
-                      "iconFontFamily": "Material Symbols Outlined",
-                      "weight": 400,
-                      "fill": "#00bf8dff"
-                    }
-                  ]
-                },
-                {
-                  "type": "text",
-                  "id": "6EG4Y",
-                  "name": "pVal",
-                  "fill": "#1A1A1A",
-                  "content": "3",
-                  "fontFamily": "DM Sans",
-                  "fontSize": 16,
-                  "fontWeight": "600"
-                },
-                {
-                  "type": "frame",
-                  "id": "bBIKc",
-                  "name": "pPlus",
-                  "width": 40,
-                  "height": 40,
-                  "cornerRadius": 12,
-                  "gap": 12,
-                  "padding": 16,
-                  "justifyContent": "center",
-                  "alignItems": "center",
-                  "children": [
-                    {
-                      "type": "icon_font",
-                      "id": "B80fU",
-                      "width": 24,
-                      "height": 24,
-                      "iconFontName": "add",
-                      "iconFontFamily": "Material Symbols Outlined",
-                      "weight": 400,
-                      "fill": "#00bf8dff"
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "type": "frame",
-          "id": "aOZ9i",
-          "name": "addBtn",
-          "width": "fill_container",
-          "fill": "#00BF8D",
-          "cornerRadius": 100,
-          "gap": 8,
-          "padding": 16,
-          "justifyContent": "center",
+          "gap": 16,
+          "justifyContent": "space_between",
           "alignItems": "center",
           "children": [
             {
-              "type": "text",
-              "id": "pooN6",
-              "name": "addTxt",
-              "fill": "#FFFFFF",
-              "content": "Add",
-              "fontFamily": "DM Sans",
-              "fontSize": 16,
-              "fontWeight": "600"
+              "type": "frame",
+              "id": "Nh2pW",
+              "name": "btnCancel",
+              "width": "fill_container",
+              "height": 48,
+              "fill": "$surface",
+              "cornerRadius": 24,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "wj6co",
+                  "fill": "$text",
+                  "content": "Cancel",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 15,
+                  "fontWeight": "600"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "pVwxw",
+              "name": "btnApply",
+              "width": "fill_container",
+              "height": 48,
+              "fill": "$primary",
+              "cornerRadius": 24,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "gtCsW",
+                  "fill": "$textInverse",
+                  "content": "Add",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 15,
+                  "fontWeight": "600"
+                }
+              ]
             }
           ]
         }
@@ -27348,6 +27307,1301 @@
                           "fontFamily": "DM Sans",
                           "fontSize": 16,
                           "fontWeight": "600"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "RA43o",
+      "x": -2478,
+      "y": 4158,
+      "name": "MenuItemDetail",
+      "width": 360,
+      "fill": "#FFFFFF",
+      "cornerRadius": 24,
+      "effect": {
+        "type": "shadow",
+        "shadowType": "outer",
+        "color": "#0000001A",
+        "offset": {
+          "x": 0,
+          "y": 10
+        },
+        "blur": 20
+      },
+      "layout": "vertical",
+      "gap": 24,
+      "padding": [
+        24,
+        16
+      ],
+      "children": [
+        {
+          "type": "text",
+          "id": "t6FfE5",
+          "name": "menuTitle",
+          "fill": "#1A1A1A",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "Grilled Chicken Salad",
+          "textAlign": "center",
+          "fontFamily": "Bricolage Grotesque",
+          "fontSize": 20,
+          "fontWeight": "700"
+        },
+        {
+          "type": "frame",
+          "id": "a0R9u",
+          "name": "dayStats",
+          "width": "fill_container",
+          "fill": "#F6F7F8",
+          "cornerRadius": 20,
+          "effect": {
+            "type": "shadow",
+            "shadowType": "outer",
+            "enabled": false,
+            "color": "#000000"
+          },
+          "layout": "vertical",
+          "gap": 16,
+          "padding": 20,
+          "children": [
+            {
+              "type": "frame",
+              "id": "YFnkd",
+              "name": "calsHeader",
+              "width": "fill_container",
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "vACP3",
+                  "fill": "#1A1A1A",
+                  "content": "2,150 kcal",
+                  "fontFamily": "Bricolage Grotesque",
+                  "fontSize": 24,
+                  "fontWeight": "800"
+                },
+                {
+                  "type": "frame",
+                  "id": "Rk14i",
+                  "name": "calsRight",
+                  "clip": true,
+                  "width": 0,
+                  "height": 0,
+                  "layout": "none",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "tp6oF",
+                      "x": 11,
+                      "y": 0,
+                      "fill": "#6B7280",
+                      "content": "1122 left",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 11,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "O860Si",
+                      "x": 0,
+                      "y": 18,
+                      "fill": "#9CA3AF",
+                      "content": "0 BURNED",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 11,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "lExFt",
+              "name": "macRowDay",
+              "width": "fill_container",
+              "gap": 16,
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "iGuRS",
+                  "name": "protsDay",
+                  "gap": "$space.xs",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "y9pQxL",
+                      "name": "ipDay",
+                      "width": 8,
+                      "height": 8,
+                      "fill": "#6366F1",
+                      "cornerRadius": 4
+                    },
+                    {
+                      "type": "text",
+                      "id": "YZzIG",
+                      "name": "tpDay",
+                      "fill": "#6B7280",
+                      "content": "Protein",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "tJOKz",
+                      "name": "vpDay",
+                      "fill": "#1A1A1A",
+                      "content": "120 g",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "MiNtF",
+                  "name": "carbsDay",
+                  "gap": "$space.xs",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "CSR36",
+                      "name": "icDay",
+                      "width": 8,
+                      "height": 8,
+                      "fill": "#00a6bfff",
+                      "cornerRadius": 4
+                    },
+                    {
+                      "type": "text",
+                      "id": "blsut",
+                      "name": "tcDay",
+                      "fill": "#6B7280",
+                      "content": "Carbs",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "vWW9V",
+                      "name": "vcDay",
+                      "fill": "#1A1A1A",
+                      "content": "250 g",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "nEzk2",
+                  "name": "fatsDay",
+                  "gap": "$space.xs",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "ppxxA",
+                      "name": "ifDay",
+                      "width": 8,
+                      "height": 8,
+                      "fill": "#FCD34D",
+                      "cornerRadius": 4
+                    },
+                    {
+                      "type": "text",
+                      "id": "idcga",
+                      "name": "tfDay",
+                      "fill": "#6B7280",
+                      "content": "Fat",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "B9Sf9Y",
+                      "name": "vfDay",
+                      "fill": "#1A1A1A",
+                      "content": "80 g",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "Kq6Zh",
+          "name": "tagsRow",
+          "width": "fill_container",
+          "gap": 12,
+          "children": [
+            {
+              "id": "GOFhN",
+              "type": "ref",
+              "ref": "ZGjNb",
+              "name": "timeTag",
+              "fill": "#E6F8F3",
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 0,
+              "y": 0,
+              "descendants": {
+                "gSWCy": {
+                  "type": "icon_font",
+                  "id": "RTbzP",
+                  "name": "icon",
+                  "width": 16,
+                  "height": 16,
+                  "iconFontName": "schedule",
+                  "iconFontFamily": "Material Symbols Outlined",
+                  "weight": 300,
+                  "fill": "#00BF8D"
+                },
+                "M8v6Y": {
+                  "content": "15 mins",
+                  "fontSize": 14,
+                  "fill": "#00BF8D",
+                  "fontWeight": "600",
+                  "x": 34,
+                  "y": 6
+                },
+                "oTE0N": {
+                  "x": 91,
+                  "y": 14.995000000000001
+                }
+              }
+            },
+            {
+              "id": "Dz6Cw",
+              "type": "ref",
+              "ref": "ZGjNb",
+              "name": "diffTag",
+              "fill": "#E6F8F3",
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 115.01,
+              "y": 0,
+              "descendants": {
+                "gSWCy": {
+                  "type": "icon_font",
+                  "id": "BHOe2",
+                  "name": "icon",
+                  "width": 16,
+                  "height": 16,
+                  "iconFontName": "restaurant",
+                  "iconFontFamily": "Material Symbols Outlined",
+                  "weight": 300,
+                  "fill": "#00BF8D"
+                },
+                "M8v6Y": {
+                  "content": "Easy",
+                  "fontSize": 14,
+                  "fill": "#00BF8D",
+                  "fontWeight": "600",
+                  "x": 34,
+                  "y": 6
+                },
+                "oTE0N": {
+                  "x": 72,
+                  "y": 14.995000000000001
+                }
+              }
+            },
+            {
+              "id": "LB66I",
+              "type": "ref",
+              "ref": "ZGjNb",
+              "name": "loggedTag",
+              "fill": "#E6F8F3",
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 211.02,
+              "y": 0,
+              "descendants": {
+                "gSWCy": {
+                  "type": "icon_font",
+                  "id": "cEjjH",
+                  "name": "icon",
+                  "width": 16,
+                  "height": 16,
+                  "iconFontName": "task_alt",
+                  "iconFontFamily": "Material Symbols Outlined",
+                  "weight": 400,
+                  "fill": "#00BF8D"
+                },
+                "M8v6Y": {
+                  "content": "Logged",
+                  "fill": "#00BF8D",
+                  "fontSize": 14,
+                  "fontWeight": "600",
+                  "x": 34,
+                  "y": 6
+                },
+                "oTE0N": {
+                  "x": 90,
+                  "y": 14.995000000000001
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "I98kg6",
+          "name": "portionSection",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 8,
+          "children": [
+            {
+              "type": "text",
+              "id": "GxGVv",
+              "name": "portionLabel",
+              "fill": "#6B7280",
+              "content": "Portion size",
+              "fontFamily": "DM Sans",
+              "fontSize": 14,
+              "fontWeight": "600"
+            },
+            {
+              "type": "frame",
+              "id": "BZmkC",
+              "name": "portionInput",
+              "width": "fill_container",
+              "fill": "#F6F7F8",
+              "cornerRadius": 16,
+              "padding": 16,
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "L0g5Cx",
+                  "name": "portionValue",
+                  "fill": "#1A1A1A",
+                  "content": "1.5",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 16,
+                  "fontWeight": "600"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "HDYy1",
+          "name": "nameRow",
+          "width": "fill_container",
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "foOPH",
+              "fill": "$text",
+              "content": "Action:",
+              "fontFamily": "Inter",
+              "fontSize": 16,
+              "fontWeight": "600"
+            },
+            {
+              "type": "frame",
+              "id": "jzQPH",
+              "name": "actionRow",
+              "context": "These 3 buttons' availability is explained in the note below",
+              "gap": 12,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "k4SYIx",
+                  "name": "deleteBtn",
+                  "width": 40,
+                  "height": 40,
+                  "fill": "#FCEBEB",
+                  "cornerRadius": 12,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "SukIP",
+                      "name": "deleteIcon",
+                      "width": 20,
+                      "height": 20,
+                      "iconFontName": "delete",
+                      "iconFontFamily": "Material Symbols Outlined",
+                      "weight": 300,
+                      "fill": "#DC5B62"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "T5chKo",
+                  "name": "logBtn",
+                  "width": 40,
+                  "height": 40,
+                  "fill": "#F0FDF4",
+                  "cornerRadius": 12,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "RZJEy",
+                      "name": "logIcon",
+                      "width": 20,
+                      "height": 20,
+                      "iconFontName": "task_alt",
+                      "iconFontFamily": "Material Symbols Outlined",
+                      "weight": 300,
+                      "fill": "#22C55E"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "wkCuP",
+                  "name": "logBtn",
+                  "width": 40,
+                  "height": 40,
+                  "fill": "#F0FDF4",
+                  "cornerRadius": 12,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "whNX8",
+                      "name": "logIcon",
+                      "width": 20,
+                      "height": 20,
+                      "iconFontName": "arrow_forward",
+                      "iconFontFamily": "Material Symbols Outlined",
+                      "weight": 300,
+                      "fill": "#22C55E"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "jQjGf",
+          "name": "saveBtn",
+          "width": "fill_container",
+          "fill": "#00BF8D",
+          "cornerRadius": 100,
+          "padding": 16,
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "jEDQt",
+              "name": "saveText",
+              "fill": "#FFFFFF",
+              "content": "Save",
+              "fontFamily": "DM Sans",
+              "fontSize": 16,
+              "fontWeight": "600"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "note",
+      "id": "W20D7",
+      "x": -2478,
+      "y": 4683,
+      "width": 360,
+      "height": 219,
+      "content": "Note that the action availability is based on the current date that the menu item is on.\n- Past: delete and log are not available\n- Present (current date): both delete and log are available\n- Future: only delete is avalable\n\nThe \"View meal detail\" button (the button with the arrow right icon) is always available"
+    },
+    {
+      "type": "frame",
+      "id": "Ob9Gq",
+      "x": -3362,
+      "y": 2260,
+      "name": "Search Meal Screen - From Menu",
+      "clip": true,
+      "width": 402,
+      "height": 874,
+      "fill": "#FFFFFF",
+      "cornerRadius": 32,
+      "stroke": {
+        "thickness": 1,
+        "fill": "#E5E4E1"
+      },
+      "layout": "vertical",
+      "children": [
+        {
+          "id": "hbpQa",
+          "type": "ref",
+          "ref": "mtc64",
+          "layoutPosition": "absolute",
+          "x": 0,
+          "y": 0,
+          "name": "statusBar",
+          "descendants": {
+            "Sx4A7": {
+              "x": 24,
+              "y": 14
+            },
+            "VJKV6": {
+              "width": "fit_content",
+              "height": "fit_content",
+              "x": 310,
+              "y": 14
+            },
+            "U7Ajt": {
+              "y": 1
+            },
+            "ldazK": {
+              "x": 24,
+              "y": 1
+            },
+            "fkqWm": {
+              "x": 48
+            }
+          }
+        },
+        {
+          "type": "frame",
+          "id": "bKdlx",
+          "name": "navHeader",
+          "width": "fill_container",
+          "padding": [
+            72,
+            24,
+            16,
+            24
+          ],
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "icon_font",
+              "id": "T1y3JH",
+              "layoutPosition": "absolute",
+              "x": 24,
+              "y": 72,
+              "name": "backIcon",
+              "width": 24,
+              "height": 24,
+              "iconFontName": "chevron_left",
+              "iconFontFamily": "Material Symbols Outlined",
+              "weight": 300,
+              "fill": "#1A1A1A"
+            },
+            {
+              "type": "text",
+              "id": "PyuNI",
+              "name": "title",
+              "fill": "#1A1A1A",
+              "textGrowth": "fixed-width",
+              "width": 220,
+              "content": "Add to Lunch, May 04",
+              "textAlign": "center",
+              "fontFamily": "Bricolage Grotesque",
+              "fontSize": 18,
+              "fontWeight": "700"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "cXRZR",
+          "name": "searchRow",
+          "width": "fill_container",
+          "gap": 12,
+          "padding": 24,
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "Y4f1M",
+              "name": "searchBar",
+              "width": "fill_container",
+              "fill": "#F6F7F8",
+              "cornerRadius": 16,
+              "gap": 12,
+              "padding": [
+                12,
+                16
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "S8VKO",
+                  "name": "searchIcon",
+                  "width": 24,
+                  "height": 24,
+                  "iconFontName": "search",
+                  "iconFontFamily": "Material Symbols Outlined",
+                  "weight": 300,
+                  "fill": "#9CA3AF"
+                },
+                {
+                  "type": "text",
+                  "id": "CXx8r",
+                  "name": "searchTxt",
+                  "fill": "#9CA3AF",
+                  "content": "What do you want to eat ?",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 15,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "Q9vbF",
+              "name": "filterBtn",
+              "width": 48,
+              "height": 48,
+              "fill": "#00BF8D",
+              "cornerRadius": 16,
+              "padding": 12,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "fsKyG",
+                  "name": "filterIcon",
+                  "width": 24,
+                  "height": 24,
+                  "iconFontName": "tune",
+                  "iconFontFamily": "Material Symbols Outlined",
+                  "weight": 300,
+                  "fill": "#FFFFFF"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "w4GVSK",
+          "name": "content",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "gap": "$space.md",
+          "padding": [
+            0,
+            "$space.md"
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "gziax",
+              "name": "searchCard2",
+              "width": "fill_container",
+              "fill": "#F6F7F8",
+              "cornerRadius": 16,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "udU0c",
+                  "name": "topRow",
+                  "gap": 16,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "ZpOJ7",
+                      "name": "imgWrap",
+                      "clip": true,
+                      "width": 64,
+                      "height": 64,
+                      "fill": "#E5E7EB",
+                      "cornerRadius": 8
+                    },
+                    {
+                      "type": "frame",
+                      "id": "qrq9T",
+                      "name": "textsWrap",
+                      "layout": "vertical",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "BFBlC",
+                          "name": "cardTitle",
+                          "fill": "#1A1A1A",
+                          "content": "Grilled Salmon Bowl",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 16,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "W11AQ",
+                          "name": "cardSub",
+                          "fill": "#6B7280",
+                          "content": "20 mins • Medium",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "mINPo",
+                          "name": "nutRow",
+                          "gap": 16,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "W3pSAr",
+                              "name": "nut1",
+                              "gap": 4,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "U0jpK",
+                                  "name": "nut1T",
+                                  "fill": "#F59E0B",
+                                  "content": "450 cal",
+                                  "fontFamily": "DM Sans",
+                                  "fontSize": 13,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "o9n6fK",
+                              "name": "nut2",
+                              "gap": 4,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "GJUf1",
+                                  "name": "nut2T",
+                                  "fill": "#3B82F6",
+                                  "content": "35g p",
+                                  "fontFamily": "DM Sans",
+                                  "fontSize": 13,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "Y478H",
+                              "name": "nut3",
+                              "gap": 4,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "eBYtg",
+                                  "name": "nut3T",
+                                  "fill": "#8B5CF6",
+                                  "content": "12g c",
+                                  "fontFamily": "DM Sans",
+                                  "fontSize": 13,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "iv2Xw",
+                              "name": "nut4",
+                              "gap": 4,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "PZRtU",
+                                  "name": "nut4T",
+                                  "fill": "#EF4444",
+                                  "content": "22g f",
+                                  "fontFamily": "DM Sans",
+                                  "fontSize": 13,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "QEx0D",
+              "name": "searchCard3",
+              "width": "fill_container",
+              "fill": "#F6F7F8",
+              "cornerRadius": 16,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "D4RvO",
+                  "name": "topRow",
+                  "gap": 16,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "A4tE4",
+                      "name": "imgWrap",
+                      "clip": true,
+                      "width": 64,
+                      "height": 64,
+                      "fill": "#E5E7EB",
+                      "cornerRadius": 8
+                    },
+                    {
+                      "type": "frame",
+                      "id": "RBqJI",
+                      "name": "textsWrap",
+                      "layout": "vertical",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "x7IZ7s",
+                          "name": "cardTitle",
+                          "fill": "#1A1A1A",
+                          "content": "Vegan Quinoa Wrap",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 16,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "w73B1s",
+                          "name": "cardSub",
+                          "fill": "#6B7280",
+                          "content": "10 mins • Easy",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "p7aURj",
+                          "name": "nutRow",
+                          "gap": 16,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "vWIG8",
+                              "name": "nut1",
+                              "gap": 4,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "tlU18",
+                                  "name": "nut1T",
+                                  "fill": "#F59E0B",
+                                  "content": "450 cal",
+                                  "fontFamily": "DM Sans",
+                                  "fontSize": 13,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "LG0WQ",
+                              "name": "nut2",
+                              "gap": 4,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "H61HL",
+                                  "name": "nut2T",
+                                  "fill": "#3B82F6",
+                                  "content": "35g p",
+                                  "fontFamily": "DM Sans",
+                                  "fontSize": 13,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "h1IGDl",
+                              "name": "nut3",
+                              "gap": 4,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "sSPla",
+                                  "name": "nut3T",
+                                  "fill": "#8B5CF6",
+                                  "content": "12g c",
+                                  "fontFamily": "DM Sans",
+                                  "fontSize": 13,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "XHikP",
+                              "name": "nut4",
+                              "gap": 4,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "BlCN9",
+                                  "name": "nut4T",
+                                  "fill": "#EF4444",
+                                  "content": "22g f",
+                                  "fontFamily": "DM Sans",
+                                  "fontSize": 13,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "XsTME",
+              "name": "searchCard4",
+              "width": "fill_container",
+              "fill": "#F6F7F8",
+              "cornerRadius": 16,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "BzloW",
+                  "name": "topRow",
+                  "gap": 16,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "JTvRb",
+                      "name": "imgWrap",
+                      "clip": true,
+                      "width": 64,
+                      "height": 64,
+                      "fill": "#E5E7EB",
+                      "cornerRadius": 8
+                    },
+                    {
+                      "type": "frame",
+                      "id": "mQ7ia",
+                      "name": "textsWrap",
+                      "layout": "vertical",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "ddi14",
+                          "name": "cardTitle",
+                          "fill": "#1A1A1A",
+                          "content": "Beef & Broccoli Stir-fry",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 16,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "Rl231",
+                          "name": "cardSub",
+                          "fill": "#6B7280",
+                          "content": "25 mins • Medium",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "hVtdw",
+                          "name": "nutRow",
+                          "gap": 16,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "RmVde",
+                              "name": "nut1",
+                              "gap": 4,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "F1u6s",
+                                  "name": "nut1T",
+                                  "fill": "#F59E0B",
+                                  "content": "450 cal",
+                                  "fontFamily": "DM Sans",
+                                  "fontSize": 13,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "h8JNA",
+                              "name": "nut2",
+                              "gap": 4,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "DC7oD",
+                                  "name": "nut2T",
+                                  "fill": "#3B82F6",
+                                  "content": "35g p",
+                                  "fontFamily": "DM Sans",
+                                  "fontSize": 13,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "qE42S",
+                              "name": "nut3",
+                              "gap": 4,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "j2cTfs",
+                                  "name": "nut3T",
+                                  "fill": "#8B5CF6",
+                                  "content": "12g c",
+                                  "fontFamily": "DM Sans",
+                                  "fontSize": 13,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "P7BSo",
+                              "name": "nut4",
+                              "gap": 4,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "UY5gl",
+                                  "name": "nut4T",
+                                  "fill": "#EF4444",
+                                  "content": "22g f",
+                                  "fontFamily": "DM Sans",
+                                  "fontSize": 13,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "ZsM4m",
+              "name": "searchCard5",
+              "width": "fill_container",
+              "fill": "#F6F7F8",
+              "cornerRadius": 16,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "BLeaG",
+                  "name": "topRow",
+                  "gap": 16,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "TYwQo",
+                      "name": "imgWrap",
+                      "clip": true,
+                      "width": 64,
+                      "height": 64,
+                      "fill": "#E5E7EB",
+                      "cornerRadius": 8
+                    },
+                    {
+                      "type": "frame",
+                      "id": "lUz6A",
+                      "name": "textsWrap",
+                      "layout": "vertical",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "UnG1n",
+                          "name": "cardTitle",
+                          "fill": "#1A1A1A",
+                          "content": "Berry Protein Smoothie",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 16,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "W2aQlt",
+                          "name": "cardSub",
+                          "fill": "#6B7280",
+                          "content": "5 mins • Easy",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "H7RnGa",
+                          "name": "nutRow",
+                          "gap": 16,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "jY0tI",
+                              "name": "nut1",
+                              "gap": 4,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "l3XtMz",
+                                  "name": "nut1T",
+                                  "fill": "#F59E0B",
+                                  "content": "450 cal",
+                                  "fontFamily": "DM Sans",
+                                  "fontSize": 13,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "leAS4",
+                              "name": "nut2",
+                              "gap": 4,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "KHICu",
+                                  "name": "nut2T",
+                                  "fill": "#3B82F6",
+                                  "content": "35g p",
+                                  "fontFamily": "DM Sans",
+                                  "fontSize": 13,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "nNwiH",
+                              "name": "nut3",
+                              "gap": 4,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "s63Hot",
+                                  "name": "nut3T",
+                                  "fill": "#8B5CF6",
+                                  "content": "12g c",
+                                  "fontFamily": "DM Sans",
+                                  "fontSize": 13,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "fPnCQ",
+                              "name": "nut4",
+                              "gap": 4,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "dm1dA",
+                                  "name": "nut4T",
+                                  "fill": "#EF4444",
+                                  "content": "22g f",
+                                  "fontFamily": "DM Sans",
+                                  "fontSize": 13,
+                                  "fontWeight": "500"
+                                }
+                              ]
+                            }
+                          ]
                         }
                       ]
                     }

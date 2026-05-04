@@ -39,7 +39,7 @@ export function MacroStatDetailCard({
         {calories} kcal
       </SizableText>
 
-      <XStack gap="$space.md" ai="center" jc="space-between">
+      <XStack gap="$space.md" ai="center" jc="space-between" flexWrap="wrap">
         <MacroStatItem color="$purple6" label="Protein" value={protein} />
         <MacroStatItem color="$jade6" label="Carbs" value={carbs} />
         <MacroStatItem color="$red6" label="Fat" value={fat} />

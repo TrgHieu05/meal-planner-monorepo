@@ -1,6 +1,6 @@
 import { SizableText, YStack, XStack, ScrollView, AnimatePresence } from 'tamagui';
 import { MealCard } from '../components/MealCard';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft, SlidersHorizontal } from '@tamagui/lucide-icons-2';
 import { StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,6 +9,7 @@ import { useAppTheme } from '@/providers/AppProviders';
 import { useTheme } from 'tamagui';
 import { useState } from 'react';
 import { mockMeals } from '../mockMeals';
+import { buildAddToMenuLabel, getSingleSearchParam } from '@features/menu/utils/menu-flow';
 import {
     cloneMealFilters,
     createEmptyMealFilters,
@@ -23,9 +24,13 @@ export default function MealSearchScreen() {
     const theme = useTheme();
     const { themeName } = useAppTheme();
     const router = useRouter();
+    const params = useLocalSearchParams<{ mealTime?: string | string[]; date?: string | string[] }>();
     const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
     const [appliedFilters, setAppliedFilters] = useState<MealFilters>(createEmptyMealFilters);
     const [draftFilters, setDraftFilters] = useState<MealFilters>(createEmptyMealFilters);
+    const mealTimeParam = getSingleSearchParam(params.mealTime);
+    const dateParam = getSingleSearchParam(params.date);
+    const headerTitle = buildAddToMenuLabel(mealTimeParam, dateParam) ?? 'Search';
 
     function handleOpenFilterSheet() {
         setDraftFilters(cloneMealFilters(appliedFilters));
@@ -89,7 +94,7 @@ export default function MealSearchScreen() {
                         <ChevronLeft color="$text" size={24} />
                     </XStack>
                     <SizableText ff="$heading" fos="$h4" fow="$bold" col="$text">
-                        Search
+                        {headerTitle}
                     </SizableText>
                 </XStack>
 
@@ -113,6 +118,14 @@ export default function MealSearchScreen() {
                             <MealCard
                                 key={meal.id}
                                 id={meal.id}
+                                href={mealTimeParam && dateParam ? {
+                                    pathname: '/meal-search/[mealId]',
+                                    params: {
+                                        mealId: meal.id,
+                                        mealTime: mealTimeParam,
+                                        date: dateParam,
+                                    },
+                                } : undefined}
                                 mealName={meal.mealName}
                                 cookTime={meal.cookTime}
                                 difficulty={meal.difficulty}

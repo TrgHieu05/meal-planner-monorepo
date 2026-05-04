@@ -22,7 +22,7 @@ export default function HomeScreen() {
             Start planning your meals for the day.
           </SizableText>
         </YStack>
-        <Button w={48} h={48} size="medium" color="secondary" onPress={toggleTheme} pressStyle={{ bg:"$surfacePress"}} >
+        <Button w={48} color="secondary"  h={48} onPress={toggleTheme}>
           <Button.Icon icon={isDark ? MoonStar : Sun} size={24}/>
         </Button>
       </XStack>

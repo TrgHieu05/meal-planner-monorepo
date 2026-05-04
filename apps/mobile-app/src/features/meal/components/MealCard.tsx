@@ -1,5 +1,5 @@
 import { SizableText, XStack, YStack } from 'tamagui';
-import { Link } from 'expo-router';
+import { Link, type Href } from 'expo-router';
 
 export interface MealCardProps {
     id: string;
@@ -10,6 +10,7 @@ export interface MealCardProps {
   totalProtein: string;
   totalCarbs: string;
   totalFat: string;
+  href?: Href;
   onPress?: () => void;
 }
 
@@ -22,10 +23,11 @@ export function MealCard({
   totalProtein,
   totalCarbs,
   totalFat,
+  href,
   onPress,
 }: MealCardProps) {
   return (
-    <Link href={`/meal-search/${id}`} asChild> 
+    <Link href={href ?? `/meal-search/${id}`} asChild> 
       <XStack id={id} onPress={onPress} w="100%" p="$space.md" pressStyle={{ bg: "$surfacePress", scale: 0.99 }} bg="$surface" borderRadius="$md" gap ="$space.md">
           <YStack h={64} w={64} bg="$background" br="$radius.sm"/>
           <YStack h={64} f={1}  ai="flex-start" jc="space-between">

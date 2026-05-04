@@ -1,8 +1,11 @@
 import { Button, Tag } from '@components';
 import { useAppTheme } from '@/providers/AppProviders';
 import { getMockMealById } from '@features/meal/mockMeals';
+import { AddMealModal } from '@features/menu/screens/AddMealModal';
+import { buildAddToMenuLabel, getSingleSearchParam } from '@features/menu/utils/menu-flow';
 import { Clock3, Utensils, ChevronLeft } from '@tamagui/lucide-icons-2';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useState } from 'react';
 import { StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SizableText, ScrollView, XStack, YStack, useTheme } from 'tamagui';
@@ -32,8 +35,13 @@ export default function MealDetailScreen() {
 	const theme = useTheme();
 	const { themeName } = useAppTheme();
 	const router = useRouter();
-	const params = useLocalSearchParams<{ mealId?: string }>();
-	const mealId = params.mealId;
+	const [isAddMealModalOpen, setIsAddMealModalOpen] = useState(false);
+	const params = useLocalSearchParams<{ mealId?: string | string[]; mealTime?: string | string[]; date?: string | string[] }>();
+	const mealId = getSingleSearchParam(params.mealId);
+	const mealTimeParam = getSingleSearchParam(params.mealTime);
+	const dateParam = getSingleSearchParam(params.date);
+	const addToMenuLabel = buildAddToMenuLabel(mealTimeParam, dateParam) ?? 'Add to Menu';
+	const hasLockedAddMealContext = Boolean(mealTimeParam && dateParam);
 	const meal = getMockMealById(mealId);
 
 	if (!meal) {
@@ -142,10 +150,16 @@ export default function MealDetailScreen() {
 
 				
             <YStack p="$space.md"  bg="$background" >
-                <Button w="100%" color="primary" size="large">
-                    <Button.Text>Add to Meal</Button.Text>
+					<Button w="100%" color="primary" size="large" onPress={() => setIsAddMealModalOpen(true)}>
+                    <Button.Text>{addToMenuLabel}</Button.Text>
                 </Button>
             </YStack>
+
+				<AddMealModal
+					open={isAddMealModalOpen}
+					onOpenChange={setIsAddMealModalOpen}
+					hideDateAndMealTime={hasLockedAddMealContext}
+				/>
 		</SafeAreaView>
 	);
 }

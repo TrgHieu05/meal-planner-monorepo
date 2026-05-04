@@ -1,11 +1,7 @@
-import { YStack, Text } from 'tamagui';
-import { Link } from 'expo-router';
+import MenuScreen from '@features/menu/screens/MenuScreen';
 
-export default function MealScreen() {
-	return (
-		<YStack>
-			<Text>Meal Screen</Text>
-			<Link href="/" asChild><Text>Go to Home</Text></Link>
-		</YStack>
-	);
+export default function Menu() {
+    return (
+        <MenuScreen />
+    );
 }

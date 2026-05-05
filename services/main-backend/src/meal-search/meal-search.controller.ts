@@ -33,7 +33,7 @@ export class MealSearchController {
   @Header('X-API-Version', 'v1')
   @ApiOperation({
     summary:
-      'Tìm kiếm món ăn theo q (tên món hoặc nguyên liệu). Nếu không truyền q sẽ trả về toàn bộ danh sách (có thể kèm filter difficulty/cookingTime/allergies)',
+      'Tìm kiếm món ăn theo q (tên món hoặc nguyên liệu). Nếu không truyền q sẽ trả về danh sách theo phân trang, có thể lọc theo difficulty/allergies/cookTimeMin/cookTimeMax',
   })
   @ApiResponse({ status: 200, description: 'Trả về danh sách món ăn phù hợp' })
   @ApiResponse({
@@ -98,7 +98,8 @@ export class MealSearchController {
     queryText: string;
     excludeIngredients: string[];
     difficulty?: 'easy' | 'medium' | 'hard';
-    cookingTimeMaxMins?: number;
+    cookTimeMinMins?: number;
+    cookTimeMaxMins?: number;
     page: number;
     pageSize: number;
   } {
@@ -108,17 +109,12 @@ export class MealSearchController {
         ? q.allergies.split(',').map((s) => s.trim())
         : [];
 
-    let cookingTimeMaxMins: number | undefined;
-    if (q.cookingTime) {
-      cookingTimeMaxMins =
-        q.cookingTime === '<30m' ? 30 : q.cookingTime === '<45m' ? 45 : 60;
-    }
-
     return {
       queryText,
       excludeIngredients,
       difficulty: q.difficulty,
-      cookingTimeMaxMins,
+      cookTimeMinMins: q.cookTimeMin,
+      cookTimeMaxMins: q.cookTimeMax,
       page: q.page,
       pageSize: q.pageSize,
     };

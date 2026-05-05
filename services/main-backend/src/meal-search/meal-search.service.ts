@@ -61,7 +61,8 @@ export class MealSearchService {
     queryText: string;
     excludeIngredients: string[];
     difficulty?: 'easy' | 'medium' | 'hard';
-    cookingTimeMaxMins?: number;
+    cookTimeMinMins?: number;
+    cookTimeMaxMins?: number;
     page: number;
     pageSize: number;
   }): Promise<{
@@ -96,8 +97,11 @@ export class MealSearchService {
       ];
     }
 
-    if (params.cookingTimeMaxMins != null) {
-      where['cookTimeMins'] = { lte: params.cookingTimeMaxMins };
+    if (params.cookTimeMinMins != null || params.cookTimeMaxMins != null) {
+      where['cookTimeMins'] = {
+        ...(params.cookTimeMinMins != null ? { gte: params.cookTimeMinMins } : {}),
+        ...(params.cookTimeMaxMins != null ? { lte: params.cookTimeMaxMins } : {}),
+      };
     }
 
     if (params.difficulty) {

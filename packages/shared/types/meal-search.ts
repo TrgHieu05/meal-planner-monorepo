@@ -4,17 +4,24 @@ import { IntSchema } from './common';
 export const DifficultyFilterSchema = z.enum(['easy', 'medium', 'hard']);
 export type DifficultyFilter = z.infer<typeof DifficultyFilterSchema>;
 
-export const CookingTimeSchema = z.enum(['<30m', '<45m', '<1hour']);
-export type CookingTime = z.infer<typeof CookingTimeSchema>;
-
 export const MealSearchQuerySchema = z.object({
   q: z.string().optional().default(''),
   difficulty: DifficultyFilterSchema.optional(),
-  cookingTime: CookingTimeSchema.optional(),
   allergies: z.string().optional(),
+  cookTimeMin: z.coerce.number().int().min(2).max(120).optional(),
+  cookTimeMax: z.coerce.number().int().min(2).max(120).optional(),
   page: z.coerce.number().int().positive().default(1),
   pageSize: z.coerce.number().int().positive().default(10),
-});
+}).refine(
+  (value) =>
+    value.cookTimeMin == null ||
+    value.cookTimeMax == null ||
+    value.cookTimeMin <= value.cookTimeMax,
+  {
+    message: 'cookTimeMin must be less than or equal to cookTimeMax',
+    path: ['cookTimeMin'],
+  },
+);
 
 export type MealSearchQuery = z.infer<typeof MealSearchQuerySchema>;
 

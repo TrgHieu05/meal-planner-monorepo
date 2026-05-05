@@ -5,10 +5,10 @@ import { PrismaService } from '../database/prisma.service';
 
 describe('MealSearchService', () => {
   let service: MealSearchService;
-  let prisma: { meal: { findMany: jest.Mock; findUnique: jest.Mock } };
+  let prisma: { meal: { findMany: jest.Mock; findUnique: jest.Mock; count: jest.Mock } };
 
   beforeEach(() => {
-    prisma = { meal: { findMany: jest.fn(), findUnique: jest.fn() } };
+    prisma = { meal: { findMany: jest.fn(), findUnique: jest.fn(), count: jest.fn() } };
     service = new MealSearchService(prisma as unknown as PrismaService);
   });
 
@@ -31,6 +31,8 @@ describe('MealSearchService', () => {
       queryText: 'Tomáto',
       excludeIngredients: [],
       difficulty: 'easy',
+      page: 1,
+      pageSize: 10,
     });
 
     expect(result.list).toHaveLength(1);
@@ -58,6 +60,8 @@ describe('MealSearchService', () => {
     const result = await service.search({
       queryText: 'egg deluxe',
       excludeIngredients: [],
+      page: 1,
+      pageSize: 10,
     });
 
     expect(result.list).toHaveLength(10);
@@ -65,6 +69,49 @@ describe('MealSearchService', () => {
     expect(result.list[0]?.score).toBeGreaterThanOrEqual(
       result.list[1]?.score ?? 0,
     );
+  });
+
+  it('returns paginated list when queryText is empty', async () => {
+    prisma.meal.count.mockResolvedValue(2);
+    prisma.meal.findMany.mockResolvedValue([
+      {
+        id: 1,
+        name: 'Apple Salad',
+        difficulty: Difficulty.LEVEL_1,
+        cookTimeMins: 5,
+      },
+    ]);
+
+    const result = await service.search({
+      queryText: '',
+      excludeIngredients: [],
+      page: 1,
+      pageSize: 1,
+    });
+
+    expect(prisma.meal.count).toHaveBeenCalled();
+    expect(prisma.meal.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        skip: 0,
+        take: 1,
+        orderBy: { name: 'asc' },
+      }),
+    );
+    expect(result).toEqual({
+      list: [
+        {
+          id: 1,
+          name: 'Apple Salad',
+          difficulty: 'easy',
+          cook_time_min: 5,
+          score: 0,
+        },
+      ],
+      page: 1,
+      pageSize: 1,
+      total: 2,
+      hasMore: true,
+    });
   });
 
   it('throws 404 when meal does not exist', async () => {

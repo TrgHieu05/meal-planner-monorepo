@@ -33,12 +33,12 @@ export class MealSearchController {
   @Header('X-API-Version', 'v1')
   @ApiOperation({
     summary:
-      'Tìm kiếm món ăn theo chuỗi q (tên món hoặc nguyên liệu) với bộ lọc difficulty/cookingTime/allergies',
+      'Tìm kiếm món ăn theo q (tên món hoặc nguyên liệu). Nếu không truyền q sẽ trả về toàn bộ danh sách (có thể kèm filter difficulty/cookingTime/allergies)',
   })
   @ApiResponse({ status: 200, description: 'Trả về danh sách món ăn phù hợp' })
   @ApiResponse({
     status: 400,
-    description: 'Invalid request (missing or invalid query params).',
+    description: 'Invalid query params.',
   })
   @ApiResponse({
     status: 401,
@@ -99,14 +99,10 @@ export class MealSearchController {
     excludeIngredients: string[];
     difficulty?: 'easy' | 'medium' | 'hard';
     cookingTimeMaxMins?: number;
+    page: number;
+    pageSize: number;
   } {
-    const queryText = q.q.trim();
-    if (queryText.length === 0) {
-      throw new BadRequestException({
-        error: 'Bad Request',
-        message: 'Missing `q` parameter.',
-      });
-    }
+    const queryText = (q.q ?? '').trim();
     const excludeIngredients =
       typeof q.allergies === 'string' && q.allergies.length > 0
         ? q.allergies.split(',').map((s) => s.trim())
@@ -123,6 +119,8 @@ export class MealSearchController {
       excludeIngredients,
       difficulty: q.difficulty,
       cookingTimeMaxMins,
+      page: q.page,
+      pageSize: q.pageSize,
     };
   }
 }

@@ -26,7 +26,8 @@ describe('MealSearchController', () => {
       queryText: '',
       excludeIngredients: [],
       difficulty: undefined,
-      cookingTimeMaxMins: undefined,
+      cookTimeMinMins: undefined,
+      cookTimeMaxMins: undefined,
       page: 1,
       pageSize: 10,
     });
@@ -50,13 +51,15 @@ describe('MealSearchController', () => {
     const result = await controller.search({
       q: 'egg tomato',
       difficulty: 'easy',
-      cookingTime: '<30m',
+      cookTimeMin: 2,
+      cookTimeMax: 30,
     });
     expect(service.search).toHaveBeenCalledWith({
       queryText: 'egg tomato',
       excludeIngredients: [],
       difficulty: 'easy',
-      cookingTimeMaxMins: 30,
+      cookTimeMinMins: 2,
+      cookTimeMaxMins: 30,
       page: 1,
       pageSize: 10,
     });

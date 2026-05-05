@@ -88,7 +88,8 @@ describe('Meal Search API (e2e)', () => {
       queryText: '',
       excludeIngredients: [],
       difficulty: undefined,
-      cookingTimeMaxMins: undefined,
+      cookTimeMinMins: undefined,
+      cookTimeMaxMins: undefined,
       page: 1,
       pageSize: 10,
     });
@@ -112,7 +113,7 @@ describe('Meal Search API (e2e)', () => {
     });
 
     const response = await request(app.getHttpServer())
-      .get('/api/v1/meals?q=egg&difficulty=easy&cookingTime=%3C30m&allergies=milk,peanut')
+      .get('/api/v1/meals?q=egg&difficulty=easy&cookTimeMin=2&cookTimeMax=30&allergies=milk,peanut')
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
 
@@ -120,7 +121,8 @@ describe('Meal Search API (e2e)', () => {
       queryText: 'egg',
       excludeIngredients: ['milk', 'peanut'],
       difficulty: 'easy',
-      cookingTimeMaxMins: 30,
+      cookTimeMinMins: 2,
+      cookTimeMaxMins: 30,
       page: 1,
       pageSize: 10,
     });

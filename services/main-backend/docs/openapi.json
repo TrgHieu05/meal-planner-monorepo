@@ -1537,7 +1537,7 @@
             "description": "Trả về danh sách món ăn phù hợp"
           },
           "400": {
-            "description": "Invalid request (missing or invalid query params)."
+            "description": "Invalid query params."
           },
           "401": {
             "description": "Token không hợp lệ hoặc đã hết hạn"
@@ -1548,7 +1548,7 @@
             "JWT": []
           }
         ],
-        "summary": "Tìm kiếm món ăn theo chuỗi q (tên món hoặc nguyên liệu) với bộ lọc difficulty/cookingTime/allergies",
+        "summary": "Tìm kiếm món ăn theo q (tên món hoặc nguyên liệu). Nếu không truyền q sẽ trả về toàn bộ danh sách (có thể kèm filter difficulty/cookingTime/allergies)",
         "tags": [
           "Meals"
         ]

@@ -8,10 +8,12 @@ export const CookingTimeSchema = z.enum(['<30m', '<45m', '<1hour']);
 export type CookingTime = z.infer<typeof CookingTimeSchema>;
 
 export const MealSearchQuerySchema = z.object({
-  q: z.string().min(1),
+  q: z.string().optional().default(''),
   difficulty: DifficultyFilterSchema.optional(),
   cookingTime: CookingTimeSchema.optional(),
   allergies: z.string().optional(),
+  page: z.coerce.number().int().positive().default(1),
+  pageSize: z.coerce.number().int().positive().default(10),
 });
 
 export type MealSearchQuery = z.infer<typeof MealSearchQuerySchema>;
@@ -28,6 +30,10 @@ export type MealSearchResultItem = z.infer<typeof MealSearchResultItemSchema>;
 
 export const MealSearchResponseSchema = z.object({
   list: z.array(MealSearchResultItemSchema),
+  page: IntSchema,
+  pageSize: IntSchema,
+  total: z.number().int().nonnegative(),
+  hasMore: z.boolean(),
 });
 
 export type MealSearchResponse = z.infer<typeof MealSearchResponseSchema>;

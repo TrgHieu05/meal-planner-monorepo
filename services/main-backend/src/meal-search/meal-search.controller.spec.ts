@@ -13,14 +13,40 @@ describe('MealSearchController', () => {
     );
   });
 
-  it('rejects when q is missing', async () => {
-    await expect(controller.search({})).rejects.toBeInstanceOf(
-      BadRequestException,
-    );
+  it('allows missing q and delegates to service with empty queryText', async () => {
+    service.search.mockResolvedValue({
+      list: [],
+      page: 1,
+      pageSize: 10,
+      total: 0,
+      hasMore: false,
+    });
+    const result = await controller.search({});
+    expect(service.search).toHaveBeenCalledWith({
+      queryText: '',
+      excludeIngredients: [],
+      difficulty: undefined,
+      cookingTimeMaxMins: undefined,
+      page: 1,
+      pageSize: 10,
+    });
+    expect(result).toEqual({
+      list: [],
+      page: 1,
+      pageSize: 10,
+      total: 0,
+      hasMore: false,
+    });
   });
 
   it('parses and delegates to service', async () => {
-    service.search.mockResolvedValue({ list: [] });
+    service.search.mockResolvedValue({
+      list: [],
+      page: 1,
+      pageSize: 10,
+      total: 0,
+      hasMore: false,
+    });
     const result = await controller.search({
       q: 'egg tomato',
       difficulty: 'easy',
@@ -31,8 +57,16 @@ describe('MealSearchController', () => {
       excludeIngredients: [],
       difficulty: 'easy',
       cookingTimeMaxMins: 30,
+      page: 1,
+      pageSize: 10,
     });
-    expect(result).toEqual({ list: [] });
+    expect(result).toEqual({
+      list: [],
+      page: 1,
+      pageSize: 10,
+      total: 0,
+      hasMore: false,
+    });
   });
 
   it('rejects getMealById when id is invalid', async () => {

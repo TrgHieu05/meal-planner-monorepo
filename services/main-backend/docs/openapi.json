@@ -1548,7 +1548,7 @@
             "JWT": []
           }
         ],
-        "summary": "Tìm kiếm món ăn theo q (tên món hoặc nguyên liệu). Nếu không truyền q sẽ trả về toàn bộ danh sách (có thể kèm filter difficulty/cookingTime/allergies)",
+        "summary": "Tìm kiếm món ăn theo q (tên món hoặc nguyên liệu). Nếu không truyền q sẽ trả về danh sách theo phân trang, có thể lọc theo difficulty/allergies/cookTimeMin/cookTimeMax",
         "tags": [
           "Meals"
         ]

@@ -33,7 +33,16 @@ describe('MealTemplate API (e2e)', () => {
       .useValue(service)
       .overrideProvider(PrismaService)
       .useValue({
-        user: { findUnique: jest.fn().mockResolvedValue({ id: userId }) },
+        user: {
+          findUnique: jest.fn().mockResolvedValue({
+            id: userId,
+            email: 'user@example.com',
+            userName: 'John',
+            gender: null,
+            dateOfBirth: null,
+            profile: null,
+          }),
+        },
       })
       .compile();
 

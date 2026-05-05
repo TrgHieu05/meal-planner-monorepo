@@ -62,7 +62,15 @@ export class MealSearchService {
     excludeIngredients: string[];
     difficulty?: 'easy' | 'medium' | 'hard';
     cookingTimeMaxMins?: number;
-  }): Promise<{ list: MealSearchResultItem[] }> {
+    page: number;
+    pageSize: number;
+  }): Promise<{
+    list: MealSearchResultItem[];
+    page: number;
+    pageSize: number;
+    total: number;
+    hasMore: boolean;
+  }> {
     const normalizedQuery = normalizeText(params.queryText);
     const queryTokens = tokenize(normalizedQuery);
     const exclude = normalizeNames(params.excludeIngredients);
@@ -95,6 +103,51 @@ export class MealSearchService {
     if (params.difficulty) {
       where['difficulty'] = {
         in: toDbDifficultySet(params.difficulty),
+      };
+    }
+
+    const page = params.page;
+    const pageSize = params.pageSize;
+    const offset = (page - 1) * pageSize;
+
+    if (normalizedQuery.length === 0) {
+      const total = await this.prisma.meal.count({ where });
+      const meals = await this.prisma.meal.findMany({
+        where,
+        orderBy: { name: 'asc' },
+        skip: offset,
+        take: pageSize,
+        select: {
+          id: true,
+          name: true,
+          difficulty: true,
+          cookTimeMins: true,
+        },
+      });
+
+      const list: MealSearchResultItem[] = meals.map((meal) => {
+        const difficulty = fromDbDifficulty(meal.difficulty);
+        if (!difficulty) {
+          throw new InternalServerErrorException(
+            'Invalid difficulty stored for meal',
+          );
+        }
+
+        return {
+          id: meal.id,
+          name: meal.name,
+          difficulty,
+          cook_time_min: meal.cookTimeMins,
+          score: 0,
+        };
+      });
+
+      return {
+        list,
+        page,
+        pageSize,
+        total,
+        hasMore: page * pageSize < total,
       };
     }
 
@@ -153,7 +206,15 @@ export class MealSearchService {
       return a.name.localeCompare(b.name);
     });
 
-    return { list: results.slice(0, 10) };
+    const total = results.length;
+    const list = results.slice(offset, offset + pageSize);
+    return {
+      list,
+      page,
+      pageSize,
+      total,
+      hasMore: page * pageSize < total,
+    };
   }
 }
 

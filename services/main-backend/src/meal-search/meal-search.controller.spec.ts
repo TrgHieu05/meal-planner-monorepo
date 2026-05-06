@@ -72,6 +72,17 @@ describe('MealSearchController', () => {
     });
   });
 
+  it('rejects invalid search query', async () => {
+    await expect(
+      controller.search({
+        cookTimeMin: 30,
+        cookTimeMax: 2,
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(service.search).not.toHaveBeenCalled();
+  });
+
   it('rejects getMealById when id is invalid', async () => {
     await expect(controller.getMealById('0')).rejects.toBeInstanceOf(
       BadRequestException,

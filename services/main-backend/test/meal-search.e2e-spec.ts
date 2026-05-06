@@ -145,6 +145,15 @@ describe('Meal Search API (e2e)', () => {
     });
   });
 
+  it('GET /api/v1/meals should return 400 for invalid query params', async () => {
+    await request(app.getHttpServer())
+      .get('/api/v1/meals?cookTimeMin=30&cookTimeMax=2')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(400);
+
+    expect(mealSearchService.search).not.toHaveBeenCalled();
+  });
+
   it('GET /api/v1/meals/:id should return 200 with meal detail', async () => {
     mealSearchService.getMealById.mockResolvedValue({
       id: 1,

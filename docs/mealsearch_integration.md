@@ -46,11 +46,15 @@ Ngoài phạm vi của tài liệu này:
 - Vấn đề runtime export của `@meal/shared` cho `MealDetailResponseSchema` đã được sửa.
 - Đã xác nhận `pnpm --filter main-backend test -- meal-search` đang pass.
 - Đã xác nhận `pnpm --filter main-backend test:e2e -- meal-search.e2e-spec.ts` đang pass.
-- Mobile app hiện chưa có data layer riêng cho feature `meal`; mới có screen/component/mock data.
-- `MealSearchScreen` hiện vẫn render `mockMeals` thay vì gọi API thật.
-- `MealDetailScreen` hiện vẫn lấy dữ liệu bằng `getMockMealById(...)`.
-- Search input hiện mới là UI shell; chưa có state/query flow để gọi backend.
-- Filter UI hiện đang lệch contract backend ở `difficulty`.
+- Mobile app hiện đã có data layer riêng cho feature `meal` với adapter/view-model map từ shared schema sang UI model.
+- `MealSearchScreen` hiện đã gọi API thật cho danh sách meal thay vì render `mockMeals`.
+- `MealDetailScreen` hiện đã gọi API detail thật bằng `mealId` route param thay vì `getMockMealById(...)`.
+- `MenuScreen` hiện đã gọi backend menu API theo ngày, không còn dựng `createMockMenuMealTimes(...)` cho flow chính.
+- `MenuItemDetailModal` hiện điều hướng sang `/meal-search/[mealId]` bằng `mealId` numeric thật và giữ route context `mealTime` + `date`.
+- `AddMealModal` hiện đã gọi `POST /api/v1/menu-items` bằng `mealId` numeric thật thay vì chỉ đóng modal như UI shell.
+- Search input hiện đã có debounce 300ms và query flow gọi backend thật.
+- Filter UI của search đã được đồng bộ về single-select `difficulty` theo contract backend.
+- Detail screen hiện đã có loading/error/not-found states và đã đổi UI từ `carbs` sang `fiber` theo contract backend.
 - OpenAPI đã được regenerate; `/api/v1/meals` hiện đã mô tả các query params của search trong file generated (`q`, `difficulty`, `allergies`, `cookTimeMin`, `cookTimeMax`, `page`, `pageSize`).
 
 ## Các điểm cần giải quyết trước khi tích hợp
@@ -153,8 +157,8 @@ Checklist cần xử lý:
 
 - [X] Chốt search trigger: debounce khi gõ, submit bằng Enter, hay bấm nút search/filter mới gọi API. **Chốt: debounce 300ms, tự động submit khi hết thời gian debounce.**
 - [X] Chốt behavior khi `q` rỗng: **Vẫn query bình thường với `q` rỗng, backend trả về danh sách mặc định có phân trang.**
-- [ ] Đồng bộ `difficulty` về single-select hoặc mở rộng backend/shared nếu business thật sự cần multi-select.
-- [ ] Đồng bộ casing giữa UI label và API value.
+- [X] Đồng bộ `difficulty` về single-select hoặc mở rộng backend/shared nếu business thật sự cần multi-select.
+- [X] Đồng bộ casing giữa UI label và API value.
 - [X] Chốt `allergies` filter có lấy tự động từ profile hiện tại hay là lựa chọn thủ công riêng ở màn search. **Chốt: luôn tự động lấy từ profile hiện tại của user.**
 - [X] [Cần bạn làm rõ] Search nên trigger theo debounce khi nhập, hay chỉ khi người dùng submit? **Chốt: debounce 300ms, auto submit.**
 - [X] [Cần bạn làm rõ] Khi `q` rỗng, màn search nên hiển thị empty state, suggestion/default list, hay chờ người dùng nhập? **Chốt: vẫn query bình thường với `q` rỗng và hiển thị danh sách mặc định có phân trang.**
@@ -163,15 +167,15 @@ Checklist cần xử lý:
 
 ### 5. Đồng bộ `mealId` giữa search, detail, menu và add-to-menu flow
 
-Hiện tại shared/backend contract đang dùng `mealId` kiểu số nguyên dương, nhưng mock data ở mobile vẫn dùng string ids như `meal-1`, `menu-meal-avocado-toast`.
+Trước khi hoàn tất bước migrate sang backend thật, mobile từng dùng mock data với string ids như `meal-1`, `menu-meal-avocado-toast`. Hiện tại flow chính đã được chuyển hết sang `mealId` numeric theo contract shared/backend và file mock meal cũ đã được loại bỏ.
 
 Checklist cần xử lý:
 
-- [ ] Chuyển toàn bộ flow search/detail thật sang `mealId` numeric theo contract backend/shared.
-- [ ] Rà soát route params của `/meal-search/[mealId]` để không còn phụ thuộc mock string ids.
-- [ ] Rà soát luồng `MenuItemDetailModal -> /meal-search/:mealId` để không gửi id mock không tồn tại ở backend.
+- [X] Chuyển toàn bộ flow search/detail thật sang `mealId` numeric theo contract backend/shared.
+- [X] Rà soát route params của `/meal-search/[mealId]` để không còn phụ thuộc mock string ids.
+- [X] Rà soát luồng `MenuItemDetailModal -> /meal-search/:mealId` để không gửi id mock không tồn tại ở backend.
 - [X] Chốt chiến lược cho các menu item mock hiện tại: thay hoàn toàn bằng meal thật, hay duy trì tạm 2 nguồn dữ liệu song song. **Thay hoàn toàn bằng meal thật**
-- [ ] Đảm bảo `Add to Menu` từ detail dùng đúng `mealId` numeric khi gọi menu API thật.
+- [X] Đảm bảo `Add to Menu` từ detail dùng đúng `mealId` numeric khi gọi menu API thật.
 - [X] [Cần bạn làm rõ] Trong giai đoạn tích hợp, menu hiện tại có phải chuyển hoàn toàn sang `mealId` số của backend không, hay vẫn giữ mock items song song? **Chuyển hoàn toàn thành mealID số theo backend, xóa hoàn toàn các mock item**
 
 ### 6. Bổ sung test và tài liệu API cho `meal-search`
@@ -215,16 +219,16 @@ Checklist cần xử lý:
 ### D. Mobile app `apps/mobile-app`
 
 - [X] Tạo data layer riêng cho feature `meal`, ví dụ `src/features/meal/api/meal.api.ts`.
-- [ ] Dùng `session.accessToken` từ `AuthProvider` để gọi protected API.
+- [X] Dùng `session.accessToken` từ `AuthProvider` để gọi protected API.
 - [X] Tạo adapter/view-model để map response backend sang props UI.
-- [ ] Thay `mockMeals` trên `MealSearchScreen` bằng dữ liệu thật.
-- [ ] Thay `getMockMealById(...)` trên `MealDetailScreen` bằng fetch detail thật.
-- [ ] Thêm loading state cho search screen.
-- [ ] Thêm error state và retry state cho search screen.
-- [ ] Thêm empty state khi không có kết quả search.
-- [ ] Thêm loading/error/not-found state cho detail screen.
-- [ ] Giữ lại luồng route params `mealTime` + `date` cho `Add to Menu` khi có locked context.
-- [ ] Đảm bảo `Add to Menu` dùng `mealId` numeric thật.
+- [X] Thay `mockMeals` trên `MealSearchScreen` bằng dữ liệu thật.
+- [X] Thay `getMockMealById(...)` trên `MealDetailScreen` bằng fetch detail thật.
+- [X] Thêm loading state cho search screen.
+- [X] Thêm error state và retry state cho search screen.
+- [X] Thêm empty state khi không có kết quả search.
+- [X] Thêm loading/error/not-found state cho detail screen.
+- [X] Giữ lại luồng route params `mealTime` + `date` cho `Add to Menu` khi có locked context.
+- [X] Đảm bảo `Add to Menu` dùng `mealId` numeric thật.
 
 ### E. Kiểm thử và QA
 
@@ -257,7 +261,7 @@ Checklist cần xử lý:
 2. [X] Hoàn thiện nốt backend `meal-search` theo contract đã khóa: bổ sung coverage cho `invalid query`, rà lại response mapping/search query validation nếu còn điểm lệch nhỏ, rồi cập nhật Swagger annotations cho đầy đủ query params (`q`, `difficulty`, `allergies`, `cookTimeMin`, `cookTimeMax`, `page`, `pageSize`).
 3. [X] Regenerate [services/main-backend/docs/openapi.json](services/main-backend/docs/openapi.json) sau khi annotations/backend contract đã ổn định, để mobile có thể bám vào spec mới nhất.
 4. [X] Tạo data layer riêng cho mobile feature `meal` theo pattern đang dùng ở `profile`: API client, typed models, adapter/view-model map từ snake_case sang props UI, format `cook_time_min` sang label hiển thị ở mobile.
-5. [ ] Tích hợp màn search với API thật: thay `mockMeals`, thêm debounce 300ms, default list khi `q` rỗng, filter `difficulty` single-select, wiring `allergies` từ profile, loading/error/empty states, và cập nhật `MealCard` sang `fiber` thay cho `carbs` nhưng giữ treatment màu hiện tại.
-6. [ ] Tích hợp màn detail với API thật: thay `getMockMealById(...)`, cập nhật UI sang `fiber`, hiển thị ingredient bằng `quantity` số thuần, giữ placeholder cho ảnh, và bổ sung loading/error/not-found states.
-7. [ ] Chuyển toàn bộ flow liên quan sang `mealId` numeric thật: route `/meal-search/[mealId]`, điều hướng từ menu/search, `MenuItemDetailModal`, `Add to Menu`, đồng thời loại bỏ các mock item/string id cũ khỏi flow chính.
+5. [X] Tích hợp màn search với API thật: thay `mockMeals`, thêm debounce 300ms, default list khi `q` rỗng, filter `difficulty` single-select, wiring `allergies` từ profile, loading/error/empty states, và cập nhật `MealCard` sang `fiber` thay cho `carbs` nhưng giữ treatment màu hiện tại.
+6. [X] Tích hợp màn detail với API thật: thay `getMockMealById(...)`, cập nhật UI sang `fiber`, hiển thị ingredient bằng `quantity` số thuần, giữ placeholder cho ảnh, và bổ sung loading/error/not-found states.
+7. [X] Chuyển toàn bộ flow liên quan sang `mealId` numeric thật: route `/meal-search/[mealId]`, điều hướng từ menu/search, `MenuItemDetailModal`, `Add to Menu`, đồng thời loại bỏ các mock item/string id cũ khỏi flow chính.
 8. [ ] Thực hiện QA tích hợp theo luồng thực tế: search theo tên/nguyên liệu/filter, detail từ search và menu, `401`, `404`, và `Add to Menu` khi có `mealTime` + `date` trong route context.

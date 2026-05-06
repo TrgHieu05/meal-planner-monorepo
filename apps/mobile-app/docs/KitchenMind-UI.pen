@@ -11164,7 +11164,7 @@
               "ref": "ZGjNb",
               "name": "chipA",
               "fill": "$softPrimary",
-              "x": 16.970000000000027,
+              "x": 16.970000000000013,
               "y": 0,
               "width": "fit_content",
               "height": "fit_content",
@@ -11191,7 +11191,7 @@
               "ref": "ZGjNb",
               "name": "chipC",
               "fill": "$softPrimary",
-              "x": 116.99000000000002,
+              "x": 116.99000000000001,
               "y": 0,
               "width": "fit_content",
               "height": "fit_content",
@@ -11218,7 +11218,7 @@
               "ref": "ZGjNb",
               "name": "chipD",
               "fill": "$softPrimary",
-              "x": 191.01000000000002,
+              "x": 191.01,
               "y": 0,
               "width": "fit_content",
               "height": "fit_content",
@@ -11715,7 +11715,7 @@
               "ref": "ZGjNb",
               "name": "chipA",
               "fill": "$softDanger",
-              "x": 17.970000000000027,
+              "x": 17.970000000000013,
               "width": "fit_content",
               "height": "fit_content",
               "y": 0,
@@ -11742,7 +11742,7 @@
               "ref": "ZGjNb",
               "name": "chipB",
               "fill": "$softDanger",
-              "x": 109.99000000000002,
+              "x": 109.99000000000001,
               "width": "fit_content",
               "height": "fit_content",
               "y": 0,
@@ -11769,7 +11769,7 @@
               "ref": "ZGjNb",
               "name": "chipD",
               "fill": "$softDanger",
-              "x": 190.01000000000002,
+              "x": 190.01,
               "width": "fit_content",
               "height": "fit_content",
               "y": 0,
@@ -18353,6 +18353,7 @@
               "id": "BVFMl",
               "name": "Frame 3",
               "width": "fit_content(354)",
+              "height": 520,
               "layout": "vertical",
               "gap": 16,
               "children": [
@@ -18360,6 +18361,7 @@
                   "type": "frame",
                   "id": "IKlxO",
                   "name": "card1",
+                  "clip": true,
                   "width": "fill_container",
                   "cornerRadius": 24,
                   "stroke": {
@@ -18367,92 +18369,26 @@
                     "fill": "#E5E7EB"
                   },
                   "layout": "vertical",
-                  "gap": 16,
-                  "padding": 20,
                   "children": [
                     {
                       "type": "frame",
-                      "id": "JHIsW",
-                      "name": "c1Head",
+                      "id": "rIaBb",
+                      "name": "Template Hero Image",
+                      "metadata": {
+                        "type": "unsplash",
+                        "username": "joestudios",
+                        "link": "https://unsplash.com/@joestudios",
+                        "author": "joe boshra"
+                      },
+                      "clip": true,
                       "width": "fill_container",
-                      "justifyContent": "space_between",
-                      "children": [
-                        {
-                          "type": "frame",
-                          "id": "umObH",
-                          "name": "c1Texts",
-                          "layout": "vertical",
-                          "gap": 4,
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "9QZ2B",
-                              "fill": "#1A1A1A",
-                              "content": "High Protein Week",
-                              "fontFamily": "Bricolage Grotesque",
-                              "fontSize": 18,
-                              "fontWeight": "700"
-                            },
-                            {
-                              "type": "text",
-                              "id": "cNZQT",
-                              "fill": "#6B7280",
-                              "content": "Focus on chicken and fish recipes",
-                              "fontFamily": "DM Sans",
-                              "fontSize": 14,
-                              "fontWeight": "normal"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "icon_font",
-                          "id": "tjTDs",
-                          "name": "menuBtn",
-                          "width": 24,
-                          "height": 24,
-                          "iconFontName": "more_vert",
-                          "iconFontFamily": "Material Symbols Outlined",
-                          "weight": 300,
-                          "fill": "#1A1A1A"
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "DI8DK",
-                      "name": "c1Days",
-                      "gap": 6,
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "icon_font",
-                          "id": "vsMC5",
-                          "width": 24,
-                          "height": 24,
-                          "iconFontName": "event",
-                          "iconFontFamily": "Material Symbols Outlined",
-                          "weight": 300,
-                          "fill": "#00BF8D"
-                        },
-                        {
-                          "type": "text",
-                          "id": "PrSs9",
-                          "fill": "#00BF8D",
-                          "content": "7 Days Plan",
-                          "fontFamily": "DM Sans",
-                          "fontSize": 14,
-                          "fontWeight": "600"
-                        }
-                      ]
-                    },
-                    {
-                      "type": "text",
-                      "id": "kikVr",
-                      "fill": "#6B7280",
-                      "content": "1750 kcal • 85g P • 170g C • 50g F",
-                      "fontFamily": "DM Sans",
-                      "fontSize": 12,
-                      "fontWeight": "normal"
+                      "height": 199.125,
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "https://images.unsplash.com/photo-1762631383556-7fa1365898b7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzc5NjAxNjB8&ixlib=rb-4.1.0&q=80&w=1080",
+                        "mode": "fill"
+                      }
                     },
                     {
                       "type": "frame",
@@ -18461,6 +18397,7 @@
                       "x": 124,
                       "y": 44,
                       "name": "dropdown",
+                      "enabled": false,
                       "width": 210,
                       "fill": "#FFFFFF",
                       "cornerRadius": 16,
@@ -18581,6 +18518,83 @@
                           ]
                         }
                       ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "C6UoS",
+                      "name": "Frame 6",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 8,
+                      "padding": 16,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "JHIsW",
+                          "name": "c1Head",
+                          "width": "fill_container",
+                          "justifyContent": "space_between",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "9QZ2B",
+                              "fill": "#1A1A1A",
+                              "content": "High Protein Week",
+                              "fontFamily": "Bricolage Grotesque",
+                              "fontSize": 18,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "icon_font",
+                              "id": "tjTDs",
+                              "name": "menuBtn",
+                              "width": 24,
+                              "height": 24,
+                              "iconFontName": "more_vert",
+                              "iconFontFamily": "Material Symbols Outlined",
+                              "weight": 300,
+                              "fill": "#1A1A1A"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "DI8DK",
+                          "name": "c1Days",
+                          "gap": 6,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon_font",
+                              "id": "vsMC5",
+                              "width": 24,
+                              "height": 24,
+                              "iconFontName": "event",
+                              "iconFontFamily": "Material Symbols Outlined",
+                              "weight": 300,
+                              "fill": "#00BF8D"
+                            },
+                            {
+                              "type": "text",
+                              "id": "PrSs9",
+                              "fill": "#00BF8D",
+                              "content": "7 Days Plan",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 14,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "kikVr",
+                          "fill": "#6B7280",
+                          "content": "1750 kcal • 85g P • 170g C • 50g F",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
                     }
                   ]
                 },
@@ -18600,37 +18614,40 @@
                   "children": [
                     {
                       "type": "frame",
+                      "id": "jjSPY",
+                      "name": "Template Hero Image",
+                      "metadata": {
+                        "type": "unsplash",
+                        "username": "jtbean",
+                        "link": "https://unsplash.com/@jtbean",
+                        "author": "Josh Bean"
+                      },
+                      "clip": true,
+                      "width": 314,
+                      "height": 128,
+                      "fill": {
+                        "type": "image",
+                        "enabled": true,
+                        "url": "https://images.unsplash.com/photo-1514573427993-53fb869eb83e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzc5NjAxNjB8&ixlib=rb-4.1.0&q=80&w=1080",
+                        "mode": "fill"
+                      },
+                      "cornerRadius": 18
+                    },
+                    {
+                      "type": "frame",
                       "id": "YqInl",
                       "name": "c1Head",
                       "width": "fill_container",
                       "justifyContent": "space_between",
                       "children": [
                         {
-                          "type": "frame",
-                          "id": "XzgZb",
-                          "name": "c1Texts",
-                          "layout": "vertical",
-                          "gap": 4,
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "h33xb",
-                              "fill": "#1A1A1A",
-                              "content": "Low Carb Week",
-                              "fontFamily": "Bricolage Grotesque",
-                              "fontSize": 18,
-                              "fontWeight": "700"
-                            },
-                            {
-                              "type": "text",
-                              "id": "nFICR",
-                              "fill": "#6B7280",
-                              "content": "For fat loss and definitions",
-                              "fontFamily": "DM Sans",
-                              "fontSize": 14,
-                              "fontWeight": "normal"
-                            }
-                          ]
+                          "type": "text",
+                          "id": "h33xb",
+                          "fill": "#1A1A1A",
+                          "content": "Low Carb Week",
+                          "fontFamily": "Bricolage Grotesque",
+                          "fontSize": 18,
+                          "fontWeight": "700"
                         },
                         {
                           "type": "icon_font",
@@ -18680,6 +18697,7 @@
                       "x": 4000,
                       "y": 40,
                       "name": "dropdown",
+                      "enabled": false,
                       "width": 210,
                       "fill": "#FFFFFF",
                       "cornerRadius": 16,

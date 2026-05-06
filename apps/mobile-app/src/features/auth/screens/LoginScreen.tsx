@@ -121,7 +121,7 @@ export default function LoginScreen() {
                         disabled={!isGoogleSignInReady || isGoogleSigningIn}
                         onPress={handleGoogleSignIn}
                     >
-                        <GoogleIcon height="100%" />
+                        <GoogleIcon height={24} width={24} />
                         <Button.Text>
                             {isGoogleSigningIn ? 'Signing in with Google...' : 'Continue with Google'}
                         </Button.Text>

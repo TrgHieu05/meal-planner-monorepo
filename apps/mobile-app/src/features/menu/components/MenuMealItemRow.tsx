@@ -38,7 +38,7 @@ export function MenuMealItemRow({ item, onPress }: MenuMealItemRowProps) {
             {formatMenuNutritionValue(nutrition.protein)}p
           </SizableText>
           <SizableText ff="$body" fos="$sm" fow="$semiBold" color="$jade6">
-            {formatMenuNutritionValue(nutrition.carbs)}c
+            {formatMenuNutritionValue(nutrition.fiber)} fib
           </SizableText>
           <SizableText ff="$body" fos="$sm" fow="$semiBold" color="$red6">
             {formatMenuNutritionValue(nutrition.fat)}f

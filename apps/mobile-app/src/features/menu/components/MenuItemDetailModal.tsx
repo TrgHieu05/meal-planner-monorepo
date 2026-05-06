@@ -10,6 +10,7 @@ import {
   scaleMenuNutrition,
   type MenuMealItem,
 } from '@features/menu/utils/menu-meal-times';
+import { toMenuFlowMealTimeParam } from '@features/menu/utils/menu-flow';
 
 export interface MenuItemDetailModalProps {
   item: MenuMealItem | null;
@@ -106,9 +107,26 @@ export function MenuItemDetailModal({
     onOpenChange(false);
   };
 
+  const handleDelete = () => {
+    onDelete?.(item);
+    onOpenChange(false);
+  };
+
+  const handleLog = () => {
+    onLog?.(item);
+    onOpenChange(false);
+  };
+
   const handleNavigateToMealDetail = () => {
     onOpenChange(false);
-    router.push(`/meal-search/${item.mealId}`);
+    router.push({
+      pathname: '/meal-search/[mealId]',
+      params: {
+        mealId: `${item.mealId}`,
+        mealTime: toMenuFlowMealTimeParam(item.mealTime),
+        date: item.date,
+      },
+    });
   };
 
   return (
@@ -129,7 +147,7 @@ export function MenuItemDetailModal({
               <MacroStatDetailCard
                 calories={nutrition.calories}
                 protein={nutrition.protein}
-                carbs={nutrition.carbs}
+                fiber={nutrition.fiber}
                 fat={nutrition.fat}
               />
 
@@ -165,13 +183,13 @@ export function MenuItemDetailModal({
                     icon={Trash2}
                     backgroundColor="$softDanger"
                     iconColor="$danger"
-                    onPress={onDelete ? () => onDelete(item) : undefined}
+                    onPress={onDelete ? handleDelete : undefined}
                   />
                   <ActionIconButton
                     icon={Check}
                     backgroundColor="$softPrimary"
                     iconColor="$primary"
-                    onPress={onLog ? () => onLog(item) : undefined}
+                    onPress={onLog ? handleLog : undefined}
                   />
                   <ActionIconButton
                     icon={ArrowRight}

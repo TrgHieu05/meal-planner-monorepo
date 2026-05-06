@@ -1,18 +1,26 @@
 import { Modal, Pressable, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { SizableText, XStack, YStack, getTokens } from 'tamagui'
+import type { DifficultyFilter } from '@meal/shared/types/meal-search'
 
 import { Button, Chip, RadioButton } from '@components'
 
-export type MealDifficultyFilter = 'Easy' | 'Medium' | 'Hard'
+export type MealDifficultyFilter = DifficultyFilter
 export type MealCookingTimeFilter = '<30m' | '<45m' | '<1hour'
 
 export type MealFilters = {
-	difficulty: MealDifficultyFilter[]
+	difficulty: MealDifficultyFilter | null
 	cookingTime: MealCookingTimeFilter | null
 }
 
-const difficultyOptions: MealDifficultyFilter[] = ['Easy', 'Medium', 'Hard']
+const difficultyOptions: ReadonlyArray<{
+	label: string
+	value: MealDifficultyFilter
+}> = [
+	{ label: 'Easy', value: 'easy' },
+	{ label: 'Medium', value: 'medium' },
+	{ label: 'Hard', value: 'hard' },
+]
 const cookingTimeOptions: MealCookingTimeFilter[] = ['<30m', '<45m', '<1hour']
 
 type MealFilterSheetProps = {
@@ -21,26 +29,26 @@ type MealFilterSheetProps = {
 	onClose: () => void
 	onClear: () => void
 	onApply: () => void
-	onToggleDifficulty: (difficulty: MealDifficultyFilter) => void
+	onSelectDifficulty: (difficulty: MealDifficultyFilter) => void
 	onSelectCookingTime: (cookingTime: MealCookingTimeFilter) => void
 }
 
 export function createEmptyMealFilters(): MealFilters {
 	return {
-		difficulty: [],
+		difficulty: null,
 		cookingTime: null,
 	}
 }
 
 export function cloneMealFilters(filters: MealFilters): MealFilters {
 	return {
-		difficulty: [...filters.difficulty],
+		difficulty: filters.difficulty,
 		cookingTime: filters.cookingTime,
 	}
 }
 
 export function hasAppliedMealFilters(filters: MealFilters) {
-	return filters.difficulty.length > 0 || filters.cookingTime !== null
+	return filters.difficulty !== null || filters.cookingTime !== null
 }
 
 export function MealFilterSheet({
@@ -49,7 +57,7 @@ export function MealFilterSheet({
 	onClose,
 	onClear,
 	onApply,
-	onToggleDifficulty,
+	onSelectDifficulty,
 	onSelectCookingTime,
 }: MealFilterSheetProps) {
 	const insets = useSafeAreaInsets()
@@ -89,11 +97,11 @@ export function MealFilterSheet({
 						</SizableText>
 						<XStack flexWrap="wrap" gap="$sm">
 							{difficultyOptions.map((option) => {
-								const selected = filters.difficulty.includes(option)
+								const selected = filters.difficulty === option.value
 
 								return (
-									<Chip key={option} tone={selected ? 'brand' : 'neutral'} onPress={() => onToggleDifficulty(option)}>
-										<Chip.Text>{option}</Chip.Text>
+									<Chip key={option.value} tone={selected ? 'brand' : 'neutral'} onPress={() => onSelectDifficulty(option.value)}>
+										<Chip.Text>{option.label}</Chip.Text>
 									</Chip>
 								)
 							})}

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Modal, Pressable, StyleSheet } from 'react-native';
-import type { MealTime } from '@meal/shared/types/menu-item';
+import type { MealTime } from '@meal/shared';
 import { SizableText, XStack, YStack } from 'tamagui';
 
 import { Button, Chip, InputDate, InputText } from '@components';
@@ -29,7 +29,15 @@ const MEAL_TIME_OPTIONS: Array<{ value: MealTime; label: string }> = [
   { value: 'DINNER', label: 'Dinner' },
 ];
 
-export function AddMealModal({ open, onOpenChange, hideDateAndMealTime = false }: AddMealModalProps) {
+export function AddMealModal({
+  open,
+  onOpenChange,
+  mealId,
+  hideDateAndMealTime = false,
+  lockedDate,
+  lockedMealTime,
+  onSuccess,
+}: AddMealModalProps) {
   const { session } = useSession();
   const [selectedDate, setSelectedDate] = useState<Date>(() => createTodayCalendarDate());
   const [portionSize, setPortionSize] = useState('1');

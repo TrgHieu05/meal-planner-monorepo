@@ -5,6 +5,7 @@ import {
   MenuItemSchema,
   MenuItemUpdateSchema,
   MenuResponseSchema,
+  type MealTime,
   type MenuItem,
   type MenuItemCreate,
   type MenuItemUpdate,
@@ -12,7 +13,6 @@ import {
 } from '@meal/shared';
 import { DateStringSchema, IntSchema } from '@meal/shared/types/common';
 import type { MealDetailResponse } from '@meal/shared/types/meal';
-import type { MealTime } from '@meal/shared/types/menu-item';
 
 import { createAuthenticatedApiClient } from '@/services/api/http-client';
 import { fetchMealDetail, formatCookTimeLabel } from '@features/meal/api/meal.api';

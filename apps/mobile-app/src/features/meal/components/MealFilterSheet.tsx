@@ -1,17 +1,34 @@
 import { Modal, Pressable, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { SizableText, XStack, YStack, getTokens } from 'tamagui'
-import type { DifficultyFilter } from '@meal/shared/types/meal-search'
+import { SizableText, Slider, XStack, YStack, getTokens } from 'tamagui'
 
-import { Button, Chip, RadioButton } from '@components'
+import { Button, Chip } from '@components'
+import {
+	MEAL_COOKING_TIME_MAX,
+	MEAL_COOKING_TIME_MIN,
+	normalizeMealCookingTimeFilter,
+	sanitizeMealCookingTimeFilter,
+	type MealCookingTimeFilter,
+	type MealDifficultyFilter,
+	type MealFilters,
+} from './meal-filters'
 
-export type MealDifficultyFilter = DifficultyFilter
-export type MealCookingTimeFilter = '<30m' | '<45m' | '<1hour'
+export {
+	cloneMealFilters,
+	createEmptyMealFilters,
+	hasAppliedMealFilters,
+	isDefaultMealCookingTimeFilter,
+	MEAL_COOKING_TIME_MAX,
+	MEAL_COOKING_TIME_MIN,
+	normalizeMealCookingTimeFilter,
+	sanitizeMealCookingTimeFilter,
+} from './meal-filters'
 
-export type MealFilters = {
-	difficulty: MealDifficultyFilter | null
-	cookingTime: MealCookingTimeFilter | null
-}
+export type {
+	MealCookingTimeFilter,
+	MealDifficultyFilter,
+	MealFilters,
+} from './meal-filters'
 
 const difficultyOptions: ReadonlyArray<{
 	label: string
@@ -21,7 +38,6 @@ const difficultyOptions: ReadonlyArray<{
 	{ label: 'Medium', value: 'medium' },
 	{ label: 'Hard', value: 'hard' },
 ]
-const cookingTimeOptions: MealCookingTimeFilter[] = ['<30m', '<45m', '<1hour']
 
 type MealFilterSheetProps = {
 	open: boolean
@@ -33,22 +49,19 @@ type MealFilterSheetProps = {
 	onSelectCookingTime: (cookingTime: MealCookingTimeFilter) => void
 }
 
-export function createEmptyMealFilters(): MealFilters {
-	return {
-		difficulty: null,
-		cookingTime: null,
+function formatMealCookingTimeLabel(value: number) {
+	if (value < 60) {
+		return `${value} mins`
 	}
-}
 
-export function cloneMealFilters(filters: MealFilters): MealFilters {
-	return {
-		difficulty: filters.difficulty,
-		cookingTime: filters.cookingTime,
+	const hours = Math.floor(value / 60)
+	const remainingMinutes = value % 60
+
+	if (remainingMinutes === 0) {
+		return hours === 1 ? '1 hour' : `${hours} hours`
 	}
-}
 
-export function hasAppliedMealFilters(filters: MealFilters) {
-	return filters.difficulty !== null || filters.cookingTime !== null
+	return `${hours === 1 ? '1 hour' : `${hours} hours`} ${remainingMinutes} mins`
 }
 
 export function MealFilterSheet({
@@ -61,7 +74,12 @@ export function MealFilterSheet({
 	onSelectCookingTime,
 }: MealFilterSheetProps) {
 	const insets = useSafeAreaInsets()
-    const spaceMdToken = getTokens().space.md.val
+	const spaceMdToken = getTokens().space.md.val
+	const cookingTime = sanitizeMealCookingTimeFilter(filters.cookingTime)
+	const cookingTimeRangeLabel =
+		cookingTime.min === cookingTime.max
+			? formatMealCookingTimeLabel(cookingTime.min)
+			: `${formatMealCookingTimeLabel(cookingTime.min)} - ${formatMealCookingTimeLabel(cookingTime.max)}`
 	
 
 	return (
@@ -112,16 +130,40 @@ export function MealFilterSheet({
 						<SizableText ff="$body" fos="$md" fow="$semiBold" col="$textSubtle">
 							Cooking Time
 						</SizableText>
-						<XStack flexWrap="wrap" gap="$lg">
-							{cookingTimeOptions.map((option) => (
-								<RadioButton
-									key={option}
-									label={option}
-									selected={filters.cookingTime === option}
-									onPress={() => onSelectCookingTime(option)}
-								/>
-							))}
-						</XStack>
+						<SizableText ff="$body" fos="$md" fow="$medium" col="$text">
+							{cookingTimeRangeLabel}
+						</SizableText>
+						<YStack px="$xs" pt="$md" gap="$md">
+							<Slider
+								w="100%"
+								min={MEAL_COOKING_TIME_MIN}
+								max={MEAL_COOKING_TIME_MAX}
+								step={1}
+								minStepsBetweenThumbs={0}
+								value={[
+									cookingTime.min,
+									cookingTime.max,
+								]}
+								onValueChange={(values) =>
+									onSelectCookingTime(normalizeMealCookingTimeFilter(values))
+								}
+								
+							>
+								<Slider.Track h={8} br="$pill" bg="$surface">
+									<Slider.TrackActive bg="$primary" />
+								</Slider.Track>
+								<Slider.Thumb borderColor="$primary" circular index={0} size={24} />
+								<Slider.Thumb borderColor="$primary" circular index={1} size={24} />
+							</Slider>
+							<XStack jc="space-between" ai="center">
+								<SizableText ff="$body" fos="$sm" fow="$medium" col="$textSubtle">
+									{formatMealCookingTimeLabel(MEAL_COOKING_TIME_MIN)}
+								</SizableText>
+								<SizableText ff="$body" fos="$sm" fow="$medium" col="$textSubtle">
+									{formatMealCookingTimeLabel(MEAL_COOKING_TIME_MAX)}
+								</SizableText>
+							</XStack>
+						</YStack>
 					</YStack>
 
 					<XStack w="100%" gap="$md">

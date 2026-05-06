@@ -1,4 +1,4 @@
-import type { MealTime } from '@meal/shared/types/menu-item';
+import type { MealTime } from '@meal/shared';
 
 import { cloneCalendarDate } from './week-date';
 

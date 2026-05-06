@@ -19,8 +19,8 @@ export interface MenuMealItem {
   mealTime: MealTime;
   portionSize: number;
   eated: boolean;
-  cookTime: string;
-  difficulty: MenuDifficulty;
+  cookTime?: string;
+  difficulty?: MenuDifficulty;
   nutritionPerServing: MenuNutrition;
 }
 

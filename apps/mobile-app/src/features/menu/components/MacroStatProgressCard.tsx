@@ -4,20 +4,20 @@ const numberFormatter = new Intl.NumberFormat('en-US');
 
 export interface MacroStatProgressCardProps {
   calories: number;
-  calorieGoal: number;
+  calorieGoal?: number | null;
   protein: number;
-  proteinGoal: number;
-  carbs: number;
-  carbsGoal: number;
+  proteinGoal?: number | null;
+  fiber: number;
+  fiberGoal?: number | null;
   fat: number;
-  fatGoal: number;
+  fatGoal?: number | null;
 }
 
 interface MacroProgressItemProps {
   color: string;
   current: number;
   label: string;
-  target: number;
+  target?: number | null;
 }
 
 function formatAmount(value: number) {
@@ -33,7 +33,8 @@ function getProgressValue(current: number, target: number) {
 }
 
 function MacroProgressItem({ color, current, label, target }: MacroProgressItemProps) {
-  const value = getProgressValue(current, target);
+  const hasTarget = typeof target === 'number' && target > 0;
+  const value = hasTarget ? getProgressValue(current, target) : 0;
 
   return (
     <YStack f={1} ai="center" gap="$space.xs">
@@ -41,12 +42,16 @@ function MacroProgressItem({ color, current, label, target }: MacroProgressItemP
         {label}
       </SizableText>
 
-      <Progress value={value} w="100%" h={6} bg="$background" br="$pill">
-        <Progress.Indicator bg={color} br="$pill" />
-      </Progress>
+      {hasTarget ? (
+        <Progress value={value} w="100%" h={6} bg="$background" br="$pill">
+          <Progress.Indicator bg={color} br="$pill" />
+        </Progress>
+      ) : null}
 
       <SizableText ff="$body" fos={12} fow="$medium" color="$textSubtle">
-        {formatAmount(current)} / {formatAmount(target)} g
+        {hasTarget
+          ? `${formatAmount(current)} / ${formatAmount(target)} g`
+          : `${formatAmount(current)} g`}
       </SizableText>
     </YStack>
   );
@@ -57,13 +62,14 @@ export function MacroStatProgressCard({
   calorieGoal,
   protein,
   proteinGoal,
-  carbs,
-  carbsGoal,
+  fiber,
+  fiberGoal,
   fat,
   fatGoal,
 }: MacroStatProgressCardProps) {
-  const caloriesLeft = Math.max(calorieGoal - calories, 0);
-  const calorieProgress = getProgressValue(calories, calorieGoal);
+  const hasCalorieGoal = typeof calorieGoal === 'number' && calorieGoal > 0;
+  const caloriesLeft = hasCalorieGoal ? Math.max(calorieGoal - calories, 0) : null;
+  const calorieProgress = hasCalorieGoal ? getProgressValue(calories, calorieGoal) : 0;
 
   return (
     <YStack w="100%" bg="$surface" br="$radius.xl" px="$space.lg" py="$space.md" gap="$space.md">
@@ -73,13 +79,17 @@ export function MacroStatProgressCard({
         </SizableText>
 
         <SizableText ff="$body" fos="$sm" fow="$medium" color="$textSubtle" mt="$space.xs">
-          {formatAmount(caloriesLeft)} left
+          {hasCalorieGoal && caloriesLeft != null
+            ? `${formatAmount(caloriesLeft)} left`
+            : 'No calorie target'}
         </SizableText>
       </XStack>
 
-      <Progress value={calorieProgress} w="100%" h={10} bg="$background" br="$pill">
-        <Progress.Indicator bg="$yellow6" br="$pill" />
-      </Progress>
+      {hasCalorieGoal ? (
+        <Progress value={calorieProgress} w="100%" h={10} bg="$background" br="$pill">
+          <Progress.Indicator bg="$yellow6" br="$pill" />
+        </Progress>
+      ) : null}
 
       <View w="100%" h={2} bg="$surfacePress" br="$pill"></View>
 
@@ -92,9 +102,9 @@ export function MacroStatProgressCard({
         />
         <MacroProgressItem
           color="$jade6"
-          current={carbs}
-          label="Carbs"
-          target={carbsGoal}
+          current={fiber}
+          label="Fiber"
+          target={fiberGoal}
         />
         <MacroProgressItem color="$red6" current={fat} label="Fat" target={fatGoal} />
       </XStack>

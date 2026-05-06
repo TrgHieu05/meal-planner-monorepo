@@ -3,8 +3,11 @@ import { ActivityIndicator } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { ScrollView, YStack, XStack, SizableText } from 'tamagui';
 import { Button, DatePicker, type DatePickerWeekValue } from '@components';
+import { MacroStatDetailCard } from '@features/menu/components/MacroStatDetailCard';
 import { MenuItemDetailModal } from '@features/menu/components/MenuItemDetailModal';
 import { MenuMealTimeCard } from '@features/menu/components/MenuMealTimeCard';
+import { MacroStatProgressCard } from '@features/menu/components/MacroStatProgressCard';
+import { fetchProfileOverview } from '@features/profile/api/profile.api';
 import { useRouter } from 'expo-router';
 import { WeekDateStrip } from '@features/menu/components/WeekDateStrip';
 import { useSession } from '@/providers/AuthProvider';
@@ -27,12 +30,21 @@ import {
     updateMenuItem,
 } from '@features/menu/api/menu.api';
 import {
+    compareCalendarDates,
     createEmptyMenuMealTimeGroups,
     isPastCalendarDate,
     type MenuMealItem,
     type MenuMealTimeGroup,
+    type MenuNutrition,
 } from '@features/menu/utils/menu-meal-times';
 import { Calendar, Grid2x2Plus } from '@tamagui/lucide-icons-2';
+
+const EMPTY_MENU_NUTRITION: MenuNutrition = {
+    calories: 0,
+    protein: 0,
+    fiber: 0,
+    fat: 0,
+};
 
 function resolveMenuScreenErrorMessage(error: unknown, fallbackMessage: string) {
     if (error instanceof Error && error.message.trim()) {
@@ -51,6 +63,8 @@ export default function MenuScreen() {
     const [selectedDate, setSelectedDate] = useState<Date>(() => today);
     const [selectedItem, setSelectedItem] = useState<MenuMealItem | null>(null);
     const [mealTimeGroups, setMealTimeGroups] = useState<MenuMealTimeGroup[]>(createEmptyMenuMealTimeGroups);
+    const [nutritionTotal, setNutritionTotal] = useState<MenuNutrition>(EMPTY_MENU_NUTRITION);
+    const [targetCalories, setTargetCalories] = useState<number | null>(null);
     const [screenError, setScreenError] = useState<string | null>(null);
     const [isLoadingMenu, setIsLoadingMenu] = useState(true);
     const [reloadNonce, setReloadNonce] = useState(0);
@@ -58,11 +72,13 @@ export default function MenuScreen() {
     const weekDays = useMemo(() => getWeekDays(selectedWeek.startDate), [selectedWeek]);
     const headerDateLabel = useMemo(() => formatHeaderDate(selectedDate), [selectedDate]);
     const allowAddMeal = useMemo(() => !isPastCalendarDate(selectedDate, today), [selectedDate, today]);
+    const showProgressCard = useMemo(() => compareCalendarDates(selectedDate, today) <= 0, [selectedDate, today]);
     const selectedApiDate = useMemo(() => formatMenuApiDate(selectedDate), [selectedDate]);
 
     const loadMenuData = useCallback(async () => {
         if (!session?.accessToken) {
             setMealTimeGroups(createEmptyMenuMealTimeGroups());
+            setNutritionTotal(EMPTY_MENU_NUTRITION);
             setScreenError('Missing access token. Please sign in again.');
             setIsLoadingMenu(false);
             return;
@@ -78,18 +94,43 @@ export default function MenuScreen() {
             });
 
             setMealTimeGroups(nextMenuData.mealTimeGroups);
+            setNutritionTotal(nextMenuData.nutritionTotal);
         } catch (error) {
             setMealTimeGroups(createEmptyMenuMealTimeGroups());
+            setNutritionTotal(EMPTY_MENU_NUTRITION);
             setScreenError(resolveMenuScreenErrorMessage(error, 'Unable to load your menu right now.'));
         } finally {
             setIsLoadingMenu(false);
         }
     }, [selectedApiDate, session?.accessToken]);
 
+    const loadNutritionTargets = useCallback(async () => {
+        if (!session?.accessToken) {
+            setTargetCalories(null);
+            return;
+        }
+
+        try {
+            const profileOverview = await fetchProfileOverview({
+                accessToken: session.accessToken,
+            });
+
+            setTargetCalories(profileOverview.preferences?.targetCalories ?? null);
+        } catch {
+            setTargetCalories(null);
+        }
+    }, [session?.accessToken]);
+
     useFocusEffect(
         useCallback(() => {
             void loadMenuData();
         }, [loadMenuData, reloadNonce]),
+    );
+
+    useFocusEffect(
+        useCallback(() => {
+            void loadNutritionTargets();
+        }, [loadNutritionTargets]),
     );
 
     const handleWeekChange = (value: DatePickerWeekValue) => {
@@ -211,6 +252,25 @@ export default function MenuScreen() {
                         onDayPress={handleSelectedDateChange}
                     />
                 </YStack>
+
+                {!isLoadingMenu && !screenError ? (
+                    showProgressCard ? (
+                        <MacroStatProgressCard
+                            calories={nutritionTotal.calories}
+                            calorieGoal={targetCalories}
+                            protein={nutritionTotal.protein}
+                            fiber={nutritionTotal.fiber}
+                            fat={nutritionTotal.fat}
+                        />
+                    ) : (
+                        <MacroStatDetailCard
+                            calories={nutritionTotal.calories}
+                            protein={nutritionTotal.protein}
+                            fiber={nutritionTotal.fiber}
+                            fat={nutritionTotal.fat}
+                        />
+                    )
+                ) : null}
 
                 {isLoadingMenu ? (
                     <XStack w="100%" ai="center" gap="$space.sm">

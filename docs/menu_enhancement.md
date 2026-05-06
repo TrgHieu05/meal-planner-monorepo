@@ -39,7 +39,7 @@ Ngày cập nhật: `2026-05-06`
 - [ ] Đảm bảo flow `Menu -> Meal Search -> Meal Detail -> Add to Menu` quay lại đúng ngữ cảnh ngày và bữa đang thao tác.
 - [ ] Sửa hành vi lưu `portionSize` không hợp lệ: cần hiển thị lỗi rõ ràng và giữ modal mở, không fallback im lặng về giá trị cũ.
 - [X] Chốt giữ `nutritionTotal` trong payload và hiển thị trên `MenuScreen`. **Đã làm rõ.**
-- [ ] Triển khai hiển thị `nutritionTotal` trên `MenuScreen` theo layout phù hợp.
+- [X] Triển khai hiển thị `nutritionTotal` trên `MenuScreen` theo layout phù hợp.
 - [ ] Tách rõ các trạng thái `empty`, `loading`, `error`, `refreshing` để tránh hiểu nhầm menu rỗng với lỗi tải dữ liệu.
 - [X] Chốt giữ nguyên nút `Templates` như hiện tại vì hiện chỉ đóng vai trò điều hướng. **Đã làm rõ.**
 
@@ -55,8 +55,8 @@ Ngày cập nhật: `2026-05-06`
 ### 2.1 Đồng bộ spec và implementation
 
 - [X] Chốt contract `GET/DELETE /menus/day` theo implementation hiện tại dùng path param `/:date`. **Đã làm rõ.**
-- [ ] Đồng bộ toàn bộ docs/OpenAPI/examples theo contract `/:date`.
-- [ ] Gỡ mọi tham chiếu cũ tới `GET /api/v1/menus/range` khỏi docs, OpenAPI, shared types, test plan và backlog.
+- [X] Đồng bộ toàn bộ docs/OpenAPI/examples theo contract `/:date`.
+- [X] Gỡ mọi tham chiếu cũ tới `GET /api/v1/menus/range` khỏi docs, OpenAPI, shared types, test plan và backlog.
 - [X] Chốt `PATCH /menu-items/:id` trong v1 chỉ cho phép update `portionSize` và `eated`, không cho phép đổi `mealTime`. **Đã làm rõ.**
 
 ### 2.2 Giảm ghép nối giữa mobile và meal detail
@@ -69,10 +69,10 @@ Ngày cập nhật: `2026-05-06`
 - [X] Backend: mở rộng payload `GET /api/v1/menus/day/:date` để mỗi `menu_item` trả thêm `nutritionPerServing` từ bảng `meal`, gồm `calories`, `protein`, `fiber`, `fat`.
 - [X] Backend: giữ `mealName`, `mealId`, `menuItemId`, `portionSize`, `eated` như hiện tại; không bắt buộc thêm `cookTime` và `difficulty` vào payload danh sách.
 - [X] Shared types: cập nhật schema response của `menu day` để phản ánh các field render trực tiếp trên card/menu item.
-- [ ] Mobile app: refactor `fetchMenuScreenData` để map trực tiếp từ `fetchMenuDay`, xóa `loadMenuMealDetails` và bỏ `Promise.all(fetchMealDetail(...))` trong luồng load màn hình menu.
-- [ ] Mobile app: điều chỉnh `MenuMealItem` và mapper để nhận `nutritionPerServing` trực tiếp từ payload `menu day`.
+- [X] Mobile app: refactor `fetchMenuScreenData` để map trực tiếp từ `fetchMenuDay`, xóa `loadMenuMealDetails` và bỏ `Promise.all(fetchMealDetail(...))` trong luồng load màn hình menu.
+- [X] Mobile app: điều chỉnh `MenuMealItem` và mapper để nhận `nutritionPerServing` trực tiếp từ payload `menu day`.
 - [ ] Mobile app: nếu modal vẫn cần `cookTime` và `difficulty`, chỉ fetch thêm meal detail khi user mở `MenuItemDetailModal` cho item đang chọn, thay vì load cho toàn bộ item từ đầu.
-- [ ] Test: bổ sung test backend cho shape mới của `GET /menus/day/:date` và test mobile để đảm bảo load menu theo ngày không còn gọi detail API cho từng món.
+- [X] Test: bổ sung test backend cho shape mới của `GET /menus/day/:date` và test mobile để đảm bảo load menu theo ngày không còn gọi detail API cho từng món.
 
 ### 2.3 Tăng độ tin cậy của API
 
@@ -107,7 +107,7 @@ Ngày cập nhật: `2026-05-06`
 - [ ] Bổ sung test cho `MenuScreen` với tình huống đổi ngày nhanh liên tục.
 - [ ] Bổ sung test cho hành vi nhập `portionSize` không hợp lệ trong modal chỉnh sửa item.
 - [ ] Bổ sung test cho flow add meal với context bị khóa theo `date` và `mealTime`.
-- [ ] Gỡ hoặc cập nhật các test plan cũ còn giả định có endpoint `GET /api/v1/menus/range`.
+- [X] Gỡ hoặc cập nhật các test plan cũ còn giả định có endpoint `GET /api/v1/menus/range`.
 - [ ] Chuẩn bị manual QA checklist ngắn cho các case add, update, delete, toggle logged, quick date switching và lỗi mạng.
 
 ## 5. Đề xuất thứ tự ưu tiên
@@ -117,14 +117,14 @@ Ngày cập nhật: `2026-05-06`
 - [X] Backend: mở rộng `GET /api/v1/menus/day/:date` để mỗi `menu_item` trả trực tiếp `nutritionPerServing` gồm `calories`, `protein`, `fiber`, `fat`.
 - [X] Backend: giữ payload danh sách gọn, chỉ gồm các field đã chốt cho list view: `menuItemId`, `mealId`, `mealName`, `portionSize`, `eated`, `nutritionPerServing`.
 - [X] Shared types: cập nhật schema response của `menu day` theo payload mới.
-- [ ] Mobile app: refactor `fetchMenuScreenData` để map trực tiếp từ `fetchMenuDay`, xóa `loadMenuMealDetails`, và bỏ `Promise.all(fetchMealDetail(...))` khỏi luồng load danh sách.
-- [ ] Mobile app: cập nhật `MenuMealItem` và mapper để nhận `nutritionPerServing` trực tiếp từ payload `menu day`.
-- [ ] Mobile app: Thêm MacroStatDetailCarb ở các màn hình sau ngày hiện tại và MacroStatProgressCard ở các màn hình trước và trong ngày hiện tại
-- [ ] Mobile app: Nối dữ liệu thật vào 2 card trên
-- [ ] Docs/OpenAPI: đồng bộ contract `GET/DELETE /menus/day` theo dạng path param `/:date` và gỡ toàn bộ tham chiếu cũ tới `GET /api/v1/menus/range`.
-- [ ] Test: bổ sung test backend cho shape mới của `GET /menus/day/:date`.
-- [ ] Test: bổ sung test mobile để đảm bảo load menu theo ngày không còn gọi detail API cho từng món.
-- [ ] Definition of done: màn hình menu render được list item và `nutritionTotal` mà không cần gọi detail API cho toàn bộ item trong ngày.
+- [X] Mobile app: refactor `fetchMenuScreenData` để map trực tiếp từ `fetchMenuDay`, xóa `loadMenuMealDetails`, và bỏ `Promise.all(fetchMealDetail(...))` khỏi luồng load danh sách.
+- [X] Mobile app: cập nhật `MenuMealItem` và mapper để nhận `nutritionPerServing` trực tiếp từ payload `menu day`.
+- [X] Mobile app: Thêm `MacroStatDetailCard` ở các màn hình sau ngày hiện tại và `MacroStatProgressCard` ở các màn hình trước và trong ngày hiện tại.
+- [X] Mobile app: Nối dữ liệu thật vào 2 card trên.
+- [X] Docs/OpenAPI: đồng bộ contract `GET/DELETE /menus/day` theo dạng path param `/:date` và gỡ toàn bộ tham chiếu cũ tới `GET /api/v1/menus/range`.
+- [X] Test: bổ sung test backend cho shape mới của `GET /menus/day/:date`.
+- [X] Test: bổ sung test mobile để đảm bảo load menu theo ngày không còn gọi detail API cho từng món.
+- [X] Definition of done: màn hình menu render được list item và `nutritionTotal` mà không cần gọi detail API cho toàn bộ item trong ngày.
 
 ### P1. Ổn định hành vi người dùng và giảm bug runtime
 

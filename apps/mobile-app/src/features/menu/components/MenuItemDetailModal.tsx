@@ -152,14 +152,18 @@ export function MenuItemDetailModal({
               />
 
               <XStack gap="$space.sm" flexWrap="wrap">
-                <Tag>
-                  <Tag.Icon icon={Clock3} size={16} />
-                  <Tag.Text>{item.cookTime}</Tag.Text>
-                </Tag>
-                <Tag>
-                  <Tag.Icon icon={Utensils} size={16} />
-                  <Tag.Text>{item.difficulty}</Tag.Text>
-                </Tag>
+                {item.cookTime ? (
+                  <Tag>
+                    <Tag.Icon icon={Clock3} size={16} />
+                    <Tag.Text>{item.cookTime}</Tag.Text>
+                  </Tag>
+                ) : null}
+                {item.difficulty ? (
+                  <Tag>
+                    <Tag.Icon icon={Utensils} size={16} />
+                    <Tag.Text>{item.difficulty}</Tag.Text>
+                  </Tag>
+                ) : null}
                 <Tag status={item.eated ? 'brand' : 'danger'}>
                   <Tag.Icon icon={Check} size={16} />
                   <Tag.Text>{item.eated ? 'Logged' : 'Not logged'}</Tag.Text>

@@ -234,7 +234,7 @@ Danh mục món ăn.
 
 ### Ghi chú
 - Đây là bảng lõi cho tính năng search meal, menu, template.
-- Dữ liệu seed mặc định: `cuisine_type_id` sẽ trỏ tới `Việt Nam` nếu không chỉ định khác trong seed.
+- Dữ liệu seed mặc định: `cuisine_type_id` sẽ trỏ tới `Vietnamese` nếu không chỉ định khác trong seed.
 
 ---
 
@@ -312,6 +312,12 @@ Danh mục chế độ ăn.
 - `created_at`: timestamp
 - `updated_at`: timestamp
 
+### Giá trị seed mặc định
+- `Balanced`
+- `Vegetarian`
+- `Vegan`
+- `High Protein`
+
 ### Quan hệ
 - 1 diet type có nhiều profile
 
@@ -326,6 +332,11 @@ Danh mục mục tiêu dinh dưỡng/sức khỏe.
 - `description`: text, nullable
 - `created_at`: timestamp
 - `updated_at`: timestamp
+
+### Giá trị seed mặc định
+- `Lose Weight`
+- `Maintain Weight`
+- `Gain Muscle`
 
 ### Quan hệ
 - 1 goal có nhiều profile
@@ -344,9 +355,9 @@ Danh mục loại ẩm thực.
 
 ### Giá trị seed mặc định
 - `General`
-- `Việt Nam`
-- `Châu Âu`
-- `Nhật Bản`
+- `Vietnamese`
+- `European`
+- `Japanese`
 
 ### Quan hệ
 - 1 cuisine type có nhiều profile

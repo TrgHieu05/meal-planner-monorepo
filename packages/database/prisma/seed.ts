@@ -34,6 +34,65 @@ type MealSeedRow = {
   cuisine?: string;
 };
 
+type LookupSeedRow = {
+  name: string;
+  description: string | null;
+};
+
+const DIET_TYPES: LookupSeedRow[] = [
+  {
+    name: 'Balanced',
+    description:
+      'Well-rounded meals with a balanced mix of protein, carbs, and fats.',
+  },
+  {
+    name: 'Vegetarian',
+    description: 'Plant-forward meals that may still include dairy and eggs.',
+  },
+  {
+    name: 'Vegan',
+    description: 'Fully plant-based meals without animal-derived ingredients.',
+  },
+  {
+    name: 'High Protein',
+    description: 'Meals that prioritize higher protein intake.',
+  },
+];
+
+const GOALS: LookupSeedRow[] = [
+  {
+    name: 'Lose Weight',
+    description: 'Support a calorie-conscious plan for gradual fat loss.',
+  },
+  {
+    name: 'Maintain Weight',
+    description: 'Keep nutrition balanced while maintaining current weight.',
+  },
+  {
+    name: 'Gain Muscle',
+    description: 'Favor meals that support muscle growth and recovery.',
+  },
+];
+
+const CUISINE_TYPES: LookupSeedRow[] = [
+  {
+    name: 'General',
+    description: 'General cuisine type',
+  },
+  {
+    name: 'Vietnamese',
+    description: 'Vietnamese cuisine',
+  },
+  {
+    name: 'European',
+    description: 'European cuisine',
+  },
+  {
+    name: 'Japanese',
+    description: 'Japanese cuisine',
+  },
+];
+
 const ingredientsData: IngredientSeedRow[] = [
   { "name": "Chicken Breast", "calories": 165, "protein": 31, "fat": 3.6, "fiber": 0, "has_gluten": false, "is_vegetarian": false },
   { "name": "Beef", "calories": 250, "protein": 26, "fat": 15, "fiber": 0, "has_gluten": false, "is_vegetarian": false },
@@ -742,17 +801,17 @@ function inferCuisine(meal: Pick<MealSeedRow, 'name' | 'ingredients'>): string {
     includesAny(name, europeNameTokens) ||
     hasIngredientAny(europeIngredientTokens)
   ) {
-    return 'Châu Âu';
+    return 'European';
   }
 
   const japanNameTokens = ['rice bowl', 'noodles'];
   const japanIngredientTokens = ['soy sauce', 'noodles'];
 
   if (includesAny(name, japanNameTokens) || hasIngredientAny(japanIngredientTokens)) {
-    return 'Nhật Bản';
+    return 'Japanese';
   }
 
-  return 'Việt Nam';
+  return 'Vietnamese';
 }
 
 const mealsDataNormalized: Array<
@@ -824,32 +883,53 @@ async function main() {
     console.log('Start seeding data...');
     await client.query('BEGIN');
 
-    const cuisineTypes: Array<{ name: string; description: string | null }> = [
-      { name: 'General', description: 'General cuisine type' },
-      { name: 'Việt Nam', description: 'Ẩm thực Việt Nam' },
-      { name: 'Châu Âu', description: 'Ẩm thực Châu Âu' },
-      { name: 'Nhật Bản', description: 'Ẩm thực Nhật Bản' },
-    ];
+    console.log('Seeding Diet Types...');
+    const dietTypeNames = DIET_TYPES.map((dietType) => dietType.name);
+    await client.query(
+      `INSERT INTO diet_types (name, description, created_at, updated_at)
+       SELECT t.name, t.description, NOW(), NOW()
+       FROM UNNEST($1::text[], $2::text[]) AS t(name, description)
+       WHERE NOT EXISTS (
+         SELECT 1 FROM diet_types existing WHERE existing.name = t.name
+       )`,
+      [dietTypeNames, DIET_TYPES.map((dietType) => dietType.description)],
+    );
 
-    const cuisineNames = cuisineTypes.map((c) => c.name);
+    console.log('Seeding Goals...');
+    const goalNames = GOALS.map((goal) => goal.name);
+    await client.query(
+      `INSERT INTO goals (name, description, created_at, updated_at)
+       SELECT t.name, t.description, NOW(), NOW()
+       FROM UNNEST($1::text[], $2::text[]) AS t(name, description)
+       WHERE NOT EXISTS (
+         SELECT 1 FROM goals existing WHERE existing.name = t.name
+       )`,
+      [goalNames, GOALS.map((goal) => goal.description)],
+    );
+
+    console.log('Seeding Cuisine Types...');
+    const cuisineNames = CUISINE_TYPES.map((cuisineType) => cuisineType.name);
     await client.query(
       `INSERT INTO cuisine_types (name, description, created_at, updated_at)
        SELECT t.name, t.description, NOW(), NOW()
        FROM UNNEST($1::text[], $2::text[]) AS t(name, description)
        WHERE NOT EXISTS (
-         SELECT 1 FROM cuisine_types c WHERE c.name = t.name
+         SELECT 1 FROM cuisine_types existing WHERE existing.name = t.name
        )`,
-      [cuisineNames, cuisineTypes.map((c) => c.description)],
+      [
+        cuisineNames,
+        CUISINE_TYPES.map((cuisineType) => cuisineType.description),
+      ],
     );
-
     const seededCuisineRows = await client.query<{ id: number; name: string }>(
       `SELECT id, name FROM cuisine_types WHERE name = ANY($1::text[])`,
       [cuisineNames],
     );
     const cuisineIdByName = new Map<string, number>(
-      seededCuisineRows.rows.map((r) => [r.name, r.id]),
+      seededCuisineRows.rows.map((row) => [row.name, row.id]),
     );
-    const defaultCuisineName = 'Việt Nam';
+
+    const defaultCuisineName = 'Vietnamese';
     const defaultCuisineTypeId = cuisineIdByName.get(defaultCuisineName);
     if (!defaultCuisineTypeId) {
       throw new Error(

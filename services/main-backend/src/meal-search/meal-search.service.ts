@@ -124,8 +124,13 @@ export class MealSearchService {
         select: {
           id: true,
           name: true,
+          mealImageKey: true,
           difficulty: true,
           cookTimeMins: true,
+          totalCalories: true,
+          totalProtein: true,
+          totalFat: true,
+          totalFiber: true,
         },
       });
 
@@ -140,8 +145,13 @@ export class MealSearchService {
         return {
           id: meal.id,
           name: meal.name,
+          meal_image_key: meal.mealImageKey,
           difficulty,
           cook_time_min: meal.cookTimeMins,
+          total_calories: meal.totalCalories,
+          total_protein: meal.totalProtein,
+          total_fat: meal.totalFat,
+          total_fiber: meal.totalFiber,
           score: 0,
         };
       });
@@ -191,8 +201,13 @@ export class MealSearchService {
         return {
           id: meal.id,
           name: meal.name,
+          meal_image_key: meal.mealImageKey,
           difficulty,
           cook_time_min: meal.cookTimeMins,
+          total_calories: meal.totalCalories,
+          total_protein: meal.totalProtein,
+          total_fat: meal.totalFat,
+          total_fiber: meal.totalFiber,
           score,
         };
       })

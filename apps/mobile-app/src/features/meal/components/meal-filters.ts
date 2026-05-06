@@ -59,6 +59,13 @@ export function sanitizeMealCookingTimeFilter(
 	return normalizeMealCookingTimeFilter([min, max])
 }
 
+export function areMealCookingTimeFiltersEqual(
+	left: MealCookingTimeFilter,
+	right: MealCookingTimeFilter,
+) {
+	return left.min === right.min && left.max === right.max
+}
+
 export function isDefaultMealCookingTimeFilter(
 	filter: MealCookingTimeFilter,
 ) {

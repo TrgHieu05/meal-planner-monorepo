@@ -293,21 +293,20 @@ export default function MealSearchScreen() {
         });
     }
 
-    function handleSelectCookingTime(cookingTime: MealCookingTimeFilter) {
-        setDraftFilters((currentFilters) => ({
-            ...currentFilters,
-            cookingTime,
-        }));
-    }
-
     function handleClearFilters() {
         const clearedFilters = createEmptyMealFilters();
         setDraftFilters(clearedFilters);
         setAppliedFilters(clearedFilters);
     }
 
-    function handleApplyFilters() {
-        setAppliedFilters(cloneMealFilters(draftFilters));
+    function handleApplyFilters(cookingTime: MealCookingTimeFilter) {
+        const nextDraftFilters = cloneMealFilters({
+            ...draftFilters,
+            cookingTime,
+        });
+
+        setDraftFilters(nextDraftFilters);
+        setAppliedFilters(nextDraftFilters);
         setIsFilterSheetOpen(false);
     }
 
@@ -315,6 +314,21 @@ export default function MealSearchScreen() {
     const mealCards = mealSearchData?.list ?? [];
     const hasMoreMeals = mealSearchData?.hasMore ?? false;
     const isInitialLoading = isLoadingMeals && mealSearchData === null && !errorMessage;
+    const mealCardHrefs = useMemo(() => {
+        return new Map(
+            mealCards.map((meal) => [
+                meal.mealId,
+                {
+                    pathname: '/meal-search/[mealId]' as const,
+                    params: {
+                        mealId: `${meal.mealId}`,
+                        ...(mealTimeParam ? { mealTime: mealTimeParam } : {}),
+                        ...(dateParam ? { date: dateParam } : {}),
+                    },
+                },
+            ]),
+        );
+    }, [dateParam, mealCards, mealTimeParam]);
 
     const mealListHeader = isLoadingMeals ? (
         <XStack ai="center" gap="$space.sm" pb="$space.md">
@@ -343,14 +357,7 @@ export default function MealSearchScreen() {
             <YStack pb="$space.md">
                 <MealCard
                     id={item.mealId}
-                    href={{
-                        pathname: '/meal-search/[mealId]',
-                        params: {
-                            mealId: `${item.mealId}`,
-                            ...(mealTimeParam ? { mealTime: mealTimeParam } : {}),
-                            ...(dateParam ? { date: dateParam } : {}),
-                        },
-                    }}
+                    href={mealCardHrefs.get(item.mealId)}
                     mealName={item.mealName}
                     cookTime={item.cookTime}
                     difficulty={item.difficulty}
@@ -361,7 +368,7 @@ export default function MealSearchScreen() {
                 />
             </YStack>
         ),
-        [dateParam, mealTimeParam],
+        [mealCardHrefs],
     );
 
     const content = (() => {
@@ -482,7 +489,6 @@ export default function MealSearchScreen() {
                     onClear={handleClearFilters}
                     onApply={handleApplyFilters}
                     onSelectDifficulty={handleSelectDifficulty}
-                    onSelectCookingTime={handleSelectCookingTime}
                 />
 
             </YStack>

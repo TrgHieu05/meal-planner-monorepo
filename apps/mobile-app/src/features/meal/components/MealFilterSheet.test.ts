@@ -1,6 +1,7 @@
 import { describe, expect, it } from '@jest/globals'
 
 import {
+	areMealCookingTimeFiltersEqual,
 	createEmptyMealFilters,
 	hasAppliedMealFilters,
 	isDefaultMealCookingTimeFilter,
@@ -66,5 +67,21 @@ describe('MealFilterSheet helpers', () => {
 				},
 			}),
 		).toBe(true)
+	})
+
+	it('compares cooking time filters by their values', () => {
+		expect(
+			areMealCookingTimeFiltersEqual(
+				{ min: 15, max: 45 },
+				{ min: 15, max: 45 },
+			),
+		).toBe(true)
+
+		expect(
+			areMealCookingTimeFiltersEqual(
+				{ min: 15, max: 45 },
+				{ min: 16, max: 45 },
+			),
+		).toBe(false)
 	})
 })

@@ -1,9 +1,11 @@
+import { useEffect, useMemo, useState } from 'react'
 import { Modal, Pressable, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { SizableText, Slider, XStack, YStack, getTokens } from 'tamagui'
 
 import { Button, Chip } from '@components'
 import {
+	areMealCookingTimeFiltersEqual,
 	MEAL_COOKING_TIME_MAX,
 	MEAL_COOKING_TIME_MIN,
 	normalizeMealCookingTimeFilter,
@@ -44,9 +46,8 @@ type MealFilterSheetProps = {
 	filters: MealFilters
 	onClose: () => void
 	onClear: () => void
-	onApply: () => void
+	onApply: (cookingTime: MealCookingTimeFilter) => void
 	onSelectDifficulty: (difficulty: MealDifficultyFilter) => void
-	onSelectCookingTime: (cookingTime: MealCookingTimeFilter) => void
 }
 
 function formatMealCookingTimeLabel(value: number) {
@@ -71,15 +72,54 @@ export function MealFilterSheet({
 	onClear,
 	onApply,
 	onSelectDifficulty,
-	onSelectCookingTime,
 }: MealFilterSheetProps) {
 	const insets = useSafeAreaInsets()
 	const spaceMdToken = getTokens().space.md.val
-	const cookingTime = sanitizeMealCookingTimeFilter(filters.cookingTime)
+	const [pendingCookingTime, setPendingCookingTime] = useState(() =>
+		sanitizeMealCookingTimeFilter(filters.cookingTime),
+	)
+	const pendingCookingTimeValues = useMemo(
+		() => [pendingCookingTime.min, pendingCookingTime.max] as const,
+		[pendingCookingTime.max, pendingCookingTime.min],
+	)
+
+	useEffect(() => {
+		if (!open) {
+			return
+		}
+
+		const nextCookingTime = sanitizeMealCookingTimeFilter(filters.cookingTime)
+
+		setPendingCookingTime((currentCookingTime) =>
+			areMealCookingTimeFiltersEqual(currentCookingTime, nextCookingTime)
+				? currentCookingTime
+				: nextCookingTime,
+		)
+	}, [filters.cookingTime, open])
+
 	const cookingTimeRangeLabel =
-		cookingTime.min === cookingTime.max
-			? formatMealCookingTimeLabel(cookingTime.min)
-			: `${formatMealCookingTimeLabel(cookingTime.min)} - ${formatMealCookingTimeLabel(cookingTime.max)}`
+		pendingCookingTime.min === pendingCookingTime.max
+			? formatMealCookingTimeLabel(pendingCookingTime.min)
+			: `${formatMealCookingTimeLabel(pendingCookingTime.min)} - ${formatMealCookingTimeLabel(pendingCookingTime.max)}`
+
+	function handleCookingTimeChange(values: readonly number[]) {
+		const nextCookingTime = normalizeMealCookingTimeFilter(values)
+
+		setPendingCookingTime((currentCookingTime) =>
+			areMealCookingTimeFiltersEqual(currentCookingTime, nextCookingTime)
+				? currentCookingTime
+				: nextCookingTime,
+		)
+	}
+
+	function handleClearPress() {
+		setPendingCookingTime(sanitizeMealCookingTimeFilter(undefined))
+		onClear()
+	}
+
+	function handleApplyPress() {
+		onApply(pendingCookingTime)
+	}
 	
 
 	return (
@@ -140,13 +180,8 @@ export function MealFilterSheet({
 								max={MEAL_COOKING_TIME_MAX}
 								step={1}
 								minStepsBetweenThumbs={0}
-								value={[
-									cookingTime.min,
-									cookingTime.max,
-								]}
-								onValueChange={(values) =>
-									onSelectCookingTime(normalizeMealCookingTimeFilter(values))
-								}
+								value={pendingCookingTimeValues}
+								onValueChange={handleCookingTimeChange}
 								
 							>
 								<Slider.Track h={8} br="$pill" bg="$surface">
@@ -172,11 +207,11 @@ export function MealFilterSheet({
 							h={52}
 							br="$pill"
 							color="secondary"
-							onPress={onClear}
+						onPress={handleClearPress}
 						>
 							<Button.Text>Clear</Button.Text>
 						</Button>
-						<Button f={1} h={52} br="$pill" color="primary" onPress={onApply}>
+					<Button f={1} h={52} br="$pill" color="primary" onPress={handleApplyPress}>
 							<Button.Text>Apply</Button.Text>
 						</Button>
 					</XStack>

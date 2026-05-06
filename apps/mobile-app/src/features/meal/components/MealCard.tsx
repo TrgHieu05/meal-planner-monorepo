@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { SizableText, XStack, YStack } from 'tamagui';
 import { Link, type Href } from 'expo-router';
 
@@ -16,7 +17,7 @@ export interface MealCardProps {
   onPress?: () => void;
 }
 
-export function MealCard({
+function MealCardComponent({
     id,
   mealName,
   cookTime,
@@ -54,3 +55,5 @@ export function MealCard({
     </Link>
   );
 }
+
+export const MealCard = memo(MealCardComponent)

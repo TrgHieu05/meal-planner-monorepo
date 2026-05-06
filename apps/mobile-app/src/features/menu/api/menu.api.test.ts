@@ -91,6 +91,12 @@ describe('menu.api', () => {
                     mealName: 'Turkey Quinoa Salad',
                     portionSize: 1.25,
                     eated: false,
+                    nutritionPerServing: {
+                      calories: 340,
+                      protein: 27,
+                      fiber: 7.5,
+                      fat: 11,
+                    },
                   },
                 ],
                 DINNER: [],

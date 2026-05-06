@@ -33,6 +33,10 @@ export class MenuService {
             meal: {
               select: {
                 name: true,
+                totalCalories: true,
+                totalProtein: true,
+                totalFat: true,
+                totalFiber: true,
               },
             },
           },
@@ -73,6 +77,14 @@ export class MenuService {
         mealName: item.meal?.name,
         portionSize: item.portionSize,
         eated: item.eated,
+        nutritionPerServing: item.meal
+          ? {
+              calories: this.roundTo2(item.meal.totalCalories),
+              protein: this.roundTo2(item.meal.totalProtein),
+              fat: this.roundTo2(item.meal.totalFat),
+              fiber: this.roundTo2(item.meal.totalFiber),
+            }
+          : undefined,
       });
       if (!parsedItem.success) {
         throw new InternalServerErrorException('Invalid menu item data.');

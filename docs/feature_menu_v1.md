@@ -37,13 +37,14 @@
 
 - Tạo/cập nhật thực đơn theo ngày dựa trên thao tác với `menu_items`
 - Quản lý món theo từng bữa: `BREAKFAST`, `LUNCH`, `DINNER`
-- Lấy dữ liệu thực đơn theo ngày và theo khoảng ngày
+- Lấy dữ liệu thực đơn theo ngày
 - Cho phép xóa item; nếu xóa item cuối cùng thì xử lý trạng thái menu rỗng theo quy tắc v1
 - Chuẩn hóa response để mobile render trực tiếp theo cấu trúc ngày -> bữa -> danh sách món
 
 ### Ngoài phạm vi
 
 - AI gợi ý thực đơn tự động
+- Endpoint đọc menu theo khoảng ngày (`GET /menus/range`)
 - Lập lịch lặp lại theo tuần/tháng
 - Chia sẻ thực đơn giữa người dùng
 - Tối ưu hóa meal prep nhiều ngày
@@ -60,7 +61,6 @@
 - Là người dùng, tôi muốn xem toàn bộ món theo từng bữa trong ngày đã chọn
 - Là người dùng, tôi muốn chỉnh `portionSize` hoặc đánh dấu món đã ăn
 - Là người dùng, tôi muốn xóa món khỏi thực đơn và ngày đó trở về trạng thái trống nếu không còn món nào
-- Là người dùng, tôi muốn xem nhanh một dải ngày để biết ngày nào đã có món
 
 ## 7) Yêu cầu chức năng
 
@@ -88,12 +88,6 @@
 - Sau khi xóa, nếu menu không còn item nào thì xem như ngày trống
 - Cách xử lý bản ghi `menus` rỗng được chốt theo quy tắc dữ liệu mục 10
 
-### FR-05: Xem thực đơn theo khoảng ngày
-
-- API nhận `fromDate`, `toDate`
-- Trả danh sách ngày trong khoảng và trạng thái từng ngày
-- Bao gồm cả ngày không có món để UI render lịch đồng nhất
-
 ## 8) Yêu cầu phi chức năng
 
 - Prefix API dùng global prefix `/api`
@@ -103,7 +97,6 @@
 - Đảm bảo idempotent ở thao tác đọc; thao tác ghi cần tính nhất quán tổng dinh dưỡng
 - Thời gian phản hồi mục tiêu:
   - GET theo ngày: p95 < 300ms
-  - GET theo khoảng ngày (<= 31 ngày): p95 < 500ms
 
 ### Ghi chú triển khai v1.1
 
@@ -115,7 +108,6 @@
 
 - Menu Day
   - `GET /api/v1/menus/day?date=YYYY-MM-DD`
-  - `GET /api/v1/menus/range?fromDate=YYYY-MM-DD&toDate=YYYY-MM-DD`
   - `DELETE /api/v1/menus/day?date=YYYY-MM-DD`
 - Menu Item
   - `POST /api/v1/menu-items`
@@ -253,10 +245,10 @@
 
 ## 11) Trải nghiệm người dùng (UX flow)
 
-- Mở màn hình lập thực đơn tuần:
-  - Gọi `GET /menus/range` để render tất cả ngày trong dải
+- Mở màn hình lập thực đơn:
+  - UI khởi tạo danh sách ngày cục bộ theo tuần đang xem
 - Chọn ngày:
-  - Gọi `GET /menus/day` hoặc dùng dữ liệu range đã có
+  - Gọi `GET /menus/day` để lấy dữ liệu cho ngày được chọn
 - Thêm món vào bữa:
   - Gọi `POST /menu-items`, cập nhật UI theo response
 - Chỉnh phần ăn/đánh dấu đã ăn:
@@ -300,14 +292,7 @@ Chuyển trạng thái:
 - `422`: `date` không đúng định dạng hoặc không hợp lệ theo lịch
 - `500`: lỗi nội bộ khi mapping dữ liệu ngày
 
-### 15.2 `GET /api/v1/menus/range`
-
-- `200`: trả danh sách ngày trong khoảng
-- `401`: token không hợp lệ hoặc đã hết hạn
-- `422`: `fromDate`, `toDate` không hợp lệ hoặc khoảng ngày vượt giới hạn
-- `500`: lỗi nội bộ khi tổng hợp dữ liệu range
-
-### 15.3 `POST /api/v1/menu-items`
+### 15.2 `POST /api/v1/menu-items`
 
 - `201`: tạo item thành công
 - `401`: token không hợp lệ hoặc đã hết hạn
@@ -316,7 +301,7 @@ Chuyển trạng thái:
 - `422`: payload không hợp lệ
 - `500`: lỗi nội bộ khi tạo item/cập nhật totals
 
-### 15.4 `PATCH /api/v1/menu-items/:id`
+### 15.3 `PATCH /api/v1/menu-items/:id`
 
 - `200`: cập nhật item thành công
 - `401`: token không hợp lệ hoặc đã hết hạn
@@ -325,7 +310,7 @@ Chuyển trạng thái:
 - `422`: payload không hợp lệ
 - `500`: lỗi nội bộ khi cập nhật item/totals
 
-### 15.5 `DELETE /api/v1/menu-items/:id`
+### 15.4 `DELETE /api/v1/menu-items/:id`
 
 - `204`: xóa item thành công
 - `401`: token không hợp lệ hoặc đã hết hạn
@@ -394,16 +379,15 @@ Danh sách `code` đề xuất:
 - Unit test backend
   - Validate schema create/update menu item
   - Tính lại tổng dinh dưỡng khi add/edit/delete item
-  - Mapping response day/range đúng cấu trúc
+  - Mapping response day đúng cấu trúc
 - Integration test backend
   - `GET /menus/day` trả `200` với ngày rỗng
   - `POST /menu-items` payload hợp lệ trả `201`
   - `PATCH /menu-items/:id` payload sai trả `422`
   - `DELETE /menu-items/:id` id không tồn tại trả `404`
   - `DELETE /menus/day` với date hợp lệ trả `204`
-  - `GET /menus/range` thiếu token trả `401`
 - Contract test
-  - Khóa shape response cho endpoint day/range
+  - Khóa shape response cho endpoint day
   - Khóa enum `mealTime` chỉ gồm `BREAKFAST/LUNCH/DINNER`
 
 ## 20) Quyết định đã chốt v1

@@ -1,11 +1,5 @@
-import { YStack, SizableText } from 'tamagui';
+import TemplateListScreen from '@features/template/screens/TemplateListScreen';
 
-export default function Templates() {
-    return (
-        <YStack f={1} ai="center" jc="center" bg="$background">
-            <SizableText ff="$heading" fos="$h2" fow="$bold" color="$text">
-                Templates Screen
-            </SizableText>
-        </YStack>
-    );
+export default function TemplateList() {
+    return <TemplateListScreen />;
 }

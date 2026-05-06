@@ -1,14 +1,21 @@
 import { Button, Tag } from '@components';
 import { useAppTheme } from '@/providers/AppProviders';
-import { getMockMealById } from '@features/meal/mockMeals';
 import { AddMealModal } from '@features/menu/screens/AddMealModal';
 import { buildAddToMenuLabel, getSingleSearchParam } from '@features/menu/utils/menu-flow';
+import { useSession } from '@/providers/AuthProvider';
+import { isApiErrorWithStatus } from '@/services/api/http-client';
 import { Clock3, Utensils, ChevronLeft } from '@tamagui/lucide-icons-2';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
-import { StatusBar } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SizableText, ScrollView, XStack, YStack, useTheme } from 'tamagui';
+
+import { fetchMealDetailViewModel } from '../api/meal.api';
+
+import type { MealDetailViewModel } from '../types';
+
+type MealDetailScreenState = 'loading' | 'ready' | 'notFound' | 'error';
 
 function MacroStat({
 	value,
@@ -31,37 +38,172 @@ function MacroStat({
 	);
 }
 
+function parseMealIdParam(mealIdParam?: string) {
+	if (!mealIdParam) {
+		return null;
+	}
+
+	const mealId = Number(mealIdParam);
+	if (!Number.isInteger(mealId) || mealId <= 0) {
+		return null;
+	}
+
+	return mealId;
+}
+
+function resolveMealDetailErrorMessage(error: unknown, fallbackMessage: string) {
+	if (error instanceof Error && error.message.trim()) {
+		return error.message.trim();
+	}
+
+	return fallbackMessage;
+}
+
 export default function MealDetailScreen() {
 	const theme = useTheme();
 	const { themeName } = useAppTheme();
+	const { session } = useSession();
 	const router = useRouter();
 	const [isAddMealModalOpen, setIsAddMealModalOpen] = useState(false);
+	const [meal, setMeal] = useState<MealDetailViewModel | null>(null);
+	const [screenState, setScreenState] = useState<MealDetailScreenState>('loading');
+	const [errorMessage, setErrorMessage] = useState<string | null>(null);
+	const [reloadNonce, setReloadNonce] = useState(0);
 	const params = useLocalSearchParams<{ mealId?: string | string[]; mealTime?: string | string[]; date?: string | string[] }>();
-	const mealId = getSingleSearchParam(params.mealId);
+	const mealIdParam = getSingleSearchParam(params.mealId);
+	const mealId = useMemo(() => parseMealIdParam(mealIdParam), [mealIdParam]);
 	const mealTimeParam = getSingleSearchParam(params.mealTime);
 	const dateParam = getSingleSearchParam(params.date);
 	const addToMenuLabel = buildAddToMenuLabel(mealTimeParam, dateParam) ?? 'Add to Menu';
 	const hasLockedAddMealContext = Boolean(mealTimeParam && dateParam);
-	const meal = getMockMealById(mealId);
 
-	if (!meal) {
+	useEffect(() => {
+		if (mealId === null) {
+			setMeal(null);
+			setErrorMessage(null);
+			setScreenState('notFound');
+			return;
+		}
+
+		if (!session?.accessToken) {
+			setMeal(null);
+			setErrorMessage('Missing access token. Please sign in again.');
+			setScreenState('error');
+			return;
+		}
+
+		let isActive = true;
+		setScreenState('loading');
+		setErrorMessage(null);
+
+		void (async () => {
+			try {
+				const nextMeal = await fetchMealDetailViewModel({
+					accessToken: session.accessToken,
+					mealId,
+				});
+
+				if (!isActive) {
+					return;
+				}
+
+				setMeal(nextMeal);
+				setScreenState('ready');
+			} catch (error) {
+				if (!isActive) {
+					return;
+				}
+
+				setMeal(null);
+
+				if (isApiErrorWithStatus(error, 404)) {
+					setErrorMessage(null);
+					setScreenState('notFound');
+					return;
+				}
+
+				setErrorMessage(
+					resolveMealDetailErrorMessage(error, 'Unable to load meal details right now.'),
+				);
+				setScreenState('error');
+			}
+		})();
+
+		return () => {
+			isActive = false;
+		};
+	}, [mealId, reloadNonce, session?.accessToken]);
+
+	function handleRetry() {
+		setReloadNonce((currentValue) => currentValue + 1);
+	}
+
+	function renderBackAction() {
+		return (
+			<XStack ai="center" gap="$space.sm" onPress={() => router.back()}>
+				<ChevronLeft color={theme.text.val} size={24} />
+				<SizableText ff="$body" fos="$md" fow="$semiBold" col="$text">
+					Back
+				</SizableText>
+			</XStack>
+		);
+	}
+
+	if (screenState === 'loading') {
 		return (
 			<SafeAreaView style={{ flex: 1, backgroundColor: theme.background.val }}>
 				<StatusBar barStyle={themeName === 'dark' ? 'light-content' : 'dark-content'} />
 				<YStack f={1} px="$space.md" py="$space.lg" gap="$space.lg" bg="$background">
-					<XStack ai="center" gap="$space.sm" onPress={() => router.back()}>
-						<ChevronLeft color={theme.text.val} size={24} />
-						<SizableText ff="$body" fos="$md" fow="$semiBold" col="$text">
-							Back
+					{renderBackAction()}
+					<YStack f={1} ai="center" jc="center" gap="$space.sm">
+						<ActivityIndicator color={theme.primary.val} />
+						<SizableText ff="$heading" fos="$h4" fow="$bold" col="$text">
+							Loading meal details
 						</SizableText>
-					</XStack>
+						<SizableText ff="$body" fos="$md" col="$textSubtle" textAlign="center">
+							Fetching the latest meal information from the server.
+						</SizableText>
+					</YStack>
+				</YStack>
+			</SafeAreaView>
+		);
+	}
+
+	if (screenState === 'notFound' || !meal) {
+		return (
+			<SafeAreaView style={{ flex: 1, backgroundColor: theme.background.val }}>
+				<StatusBar barStyle={themeName === 'dark' ? 'light-content' : 'dark-content'} />
+				<YStack f={1} px="$space.md" py="$space.lg" gap="$space.lg" bg="$background">
+					{renderBackAction()}
 					<YStack f={1} ai="center" jc="center" gap="$space.sm">
 						<SizableText ff="$heading" fos="$h4" fow="$bold" col="$text">
 							Meal not found
 						</SizableText>
 						<SizableText ff="$body" fos="$md" col="$textSubtle" textAlign="center">
-							The selected meal does not exist in the current mock dataset.
+							The selected meal does not exist or is no longer available.
 						</SizableText>
+					</YStack>
+				</YStack>
+			</SafeAreaView>
+		);
+	}
+
+	if (screenState === 'error') {
+		return (
+			<SafeAreaView style={{ flex: 1, backgroundColor: theme.background.val }}>
+				<StatusBar barStyle={themeName === 'dark' ? 'light-content' : 'dark-content'} />
+				<YStack f={1} px="$space.md" py="$space.lg" gap="$space.lg" bg="$background">
+					{renderBackAction()}
+					<YStack f={1} ai="center" jc="center" gap="$space.md">
+						<SizableText ff="$heading" fos="$h4" fow="$bold" col="$text">
+							Unable to load meal details
+						</SizableText>
+						<SizableText ff="$body" fos="$md" col="$danger" textAlign="center">
+							{errorMessage ?? 'Unable to load meal details right now.'}
+						</SizableText>
+						<Button color="secondary" onPress={handleRetry}>
+							<Button.Text>Retry</Button.Text>
+						</Button>
 					</YStack>
 				</YStack>
 			</SafeAreaView>
@@ -85,6 +227,14 @@ export default function MealDetailScreen() {
 					>
 						<ChevronLeft color={theme.text.val} size={24} />
 					</XStack>
+					<YStack f={1} ai="center" jc="center" gap="$space.sm">
+						<SizableText ff="$heading" fos="$h4" fow="$bold" col="$text">
+							Meal photo coming soon
+						</SizableText>
+						<SizableText ff="$body" fos="$md" col="$textSubtle" textAlign="center">
+							A placeholder is shown here until real meal images are integrated.
+						</SizableText>
+					</YStack>
 				</YStack>
 
                 <ScrollView f={1} showsVerticalScrollIndicator={false} mt={-24} br="$radius.xl">
@@ -98,10 +248,10 @@ export default function MealDetailScreen() {
                         </SizableText>
 
                         <XStack gap="$space.sm" jc="space-between">
-                            <MacroStat value={`${meal.totalCalories} Cal`} label="Calories" color="$yellow6" />
-                            <MacroStat value={`${meal.totalCarbs} g`} label="Carbs" color="$green6" />
-                            <MacroStat value={`${meal.totalProtein} g`} label="Protein" color="$purple6" />
-                            <MacroStat value={`${meal.totalFat} g`} label="Fat" color="$text" />
+							<MacroStat value={`${meal.totalCalories} Cal`} label="Calories" color="$yellow6" />
+							<MacroStat value={`${meal.totalFiber} g`} label="Fiber" color="$green6" />
+							<MacroStat value={`${meal.totalProtein} g`} label="Protein" color="$purple6" />
+							<MacroStat value={`${meal.totalFat} g`} label="Fat" color="$text" />
                         </XStack>
 
                         <XStack gap="$space.md" flexWrap="wrap">
@@ -130,13 +280,13 @@ export default function MealDetailScreen() {
                             </SizableText>
                             <YStack gap="$space.sm">
                                 {meal.ingredients.map((ingredient, index) => (
-                                    <YStack key={`${meal.id}-${ingredient.name}`} gap="$space.sm">
+									<YStack key={`${meal.mealId}-${ingredient.id}`} gap="$space.sm">
                                         <XStack ai="center" jc="space-between" gap="$space.md">
                                             <SizableText ff="$body" fos="$md" fow="$medium" col="$text" flex={1}>
                                                 {ingredient.name}
                                             </SizableText>
                                             <SizableText ff="$body" fos="$md" fow="$medium" col="$textSubtle">
-                                                {ingredient.amount}
+												{ingredient.quantityLabel}
                                             </SizableText>
                                         </XStack>
                                         {index < meal.ingredients.length - 1 ? <YStack h={1} bg="$color.gray6" /> : null}
@@ -158,7 +308,10 @@ export default function MealDetailScreen() {
 				<AddMealModal
 					open={isAddMealModalOpen}
 					onOpenChange={setIsAddMealModalOpen}
+					mealId={meal.mealId}
 					hideDateAndMealTime={hasLockedAddMealContext}
+					lockedDate={dateParam}
+					lockedMealTime={mealTimeParam}
 				/>
 		</SafeAreaView>
 	);

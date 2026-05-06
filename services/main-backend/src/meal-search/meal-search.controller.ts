@@ -10,6 +10,7 @@ import {
 import {
   ApiBearerAuth,
   ApiOperation,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -34,6 +35,42 @@ export class MealSearchController {
   @ApiOperation({
     summary:
       'Tìm kiếm món ăn theo q (tên món hoặc nguyên liệu). Nếu không truyền q sẽ trả về danh sách theo phân trang, có thể lọc theo difficulty/allergies/cookTimeMin/cookTimeMax',
+  })
+  @ApiQuery({
+    name: 'q',
+    required: false,
+    example: 'egg tomato',
+  })
+  @ApiQuery({
+    name: 'difficulty',
+    required: false,
+    schema: { type: 'string', enum: ['easy', 'medium', 'hard'] },
+  })
+  @ApiQuery({
+    name: 'allergies',
+    required: false,
+    example: 'milk,peanut',
+    description: 'Comma-separated ingredient names to exclude from results.',
+  })
+  @ApiQuery({
+    name: 'cookTimeMin',
+    required: false,
+    schema: { type: 'integer', minimum: 2, maximum: 120 },
+  })
+  @ApiQuery({
+    name: 'cookTimeMax',
+    required: false,
+    schema: { type: 'integer', minimum: 2, maximum: 120 },
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    schema: { type: 'integer', minimum: 1, default: 1 },
+  })
+  @ApiQuery({
+    name: 'pageSize',
+    required: false,
+    schema: { type: 'integer', minimum: 1, default: 10 },
   })
   @ApiResponse({ status: 200, description: 'Trả về danh sách món ăn phù hợp' })
   @ApiResponse({

@@ -2,7 +2,7 @@ import { SizableText, XStack, YStack } from 'tamagui';
 
 export interface MacroStatDetailCardProps {
   calories: number | string;
-  carbs: number | string;
+  fiber: number | string;
   fat: number | string;
   protein: number | string;
 }
@@ -29,7 +29,7 @@ function MacroStatItem({ color, label, value }: MacroStatItemProps) {
 
 export function MacroStatDetailCard({
   calories,
-  carbs,
+  fiber,
   fat,
   protein,
 }: MacroStatDetailCardProps) {
@@ -41,7 +41,7 @@ export function MacroStatDetailCard({
 
       <XStack gap="$space.md" ai="center" jc="space-between" flexWrap="wrap">
         <MacroStatItem color="$purple6" label="Protein" value={protein} />
-        <MacroStatItem color="$jade6" label="Carbs" value={carbs} />
+        <MacroStatItem color="$jade6" label="Fiber" value={fiber} />
         <MacroStatItem color="$red6" label="Fat" value={fat} />
       </XStack>
     </YStack>

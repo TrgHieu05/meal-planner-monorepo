@@ -1531,7 +1531,78 @@
     "/api/v1/meals": {
       "get": {
         "operationId": "MealSearchController_search",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 10
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "cookTimeMax",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 120
+            }
+          },
+          {
+            "name": "cookTimeMin",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 120
+            }
+          },
+          {
+            "name": "allergies",
+            "required": false,
+            "in": "query",
+            "description": "Comma-separated ingredient names to exclude from results.",
+            "schema": {
+              "example": "milk,peanut"
+            }
+          },
+          {
+            "name": "difficulty",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "easy",
+                "medium",
+                "hard"
+              ]
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "egg tomato"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Trả về danh sách món ăn phù hợp"

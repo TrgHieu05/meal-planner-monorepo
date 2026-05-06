@@ -1,15 +1,26 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Modal, Pressable, StyleSheet } from 'react-native';
-import type { MealTime } from '@meal/shared/types/menu-item';
+import type { MealTime } from '@meal/shared';
 import { SizableText, XStack, YStack } from 'tamagui';
 
 import { Button, Chip, InputDate, InputText } from '@components';
+import { useSession } from '@/providers/AuthProvider';
+import { createMenuItem } from '@features/menu/api/menu.api';
+import {
+  formatMenuApiDate,
+  parseMenuFlowDateParam,
+  toMealTimeFromMenuFlowParam,
+} from '@features/menu/utils/menu-flow';
 import { createTodayCalendarDate } from '@features/menu/utils/week-date';
 
 export interface AddMealModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  mealId: number;
   hideDateAndMealTime?: boolean;
+  lockedDate?: string;
+  lockedMealTime?: string;
+  onSuccess?: () => void;
 }
 
 const MEAL_TIME_OPTIONS: Array<{ value: MealTime; label: string }> = [
@@ -18,33 +29,92 @@ const MEAL_TIME_OPTIONS: Array<{ value: MealTime; label: string }> = [
   { value: 'DINNER', label: 'Dinner' },
 ];
 
-export function AddMealModal({ open, onOpenChange, hideDateAndMealTime = false }: AddMealModalProps) {
+export function AddMealModal({
+  open,
+  onOpenChange,
+  mealId,
+  hideDateAndMealTime = false,
+  lockedDate,
+  lockedMealTime,
+  onSuccess,
+}: AddMealModalProps) {
+  const { session } = useSession();
   const [selectedDate, setSelectedDate] = useState<Date>(() => createTodayCalendarDate());
   const [portionSize, setPortionSize] = useState('1');
-  const [selectedMealTimes, setSelectedMealTimes] = useState<MealTime[]>(['BREAKFAST']);
+  const [selectedMealTime, setSelectedMealTime] = useState<MealTime>('BREAKFAST');
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const lockedDateValue = useMemo(() => parseMenuFlowDateParam(lockedDate), [lockedDate]);
+  const lockedMealTimeValue = useMemo(
+    () => toMealTimeFromMenuFlowParam(lockedMealTime),
+    [lockedMealTime],
+  );
 
   useEffect(() => {
     if (!open) {
       return;
     }
 
-    setSelectedDate(createTodayCalendarDate());
+    setSelectedDate(lockedDateValue ?? createTodayCalendarDate());
     setPortionSize('1');
-    setSelectedMealTimes(['BREAKFAST']);
-  }, [open]);
+    setSelectedMealTime(lockedMealTimeValue ?? 'BREAKFAST');
+    setSubmitError(null);
+  }, [lockedDateValue, lockedMealTimeValue, open]);
 
   const handleClose = () => {
     onOpenChange(false);
   };
 
-  const handleToggleMealTime = (mealTime: MealTime) => {
-    setSelectedMealTimes((currentValue) => {
-      if (currentValue.includes(mealTime)) {
-        return currentValue.filter((value) => value !== mealTime);
-      }
+  const handleSelectMealTime = (mealTime: MealTime) => {
+    setSelectedMealTime(mealTime);
+  };
 
-      return [...currentValue, mealTime];
-    });
+  const handleSubmit = async () => {
+    if (isSubmitting) {
+      return;
+    }
+
+    if (!session?.accessToken) {
+      setSubmitError('Missing access token. Please sign in again.');
+      return;
+    }
+
+    const resolvedDate = hideDateAndMealTime ? lockedDateValue : selectedDate;
+    const resolvedMealTime = hideDateAndMealTime ? lockedMealTimeValue : selectedMealTime;
+    const resolvedPortionSize = parsePortionSize(portionSize);
+
+    if (!resolvedDate || !resolvedMealTime) {
+      setSubmitError('Missing menu context. Please select a valid date and meal time.');
+      return;
+    }
+
+    if (resolvedPortionSize == null) {
+      setSubmitError('Portion size must be greater than 0.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      await createMenuItem({
+        accessToken: session.accessToken,
+        payload: {
+          date: formatMenuApiDate(resolvedDate),
+          mealId,
+          mealTime: resolvedMealTime,
+          portionSize: resolvedPortionSize,
+        },
+      });
+
+      onOpenChange(false);
+      onSuccess?.();
+    } catch (error) {
+      setSubmitError(resolveMenuMutationErrorMessage(error, 'Unable to add this meal to your menu.'));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -85,13 +155,13 @@ export function AddMealModal({ open, onOpenChange, hideDateAndMealTime = false }
                   </SizableText>
                   <XStack gap="$space.sm" flexWrap="wrap">
                     {MEAL_TIME_OPTIONS.map((option) => {
-                      const selected = selectedMealTimes.includes(option.value);
+                      const selected = selectedMealTime === option.value;
 
                       return (
                         <Chip
                           key={option.value}
                           tone={selected ? 'brand' : 'neutral'}
-                          onPress={() => handleToggleMealTime(option.value)}
+                          onPress={() => handleSelectMealTime(option.value)}
                         >
                           <Chip.Text>{option.label}</Chip.Text>
                         </Chip>
@@ -101,12 +171,18 @@ export function AddMealModal({ open, onOpenChange, hideDateAndMealTime = false }
                 </YStack>
               ) : null}
 
+              {submitError ? (
+                <SizableText ff="$body" fos="$sm" col="$danger">
+                  {submitError}
+                </SizableText>
+              ) : null}
+
               <XStack w="100%" gap="$space.md">
                 <Button f={1} h={48} br="$pill" color="secondary" onPress={handleClose}>
                   <Button.Text>Cancel</Button.Text>
                 </Button>
-                <Button f={1} h={48} br="$pill" color="primary" onPress={handleClose}>
-                  <Button.Text>Add</Button.Text>
+                <Button f={1} h={48} br="$pill" color="primary" onPress={() => void handleSubmit()}>
+                  <Button.Text>{isSubmitting ? 'Adding...' : 'Add'}</Button.Text>
                 </Button>
               </XStack>
             </YStack>
@@ -127,3 +203,22 @@ const styles = StyleSheet.create({
     maxWidth: 360,
   },
 });
+
+function parsePortionSize(value: string) {
+  const normalizedValue = value.replace(',', '.').trim();
+  const parsedValue = Number.parseFloat(normalizedValue);
+
+  if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
+    return null;
+  }
+
+  return parsedValue;
+}
+
+function resolveMenuMutationErrorMessage(error: unknown, fallbackMessage: string) {
+  if (error instanceof Error && error.message.trim()) {
+    return error.message.trim();
+  }
+
+  return fallbackMessage;
+}

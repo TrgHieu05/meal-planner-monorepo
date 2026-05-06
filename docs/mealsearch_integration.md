@@ -214,9 +214,9 @@ Checklist cần xử lý:
 
 ### D. Mobile app `apps/mobile-app`
 
-- [ ] Tạo data layer riêng cho feature `meal`, ví dụ `src/features/meal/api/meal.api.ts`.
+- [X] Tạo data layer riêng cho feature `meal`, ví dụ `src/features/meal/api/meal.api.ts`.
 - [ ] Dùng `session.accessToken` từ `AuthProvider` để gọi protected API.
-- [ ] Tạo adapter/view-model để map response backend sang props UI.
+- [X] Tạo adapter/view-model để map response backend sang props UI.
 - [ ] Thay `mockMeals` trên `MealSearchScreen` bằng dữ liệu thật.
 - [ ] Thay `getMockMealById(...)` trên `MealDetailScreen` bằng fetch detail thật.
 - [ ] Thêm loading state cho search screen.
@@ -256,7 +256,7 @@ Checklist cần xử lý:
 1. [X] Khóa contract v1 ở mức tài liệu và shared types theo các quyết định đã chốt: search card dùng `calories/protein/fiber/fat`, detail dùng `fiber`, ingredient chỉ dùng `quantity` số thuần, ảnh tạm dùng placeholder, `difficulty` single-select, `allergies` lấy từ profile, menu chuyển hẳn sang `mealId` số. Nếu không phát sinh scope mới thì không cần mở rộng DB schema cho v1.
 2. [X] Hoàn thiện nốt backend `meal-search` theo contract đã khóa: bổ sung coverage cho `invalid query`, rà lại response mapping/search query validation nếu còn điểm lệch nhỏ, rồi cập nhật Swagger annotations cho đầy đủ query params (`q`, `difficulty`, `allergies`, `cookTimeMin`, `cookTimeMax`, `page`, `pageSize`).
 3. [X] Regenerate [services/main-backend/docs/openapi.json](services/main-backend/docs/openapi.json) sau khi annotations/backend contract đã ổn định, để mobile có thể bám vào spec mới nhất.
-4. [ ] Tạo data layer riêng cho mobile feature `meal` theo pattern đang dùng ở `profile`: API client, typed models, adapter/view-model map từ snake_case sang props UI, format `cook_time_min` sang label hiển thị ở mobile.
+4. [X] Tạo data layer riêng cho mobile feature `meal` theo pattern đang dùng ở `profile`: API client, typed models, adapter/view-model map từ snake_case sang props UI, format `cook_time_min` sang label hiển thị ở mobile.
 5. [ ] Tích hợp màn search với API thật: thay `mockMeals`, thêm debounce 300ms, default list khi `q` rỗng, filter `difficulty` single-select, wiring `allergies` từ profile, loading/error/empty states, và cập nhật `MealCard` sang `fiber` thay cho `carbs` nhưng giữ treatment màu hiện tại.
 6. [ ] Tích hợp màn detail với API thật: thay `getMockMealById(...)`, cập nhật UI sang `fiber`, hiển thị ingredient bằng `quantity` số thuần, giữ placeholder cho ảnh, và bổ sung loading/error/not-found states.
 7. [ ] Chuyển toàn bộ flow liên quan sang `mealId` numeric thật: route `/meal-search/[mealId]`, điều hướng từ menu/search, `MenuItemDetailModal`, `Add to Menu`, đồng thời loại bỏ các mock item/string id cũ khỏi flow chính.

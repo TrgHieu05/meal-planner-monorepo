@@ -31,6 +31,7 @@ type MealSeedRow = {
   total_fat: number;
   total_fiber: number;
   ingredients: string[];
+  cuisine?: string;
 };
 
 const ingredientsData: IngredientSeedRow[] = [
@@ -708,6 +709,59 @@ const mealsData: MealSeedRow[] = [
   }
 ];
 
+function inferCuisine(meal: Pick<MealSeedRow, 'name' | 'ingredients'>): string {
+  const name = meal.name.toLowerCase();
+  const ingredients = meal.ingredients.map((i) => i.toLowerCase());
+
+  const includesAny = (haystack: string, needles: string[]) =>
+    needles.some((n) => haystack.includes(n));
+
+  const hasIngredientAny = (needles: string[]) =>
+    needles.some((n) => ingredients.some((ing) => ing.includes(n)));
+
+  const europeNameTokens = [
+    'pasta',
+    'sandwich',
+    'toast',
+    'parfait',
+    'pancake',
+    'smoothie',
+    'taco',
+    'wrap',
+  ];
+  const europeIngredientTokens = [
+    'parmesan',
+    'mozzarella',
+    'yogurt',
+    'cream',
+    'cheese',
+    'butter',
+  ];
+
+  if (
+    includesAny(name, europeNameTokens) ||
+    hasIngredientAny(europeIngredientTokens)
+  ) {
+    return 'Châu Âu';
+  }
+
+  const japanNameTokens = ['rice bowl', 'noodles'];
+  const japanIngredientTokens = ['soy sauce', 'noodles'];
+
+  if (includesAny(name, japanNameTokens) || hasIngredientAny(japanIngredientTokens)) {
+    return 'Nhật Bản';
+  }
+
+  return 'Việt Nam';
+}
+
+const mealsDataNormalized: Array<
+  Omit<MealSeedRow, 'cuisine'> & { cuisine: string }
+> = mealsData.map((m) => ({
+  ...m,
+  cuisine: (m.cuisine ?? inferCuisine(m)).trim(),
+}));
+
 const REQUIRED_INGREDIENT_FIELDS: (keyof IngredientSeedRow)[] = [
   'name',
   'calories',
@@ -742,7 +796,7 @@ for (const [idx, row] of ingredientsData.entries()) {
 
 const ingredientNameSet = new Set<string>(ingredientsData.map((i) => i.name));
 
-for (const [idx, row] of mealsData.entries()) {
+for (const [idx, row] of mealsDataNormalized.entries()) {
   for (const k of REQUIRED_MEAL_FIELDS) {
     if (!(k in row)) {
       throw new Error(`mealsData missing field "${String(k)}" at index ${idx}`);
@@ -770,22 +824,37 @@ async function main() {
     console.log('Start seeding data...');
     await client.query('BEGIN');
 
-    const cuisineRes = await client.query<{ id: number }>(
-      `SELECT id FROM cuisine_types WHERE name = $1 ORDER BY id ASC LIMIT 1`,
-      ['General'],
+    const cuisineTypes: Array<{ name: string; description: string | null }> = [
+      { name: 'General', description: 'General cuisine type' },
+      { name: 'Việt Nam', description: 'Ẩm thực Việt Nam' },
+      { name: 'Châu Âu', description: 'Ẩm thực Châu Âu' },
+      { name: 'Nhật Bản', description: 'Ẩm thực Nhật Bản' },
+    ];
+
+    const cuisineNames = cuisineTypes.map((c) => c.name);
+    await client.query(
+      `INSERT INTO cuisine_types (name, description, created_at, updated_at)
+       SELECT t.name, t.description, NOW(), NOW()
+       FROM UNNEST($1::text[], $2::text[]) AS t(name, description)
+       WHERE NOT EXISTS (
+         SELECT 1 FROM cuisine_types c WHERE c.name = t.name
+       )`,
+      [cuisineNames, cuisineTypes.map((c) => c.description)],
     );
 
-    let cuisineTypeId: number;
-    if (cuisineRes.rows[0]) {
-      cuisineTypeId = cuisineRes.rows[0].id;
-    } else {
-      const inserted = await client.query<{ id: number }>(
-        `INSERT INTO cuisine_types (name, description, created_at, updated_at)
-         VALUES ($1, $2, NOW(), NOW())
-         RETURNING id`,
-        ['General', 'General cuisine type'],
+    const seededCuisineRows = await client.query<{ id: number; name: string }>(
+      `SELECT id, name FROM cuisine_types WHERE name = ANY($1::text[])`,
+      [cuisineNames],
+    );
+    const cuisineIdByName = new Map<string, number>(
+      seededCuisineRows.rows.map((r) => [r.name, r.id]),
+    );
+    const defaultCuisineName = 'Việt Nam';
+    const defaultCuisineTypeId = cuisineIdByName.get(defaultCuisineName);
+    if (!defaultCuisineTypeId) {
+      throw new Error(
+        `Failed to seed cuisine_types: "${defaultCuisineName}" not found.`,
       );
-      cuisineTypeId = inserted.rows[0].id;
     }
 
     console.log('Seeding Ingredients...');
@@ -832,13 +901,22 @@ async function main() {
     );
 
     console.log('Seeding Meals...');
-    const mealNames = mealsData.map((m) => m.name);
+    const mealNames = mealsDataNormalized.map((m) => m.name);
     const existingMealsRes = await client.query<{ id: number; name: string }>(
       `SELECT id, name FROM meals WHERE name = ANY($1::text[])`,
       [mealNames],
     );
     const existingMealNames = new Set(existingMealsRes.rows.map((r) => r.name));
-    const mealsToInsert = mealsData.filter(m => !existingMealNames.has(m.name));
+    const mealsToInsert = mealsDataNormalized.filter(
+      (m) => !existingMealNames.has(m.name),
+    );
+    const cuisineTypeIdsForInsert = mealsToInsert.map((m) => {
+      const cuisineId = cuisineIdByName.get(m.cuisine);
+      if (!cuisineId) {
+        throw new Error(`Unknown cuisine "${m.cuisine}" for meal "${m.name}"`);
+      }
+      return cuisineId;
+    });
 
     if (mealsToInsert.length > 0) {
       await client.query(
@@ -891,7 +969,9 @@ async function main() {
         [
           mealsToInsert.map((m) => m.name),
           mealsToInsert.map((m) => m.description),
-          mealsToInsert.map(() => cuisineTypeId),
+          cuisineTypeIdsForInsert.length > 0
+            ? cuisineTypeIdsForInsert
+            : [defaultCuisineTypeId],
           mealsToInsert.map((m) => m.difficulty),
           mealsToInsert.map((m) => m.cook_time_mins),
           mealsToInsert.map((m) => m.total_calories),
@@ -915,7 +995,7 @@ async function main() {
     const miIngredientIds: number[] = [];
     const miQuantities: number[] = [];
 
-    for (const meal of mealsData) {
+    for (const meal of mealsDataNormalized) {
       const mealId = mealMap.get(meal.name);
       if (!mealId) continue;
       for (const ingName of meal.ingredients) {

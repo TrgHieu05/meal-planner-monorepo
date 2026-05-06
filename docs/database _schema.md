@@ -234,6 +234,7 @@ Danh mục món ăn.
 
 ### Ghi chú
 - Đây là bảng lõi cho tính năng search meal, menu, template.
+- Dữ liệu seed mặc định: `cuisine_type_id` sẽ trỏ tới `Việt Nam` nếu không chỉ định khác trong seed.
 
 ---
 
@@ -340,6 +341,12 @@ Danh mục loại ẩm thực.
 - `description`: text, nullable
 - `created_at`: timestamp
 - `updated_at`: timestamp
+
+### Giá trị seed mặc định
+- `General`
+- `Việt Nam`
+- `Châu Âu`
+- `Nhật Bản`
 
 ### Quan hệ
 - 1 cuisine type có nhiều profile

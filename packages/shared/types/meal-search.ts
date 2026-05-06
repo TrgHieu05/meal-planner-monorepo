@@ -28,8 +28,13 @@ export type MealSearchQuery = z.infer<typeof MealSearchQuerySchema>;
 export const MealSearchResultItemSchema = z.object({
   id: IntSchema,
   name: z.string(),
+  meal_image_key: z.string().nullable(),
   difficulty: z.enum(['easy', 'medium', 'hard']),
   cook_time_min: IntSchema,
+  total_calories: z.number().nonnegative(),
+  total_protein: z.number().nonnegative(),
+  total_fat: z.number().nonnegative(),
+  total_fiber: z.number().nonnegative(),
   score: z.number().nonnegative(),
 });
 

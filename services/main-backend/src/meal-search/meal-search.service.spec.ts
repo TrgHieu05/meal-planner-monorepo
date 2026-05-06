@@ -17,8 +17,13 @@ describe('MealSearchService', () => {
       {
         id: 1,
         name: 'Omelette',
+        mealImageKey: null,
         difficulty: Difficulty.LEVEL_1,
         cookTimeMins: 25,
+        totalCalories: 300,
+        totalProtein: 20,
+        totalFat: 10,
+        totalFiber: 2,
         ingredients: [
           { ingredient: { id: 10, name: 'egg' } },
           { ingredient: { id: 11, name: 'tomato' } },
@@ -46,8 +51,13 @@ describe('MealSearchService', () => {
     const meals = Array.from({ length: 12 }).map((_, idx) => ({
       id: idx + 1,
       name: idx === 0 ? 'Egg Deluxe' : `Meal${idx + 1}`,
+      mealImageKey: null,
       difficulty: idx % 3 === 0 ? Difficulty.LEVEL_2 : idx % 3 === 1 ? Difficulty.LEVEL_3 : Difficulty.LEVEL_5,
       cookTimeMins: 20 + idx,
+      totalCalories: 100 + idx,
+      totalProtein: 10 + idx,
+      totalFat: 5 + idx,
+      totalFiber: 1 + idx,
       ingredients: [
         { ingredient: { id: idx + 100, name: 'egg' } },
         { ingredient: { id: idx + 200, name: `token${idx}` } },
@@ -77,8 +87,13 @@ describe('MealSearchService', () => {
       {
         id: 1,
         name: 'Apple Salad',
+        mealImageKey: null,
         difficulty: Difficulty.LEVEL_1,
         cookTimeMins: 5,
+        totalCalories: 200,
+        totalProtein: 10,
+        totalFat: 3,
+        totalFiber: 2,
       },
     ]);
 
@@ -102,8 +117,13 @@ describe('MealSearchService', () => {
         {
           id: 1,
           name: 'Apple Salad',
+          meal_image_key: null,
           difficulty: 'easy',
           cook_time_min: 5,
+          total_calories: 200,
+          total_protein: 10,
+          total_fat: 3,
+          total_fiber: 2,
           score: 0,
         },
       ],

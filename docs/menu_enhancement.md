@@ -149,6 +149,6 @@ Ngày cập nhật: `2026-05-06`
 - [ ] Performance: chỉ cân nhắc cache read endpoint theo ngày sau khi P0 và P1 đã ổn định.
 - [ ] Observability: thêm log và metric cho `get menu day`, `create/update/delete menu item`, conflict rate và latency p95.
 - [ ] Debuggability: phân biệt rõ lỗi business, validation và network để debug từ mobile dễ hơn.
-- [ ] QA: chuẩn bị manual QA checklist ngắn cho các case add, update, delete, toggle logged, quick date switching và lỗi mạng.
+- [X] QA: chuẩn bị manual QA checklist ngắn cho các case add, update, delete, toggle logged, quick date switching và lỗi mạng.
 - [ ] Polish: giữ nguyên nút `Templates` như hiện tại, chỉ xem lại nếu sau này xuất hiện yêu cầu UX mới.
 - [ ] Definition of done: feature `menu` có tài liệu, metrics, test bổ sung và hành vi đủ ổn định để mở rộng tiếp mà không phải sửa lại nền tảng vừa làm ở P0-P1.

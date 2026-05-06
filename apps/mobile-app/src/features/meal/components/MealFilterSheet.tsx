@@ -79,7 +79,7 @@ export function MealFilterSheet({
 		sanitizeMealCookingTimeFilter(filters.cookingTime),
 	)
 	const pendingCookingTimeValues = useMemo(
-		() => [pendingCookingTime.min, pendingCookingTime.max] as const,
+		() => [pendingCookingTime.min, pendingCookingTime.max],
 		[pendingCookingTime.max, pendingCookingTime.min],
 	)
 

@@ -23,8 +23,8 @@ Ngày cập nhật: `2026-05-06`
 - [X] Backend `menu` đã có unit test và e2e test cơ bản đang pass.
 - [X] Mobile đã có `MenuScreen`, flow add meal từ `meal search`, và modal chỉnh sửa item.
 - [X] Đã chốt loại bỏ endpoint `GET` theo range khỏi scope hiện tại của `menu`.
-- [ ] Chưa tối ưu payload để mobile render menu trực tiếp mà không cần gọi thêm API chi tiết món.
-- [ ] Chưa xử lý triệt để các vấn đề stale response, silent validation và refetch chưa tối ưu.
+- [X] Payload `menu day` đã đủ để mobile render danh sách menu trực tiếp mà không cần gọi thêm API chi tiết món.
+- [X] Đã xử lý stale response ở `MenuScreen`, validation `portionSize` trong modal và giảm refetch toàn màn hình cho update/delete/toggle.
 
 ## 1. Checklist tính năng và UX
 
@@ -36,8 +36,8 @@ Ngày cập nhật: `2026-05-06`
 
 ### 1.2 Củng cố luồng người dùng
 
-- [ ] Đảm bảo flow `Menu -> Meal Search -> Meal Detail -> Add to Menu` quay lại đúng ngữ cảnh ngày và bữa đang thao tác.
-- [ ] Sửa hành vi lưu `portionSize` không hợp lệ: cần hiển thị lỗi rõ ràng và giữ modal mở, không fallback im lặng về giá trị cũ.
+- [X] Đảm bảo flow `Menu -> Meal Search -> Meal Detail -> Add to Menu` quay lại đúng ngữ cảnh ngày và bữa đang thao tác.
+- [X] Sửa hành vi lưu `portionSize` không hợp lệ: cần hiển thị lỗi rõ ràng và giữ modal mở, không fallback im lặng về giá trị cũ.
 - [X] Chốt giữ `nutritionTotal` trong payload và hiển thị trên `MenuScreen`. **Đã làm rõ.**
 - [X] Triển khai hiển thị `nutritionTotal` trên `MenuScreen` theo layout phù hợp.
 - [ ] Tách rõ các trạng thái `empty`, `loading`, `error`, `refreshing` để tránh hiểu nhầm menu rỗng với lỗi tải dữ liệu.
@@ -46,8 +46,8 @@ Ngày cập nhật: `2026-05-06`
 ### 1.3 Cải thiện trải nghiệm thao tác
 
 - [X] Chốt không áp dụng optimistic update trong scope hiện tại để tránh kéo dài thời gian hoàn thiện app. **Đã làm rõ.**
-- [ ] Giữ hướng update an toàn: chờ API thành công rồi mới cập nhật state hoặc refetch slice cần thiết.
-- [ ] Giảm việc reset lại toàn bộ màn hình khi user chỉ thay đổi một item nhỏ.
+- [X] Giữ hướng update an toàn: chờ API thành công rồi mới cập nhật state hoặc refetch slice cần thiết.
+- [X] Giảm việc reset lại toàn bộ màn hình khi user chỉ thay đổi một item nhỏ.
 - [ ] Bổ sung feedback thành công ngắn gọn cho các thao tác add, update, delete khi cần.
 
 ## 2. Checklist API và contract
@@ -71,7 +71,7 @@ Ngày cập nhật: `2026-05-06`
 - [X] Shared types: cập nhật schema response của `menu day` để phản ánh các field render trực tiếp trên card/menu item.
 - [X] Mobile app: refactor `fetchMenuScreenData` để map trực tiếp từ `fetchMenuDay`, xóa `loadMenuMealDetails` và bỏ `Promise.all(fetchMealDetail(...))` trong luồng load màn hình menu.
 - [X] Mobile app: điều chỉnh `MenuMealItem` và mapper để nhận `nutritionPerServing` trực tiếp từ payload `menu day`.
-- [ ] Mobile app: nếu modal vẫn cần `cookTime` và `difficulty`, chỉ fetch thêm meal detail khi user mở `MenuItemDetailModal` cho item đang chọn, thay vì load cho toàn bộ item từ đầu.
+- [X] Mobile app: nếu modal vẫn cần `cookTime` và `difficulty`, chỉ fetch thêm meal detail khi user mở `MenuItemDetailModal` cho item đang chọn, thay vì load cho toàn bộ item từ đầu.
 - [X] Test: bổ sung test backend cho shape mới của `GET /menus/day/:date` và test mobile để đảm bảo load menu theo ngày không còn gọi detail API cho từng món.
 
 ### 2.3 Tăng độ tin cậy của API
@@ -86,7 +86,7 @@ Ngày cập nhật: `2026-05-06`
 ### 3.1 Mobile performance
 
 - [X] Chốt triển khai loại bỏ mô hình N+1 request hiện tại khi load menu theo ngày. **Đã làm rõ.**
-- [ ] Thêm guard chống stale response khi user đổi ngày liên tục hoặc rời màn hình trong lúc request đang chạy.
+- [X] Thêm guard chống stale response khi user đổi ngày liên tục hoặc rời màn hình trong lúc request đang chạy.
 - [ ] Tránh refetch toàn bộ menu sau mọi mutation nếu response hiện có đủ dữ liệu để patch local state.
 - [ ] Nếu tạm thời vẫn giữ flow gọi chi tiết món, thêm cache theo `mealId` để giảm request lặp lại trong cùng session.
 
@@ -104,9 +104,9 @@ Ngày cập nhật: `2026-05-06`
 
 ## 4. Checklist test và rollout
 
-- [ ] Bổ sung test cho `MenuScreen` với tình huống đổi ngày nhanh liên tục.
-- [ ] Bổ sung test cho hành vi nhập `portionSize` không hợp lệ trong modal chỉnh sửa item.
-- [ ] Bổ sung test cho flow add meal với context bị khóa theo `date` và `mealTime`.
+- [X] Bổ sung test cho `MenuScreen` với tình huống đổi ngày nhanh liên tục.
+- [X] Bổ sung test cho hành vi nhập `portionSize` không hợp lệ trong modal chỉnh sửa item.
+- [X] Bổ sung test cho flow add meal với context bị khóa theo `date` và `mealTime`.
 - [X] Gỡ hoặc cập nhật các test plan cũ còn giả định có endpoint `GET /api/v1/menus/range`.
 - [ ] Chuẩn bị manual QA checklist ngắn cho các case add, update, delete, toggle logged, quick date switching và lỗi mạng.
 
@@ -128,16 +128,16 @@ Ngày cập nhật: `2026-05-06`
 
 ### P1. Ổn định hành vi người dùng và giảm bug runtime
 
-- [ ] Mobile app: thêm guard chống stale response khi user đổi ngày liên tục hoặc rời màn hình trong lúc request đang chạy.
-- [ ] Mobile app: sửa validation `portionSize` để input không hợp lệ không bị fallback im lặng; modal phải giữ mở và hiện lỗi rõ ràng.
-- [ ] Mobile app: nếu modal vẫn cần `cookTime` và `difficulty`, chỉ fetch meal detail khi user mở `MenuItemDetailModal` cho item đang chọn.
-- [ ] Mobile app: siết lại flow `Menu -> Meal Search -> Meal Detail -> Add to Menu` để luôn quay về đúng ngữ cảnh ngày và bữa đang thao tác.
-- [ ] Mobile app: giữ hướng mutate an toàn, chỉ cập nhật state hoặc refetch slice cần thiết sau khi API thành công.
-- [ ] Mobile app: giảm việc reset lại toàn bộ màn hình khi user chỉ thay đổi một item nhỏ.
-- [ ] Test: bổ sung test cho tình huống đổi ngày nhanh liên tục.
-- [ ] Test: bổ sung test cho validation `portionSize` trong modal chỉnh sửa item.
-- [ ] Test: bổ sung test cho flow add meal với context bị khóa theo `date` và `mealTime`.
-- [ ] Definition of done: các thao tác add, update, delete, toggle logged và đổi ngày không còn gây lỗi trạng thái sai hoặc mất ngữ cảnh.
+- [X] Mobile app: thêm guard chống stale response khi user đổi ngày liên tục hoặc rời màn hình trong lúc request đang chạy.
+- [X] Mobile app: sửa validation `portionSize` để input không hợp lệ không bị fallback im lặng; modal phải giữ mở và hiện lỗi rõ ràng.
+- [X] Mobile app: nếu modal vẫn cần `cookTime` và `difficulty`, chỉ fetch meal detail khi user mở `MenuItemDetailModal` cho item đang chọn.
+- [X] Mobile app: siết lại flow `Menu -> Meal Search -> Meal Detail -> Add to Menu` để luôn quay về đúng ngữ cảnh ngày và bữa đang thao tác.
+- [X] Mobile app: giữ hướng mutate an toàn, chỉ cập nhật state hoặc refetch slice cần thiết sau khi API thành công.
+- [X] Mobile app: giảm việc reset lại toàn bộ màn hình khi user chỉ thay đổi một item nhỏ.
+- [X] Test: bổ sung test cho tình huống đổi ngày nhanh liên tục.
+- [X] Test: bổ sung test cho validation `portionSize` trong modal chỉnh sửa item.
+- [X] Test: bổ sung test cho flow add meal với context bị khóa theo `date` và `mealTime`.
+- [X] Definition of done: các thao tác add, update, delete, toggle logged và đổi ngày không còn gây lỗi trạng thái sai hoặc mất ngữ cảnh.
 
 ### P2. Tối ưu thêm và hoàn thiện vận hành
 

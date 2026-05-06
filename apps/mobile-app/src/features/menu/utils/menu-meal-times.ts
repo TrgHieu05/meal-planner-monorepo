@@ -106,6 +106,12 @@ export function sumMenuMealTimeNutrition(items: readonly MenuMealItem[]) {
   );
 }
 
+export function sumLoggedMenuNutrition(groups: readonly MenuMealTimeGroup[]) {
+  return sumMenuMealTimeNutrition(
+    groups.flatMap((group) => group.items.filter((item) => item.eated)),
+  );
+}
+
 export function formatMenuItemNutritionLine(nutrition: MenuNutrition) {
   return `${formatMenuNutritionValue(nutrition.calories)} kcal · ${formatMenuNutritionValue(nutrition.protein)}p · ${formatMenuNutritionValue(nutrition.fiber)} fib · ${formatMenuNutritionValue(nutrition.fat)}f`;
 }

@@ -1,11 +1,14 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { ScrollView, YStack, XStack, SizableText } from 'tamagui';
 import { Button, DatePicker, type DatePickerWeekValue } from '@components';
+import { MacroStatDetailCard } from '@features/menu/components/MacroStatDetailCard';
 import { MenuItemDetailModal } from '@features/menu/components/MenuItemDetailModal';
 import { MenuMealTimeCard } from '@features/menu/components/MenuMealTimeCard';
-import { useRouter } from 'expo-router';
+import { MacroStatProgressCard } from '@features/menu/components/MacroStatProgressCard';
+import { fetchProfileOverview } from '@features/profile/api/profile.api';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { WeekDateStrip } from '@features/menu/components/WeekDateStrip';
 import { useSession } from '@/providers/AuthProvider';
 import {
@@ -19,6 +22,8 @@ import {
 import {
     formatMenuApiDate,
     formatMenuFlowDateParam,
+    getSingleSearchParam,
+    parseMenuFlowDateParam,
     toMenuFlowMealTimeParam,
 } from '@features/menu/utils/menu-flow';
 import {
@@ -27,12 +32,28 @@ import {
     updateMenuItem,
 } from '@features/menu/api/menu.api';
 import {
+    compareCalendarDates,
     createEmptyMenuMealTimeGroups,
     isPastCalendarDate,
+    sumLoggedMenuNutrition,
     type MenuMealItem,
     type MenuMealTimeGroup,
+    type MenuNutrition,
 } from '@features/menu/utils/menu-meal-times';
+import {
+    applyMenuItemPortionSizeToNutritionTotal,
+    removeMenuItemNutritionFromTotal,
+    removeMenuMealItemFromGroups,
+    replaceMenuMealItemInGroups,
+} from '@features/menu/utils/menu-state';
 import { Calendar, Grid2x2Plus } from '@tamagui/lucide-icons-2';
+
+const EMPTY_MENU_NUTRITION: MenuNutrition = {
+    calories: 0,
+    protein: 0,
+    fiber: 0,
+    fat: 0,
+};
 
 function resolveMenuScreenErrorMessage(error: unknown, fallbackMessage: string) {
     if (error instanceof Error && error.message.trim()) {
@@ -44,27 +65,59 @@ function resolveMenuScreenErrorMessage(error: unknown, fallbackMessage: string) 
 
 export default function MenuScreen() {
     const router = useRouter();
+    const params = useLocalSearchParams<{ date?: string | string[] }>();
     const { session } = useSession();
     const today = useMemo(() => createTodayCalendarDate(), []);
+    const routeDateParam = getSingleSearchParam(params.date);
     const [isWeekPickerOpen, setIsWeekPickerOpen] = useState(false);
     const [selectedWeek, setSelectedWeek] = useState<DatePickerWeekValue>(() => createWeekValue(today));
     const [selectedDate, setSelectedDate] = useState<Date>(() => today);
     const [selectedItem, setSelectedItem] = useState<MenuMealItem | null>(null);
     const [mealTimeGroups, setMealTimeGroups] = useState<MenuMealTimeGroup[]>(createEmptyMenuMealTimeGroups);
+    const [nutritionTotal, setNutritionTotal] = useState<MenuNutrition>(EMPTY_MENU_NUTRITION);
+    const [targetCalories, setTargetCalories] = useState<number | null>(null);
     const [screenError, setScreenError] = useState<string | null>(null);
     const [isLoadingMenu, setIsLoadingMenu] = useState(true);
-    const [reloadNonce, setReloadNonce] = useState(0);
+    const [isAddMealNavigationPending, setIsAddMealNavigationPending] = useState(false);
+    const isAddMealNavigationPendingRef = useRef(false);
+    const routeSelectedDate = useMemo(
+        () => parseMenuFlowDateParam(routeDateParam),
+        [routeDateParam],
+    );
 
     const weekDays = useMemo(() => getWeekDays(selectedWeek.startDate), [selectedWeek]);
     const headerDateLabel = useMemo(() => formatHeaderDate(selectedDate), [selectedDate]);
     const allowAddMeal = useMemo(() => !isPastCalendarDate(selectedDate, today), [selectedDate, today]);
+    const showProgressCard = useMemo(() => compareCalendarDates(selectedDate, today) <= 0, [selectedDate, today]);
     const selectedApiDate = useMemo(() => formatMenuApiDate(selectedDate), [selectedDate]);
+    const loggedNutritionTotal = useMemo(
+        () => sumLoggedMenuNutrition(mealTimeGroups),
+        [mealTimeGroups],
+    );
 
-    const loadMenuData = useCallback(async () => {
+    useEffect(() => {
+        if (!routeSelectedDate) {
+            return;
+        }
+
+        setSelectedWeek(createWeekValue(routeSelectedDate));
+        setSelectedDate(routeSelectedDate);
+    }, [routeSelectedDate]);
+
+    const loadMenuData = useCallback(async (config: { isActive: () => boolean }) => {
         if (!session?.accessToken) {
+            if (!config.isActive()) {
+                return;
+            }
+
             setMealTimeGroups(createEmptyMenuMealTimeGroups());
+            setNutritionTotal(EMPTY_MENU_NUTRITION);
             setScreenError('Missing access token. Please sign in again.');
             setIsLoadingMenu(false);
+            return;
+        }
+
+        if (!config.isActive()) {
             return;
         }
 
@@ -77,19 +130,83 @@ export default function MenuScreen() {
                 date: selectedApiDate,
             });
 
+            if (!config.isActive()) {
+                return;
+            }
+
             setMealTimeGroups(nextMenuData.mealTimeGroups);
+            setNutritionTotal(nextMenuData.nutritionTotal);
         } catch (error) {
+            if (!config.isActive()) {
+                return;
+            }
+
             setMealTimeGroups(createEmptyMenuMealTimeGroups());
+            setNutritionTotal(EMPTY_MENU_NUTRITION);
             setScreenError(resolveMenuScreenErrorMessage(error, 'Unable to load your menu right now.'));
         } finally {
-            setIsLoadingMenu(false);
+            if (config.isActive()) {
+                setIsLoadingMenu(false);
+            }
         }
     }, [selectedApiDate, session?.accessToken]);
 
+    const loadNutritionTargets = useCallback(async (config: { isActive: () => boolean }) => {
+        if (!session?.accessToken) {
+            if (!config.isActive()) {
+                return;
+            }
+
+            setTargetCalories(null);
+            return;
+        }
+
+        try {
+            const profileOverview = await fetchProfileOverview({
+                accessToken: session.accessToken,
+            });
+
+            if (!config.isActive()) {
+                return;
+            }
+
+            setTargetCalories(profileOverview.preferences?.targetCalories ?? null);
+        } catch {
+            if (config.isActive()) {
+                setTargetCalories(null);
+            }
+        }
+    }, [session?.accessToken]);
+
     useFocusEffect(
         useCallback(() => {
-            void loadMenuData();
-        }, [loadMenuData, reloadNonce]),
+            let isActive = true;
+
+            isAddMealNavigationPendingRef.current = false;
+            setIsAddMealNavigationPending(false);
+
+            void loadMenuData({
+                isActive: () => isActive,
+            });
+
+            return () => {
+                isActive = false;
+            };
+        }, [loadMenuData]),
+    );
+
+    useFocusEffect(
+        useCallback(() => {
+            let isActive = true;
+
+            void loadNutritionTargets({
+                isActive: () => isActive,
+            });
+
+            return () => {
+                isActive = false;
+            };
+        }, [loadNutritionTargets]),
     );
 
     const handleWeekChange = (value: DatePickerWeekValue) => {
@@ -105,6 +222,13 @@ export default function MenuScreen() {
     };
 
     const handleAddMeal = (mealTime: 'BREAKFAST' | 'LUNCH' | 'DINNER') => {
+        if (isAddMealNavigationPendingRef.current) {
+            return;
+        }
+
+        isAddMealNavigationPendingRef.current = true;
+        setIsAddMealNavigationPending(true);
+
         router.push({
             pathname: '/meal-search',
             params: {
@@ -122,32 +246,32 @@ export default function MenuScreen() {
 
     const handleDeleteItem = useCallback(async (item: MenuMealItem) => {
         if (!session?.accessToken) {
-            setScreenError('Missing access token. Please sign in again.');
-            return;
+            throw new Error('Missing access token. Please sign in again.');
         }
-
-        setScreenError(null);
-        setSelectedItem(null);
 
         try {
             await deleteMenuItem({
                 accessToken: session.accessToken,
                 menuItemId: item.menuItemId,
             });
-            setReloadNonce((currentValue) => currentValue + 1);
+
+            setMealTimeGroups((currentGroups) =>
+                removeMenuMealItemFromGroups(currentGroups, item.menuItemId),
+            );
+            setNutritionTotal((currentTotal) =>
+                removeMenuItemNutritionFromTotal(currentTotal, item),
+            );
         } catch (error) {
-            setScreenError(resolveMenuScreenErrorMessage(error, 'Unable to remove this meal from your menu.'));
+            throw new Error(
+                resolveMenuScreenErrorMessage(error, 'Unable to remove this meal from your menu.'),
+            );
         }
     }, [session?.accessToken]);
 
     const handleToggleLogged = useCallback(async (item: MenuMealItem) => {
         if (!session?.accessToken) {
-            setScreenError('Missing access token. Please sign in again.');
-            return;
+            throw new Error('Missing access token. Please sign in again.');
         }
-
-        setScreenError(null);
-        setSelectedItem(null);
 
         try {
             await updateMenuItem({
@@ -157,19 +281,24 @@ export default function MenuScreen() {
                     eated: !item.eated,
                 },
             });
-            setReloadNonce((currentValue) => currentValue + 1);
+
+            setMealTimeGroups((currentGroups) =>
+                replaceMenuMealItemInGroups(currentGroups, {
+                    ...item,
+                    eated: !item.eated,
+                }),
+            );
         } catch (error) {
-            setScreenError(resolveMenuScreenErrorMessage(error, 'Unable to update this meal status right now.'));
+            throw new Error(
+                resolveMenuScreenErrorMessage(error, 'Unable to update this meal status right now.'),
+            );
         }
     }, [session?.accessToken]);
 
     const handleSaveItem = useCallback(async (item: MenuMealItem, portionSize: number) => {
         if (!session?.accessToken) {
-            setScreenError('Missing access token. Please sign in again.');
-            return;
+            throw new Error('Missing access token. Please sign in again.');
         }
-
-        setScreenError(null);
 
         try {
             await updateMenuItem({
@@ -179,9 +308,20 @@ export default function MenuScreen() {
                     portionSize,
                 },
             });
-            setReloadNonce((currentValue) => currentValue + 1);
+
+            setMealTimeGroups((currentGroups) =>
+                replaceMenuMealItemInGroups(currentGroups, {
+                    ...item,
+                    portionSize,
+                }),
+            );
+            setNutritionTotal((currentTotal) =>
+                applyMenuItemPortionSizeToNutritionTotal(currentTotal, item, portionSize),
+            );
         } catch (error) {
-            setScreenError(resolveMenuScreenErrorMessage(error, 'Unable to update this meal portion right now.'));
+            throw new Error(
+                resolveMenuScreenErrorMessage(error, 'Unable to update this meal portion right now.'),
+            );
         }
     }, [session?.accessToken]);
 
@@ -212,6 +352,25 @@ export default function MenuScreen() {
                     />
                 </YStack>
 
+                {!isLoadingMenu && !screenError ? (
+                    showProgressCard ? (
+                        <MacroStatProgressCard
+                            calories={loggedNutritionTotal.calories}
+                            calorieGoal={targetCalories}
+                            protein={loggedNutritionTotal.protein}
+                            fiber={loggedNutritionTotal.fiber}
+                            fat={loggedNutritionTotal.fat}
+                        />
+                    ) : (
+                        <MacroStatDetailCard
+                            calories={nutritionTotal.calories}
+                            protein={nutritionTotal.protein}
+                            fiber={nutritionTotal.fiber}
+                            fat={nutritionTotal.fat}
+                        />
+                    )
+                ) : null}
+
                 {isLoadingMenu ? (
                     <XStack w="100%" ai="center" gap="$space.sm">
                         <ActivityIndicator />
@@ -232,7 +391,7 @@ export default function MenuScreen() {
                         <MenuMealTimeCard
                             key={mealTimeGroup.mealTime}
                             mealTimeGroup={mealTimeGroup}
-                            allowAddMeal={allowAddMeal}
+                            allowAddMeal={allowAddMeal && !isAddMealNavigationPending}
                             onAddMeal={handleAddMeal}
                             onItemPress={setSelectedItem}
                         />
@@ -251,9 +410,9 @@ export default function MenuScreen() {
                     item={selectedItem}
                     open={selectedItem !== null}
                     onOpenChange={handleItemDetailOpenChange}
-                    onDelete={(item) => void handleDeleteItem(item)}
-                    onLog={(item) => void handleToggleLogged(item)}
-                    onSave={(item, portionSize) => void handleSaveItem(item, portionSize)}
+                    onDelete={handleDeleteItem}
+                    onLog={handleToggleLogged}
+                    onSave={handleSaveItem}
                 />
 
             </YStack>

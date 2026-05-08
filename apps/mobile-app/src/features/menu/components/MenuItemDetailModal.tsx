@@ -5,20 +5,32 @@ import { useRouter } from 'expo-router';
 import { SizableText, XStack, YStack } from 'tamagui';
 
 import { Button, InputText, Tag } from '@components';
+import { useSession } from '@/providers/AuthProvider';
+import { fetchMealDetailViewModel } from '@features/meal/api/meal.api';
 import { MacroStatDetailCard } from './MacroStatDetailCard';
 import {
+  isPastCalendarDate,
   scaleMenuNutrition,
   type MenuMealItem,
 } from '@features/menu/utils/menu-meal-times';
-import { toMenuFlowMealTimeParam } from '@features/menu/utils/menu-flow';
+import {
+  parseMenuFlowDateParam,
+  toMenuFlowMealTimeParam,
+} from '@features/menu/utils/menu-flow';
+import { parsePositivePortionSize } from '@features/menu/utils/menu-state';
+import { createTodayCalendarDate } from '@features/menu/utils/week-date';
+import {
+  MENU_ACTION_SUCCESS_MESSAGES,
+  showMenuSuccessAlert,
+} from '@features/menu/utils/menu-success-alert';
 
 export interface MenuItemDetailModalProps {
   item: MenuMealItem | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onDelete?: (item: MenuMealItem) => void;
-  onLog?: (item: MenuMealItem) => void;
-  onSave?: (item: MenuMealItem, portionSize: number) => void;
+  onDelete?: (item: MenuMealItem) => Promise<void> | void;
+  onLog?: (item: MenuMealItem) => Promise<void> | void;
+  onSave?: (item: MenuMealItem, portionSize: number) => Promise<void> | void;
 }
 
 function ActionIconButton({
@@ -48,17 +60,6 @@ function ActionIconButton({
   );
 }
 
-function parsePortionSize(value: string, fallbackValue: number) {
-  const normalizedValue = value.replace(',', '.').trim();
-  const parsedValue = Number.parseFloat(normalizedValue);
-
-  if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
-    return fallbackValue;
-  }
-
-  return parsedValue;
-}
-
 export function MenuItemDetailModal({
   item,
   open,
@@ -68,7 +69,15 @@ export function MenuItemDetailModal({
   onSave,
 }: MenuItemDetailModalProps) {
   const router = useRouter();
+  const { session } = useSession();
+  const today = useMemo(() => createTodayCalendarDate(), []);
   const [draftPortionSize, setDraftPortionSize] = useState('1');
+  const [portionSizeError, setPortionSizeError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fetchedCookTime, setFetchedCookTime] = useState<string | null>(null);
+  const [fetchedDifficulty, setFetchedDifficulty] = useState<string | null>(null);
+  const [mealDetailError, setMealDetailError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open || !item) {
@@ -76,14 +85,58 @@ export function MenuItemDetailModal({
     }
 
     setDraftPortionSize(`${item.portionSize}`);
+    setPortionSizeError(null);
+    setSubmitError(null);
+    setFetchedCookTime(item.cookTime ?? null);
+    setFetchedDifficulty(item.difficulty ?? null);
+    setMealDetailError(null);
   }, [item, open]);
 
-  const resolvedPortionSize = useMemo(() => {
+  useEffect(() => {
+    if (!open || !item) {
+      return;
+    }
+
+    if ((item.cookTime && item.difficulty) || !session?.accessToken) {
+      return;
+    }
+
+    let isActive = true;
+    setMealDetailError(null);
+
+    void (async () => {
+      try {
+        const mealDetail = await fetchMealDetailViewModel({
+          accessToken: session.accessToken,
+          mealId: item.mealId,
+        });
+
+        if (!isActive) {
+          return;
+        }
+
+        setFetchedCookTime(mealDetail.cookTime);
+        setFetchedDifficulty(mealDetail.difficulty);
+      } catch (error) {
+        if (!isActive) {
+          return;
+        }
+
+        setMealDetailError(resolveActionErrorMessage(error, 'Unable to load meal details right now.'));
+      }
+    })();
+
+    return () => {
+      isActive = false;
+    };
+  }, [item, open, session?.accessToken]);
+
+  const previewPortionSize = useMemo(() => {
     if (!item) {
       return 1;
     }
 
-    return parsePortionSize(draftPortionSize, item.portionSize);
+    return parsePositivePortionSize(draftPortionSize) ?? item.portionSize;
   }, [draftPortionSize, item]);
 
   const nutrition = useMemo(() => {
@@ -91,30 +144,109 @@ export function MenuItemDetailModal({
       return null;
     }
 
-    return scaleMenuNutrition(item.nutritionPerServing, resolvedPortionSize);
-  }, [item, resolvedPortionSize]);
+    return scaleMenuNutrition(item.nutritionPerServing, previewPortionSize);
+  }, [item, previewPortionSize]);
+
+  const resolvedCookTime = item?.cookTime ?? fetchedCookTime;
+  const resolvedDifficulty = item?.difficulty ?? fetchedDifficulty;
+  const isPastMenuDate = useMemo(() => {
+    if (!item) {
+      return false;
+    }
+
+    const itemDate = parseMenuFlowDateParam(item.date);
+
+    return itemDate ? isPastCalendarDate(itemDate, today) : false;
+  }, [item, today]);
 
   if (!item || !nutrition) {
     return null;
   }
 
   const handleClose = () => {
+    if (isSubmitting) {
+      return;
+    }
+
     onOpenChange(false);
+  };
+
+  const handleDraftPortionSizeChange = (value: string) => {
+    setDraftPortionSize(value);
+    setPortionSizeError(null);
+    setSubmitError(null);
+  };
+
+  const runMutation = async (
+    action: () => Promise<void> | void,
+    successMessage?: string,
+  ) => {
+    if (isSubmitting) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      await action();
+      onOpenChange(false);
+      if (successMessage) {
+        showMenuSuccessAlert(successMessage);
+      }
+    } catch (error) {
+      setSubmitError(resolveActionErrorMessage(error, 'Unable to update this menu item right now.'));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSave = () => {
-    onSave?.(item, resolvedPortionSize);
-    onOpenChange(false);
+    if (isPastMenuDate) {
+      return;
+    }
+
+    const resolvedPortionSize = parsePositivePortionSize(draftPortionSize);
+
+    if (resolvedPortionSize == null) {
+      setPortionSizeError('Portion size must be greater than 0.');
+      return;
+    }
+
+    void runMutation(
+      async () => {
+        await onSave?.(item, resolvedPortionSize);
+      },
+      MENU_ACTION_SUCCESS_MESSAGES.updateItem,
+    );
   };
 
   const handleDelete = () => {
-    onDelete?.(item);
-    onOpenChange(false);
+    if (isPastMenuDate) {
+      return;
+    }
+
+    void runMutation(
+      async () => {
+        await onDelete?.(item);
+      },
+      MENU_ACTION_SUCCESS_MESSAGES.deleteItem,
+    );
   };
 
   const handleLog = () => {
-    onLog?.(item);
-    onOpenChange(false);
+    if (isPastMenuDate) {
+      return;
+    }
+
+    void runMutation(
+      async () => {
+        await onLog?.(item);
+      },
+      item.eated
+        ? MENU_ACTION_SUCCESS_MESSAGES.updateItem
+        : MENU_ACTION_SUCCESS_MESSAGES.logItem,
+    );
   };
 
   const handleNavigateToMealDetail = () => {
@@ -152,26 +284,48 @@ export function MenuItemDetailModal({
               />
 
               <XStack gap="$space.sm" flexWrap="wrap">
-                <Tag>
-                  <Tag.Icon icon={Clock3} size={16} />
-                  <Tag.Text>{item.cookTime}</Tag.Text>
-                </Tag>
-                <Tag>
-                  <Tag.Icon icon={Utensils} size={16} />
-                  <Tag.Text>{item.difficulty}</Tag.Text>
-                </Tag>
+                {resolvedCookTime ? (
+                  <Tag>
+                    <Tag.Icon icon={Clock3} size={16} />
+                    <Tag.Text>{resolvedCookTime}</Tag.Text>
+                  </Tag>
+                ) : null}
+                {resolvedDifficulty ? (
+                  <Tag>
+                    <Tag.Icon icon={Utensils} size={16} />
+                    <Tag.Text>{resolvedDifficulty}</Tag.Text>
+                  </Tag>
+                ) : null}
                 <Tag status={item.eated ? 'brand' : 'danger'}>
                   <Tag.Icon icon={Check} size={16} />
                   <Tag.Text>{item.eated ? 'Logged' : 'Not logged'}</Tag.Text>
                 </Tag>
               </XStack>
 
+              {mealDetailError ? (
+                <SizableText ff="$body" fos="$sm" col="$danger">
+                  {mealDetailError}
+                </SizableText>
+              ) : null}
+
               <YStack w="100%" gap="$space.xs">
                 <SizableText ff="$body" fos="$md" fow="$semiBold" col="$textSubtle">
                   Portion size
                 </SizableText>
-                <InputText value={draftPortionSize} onChangeText={setDraftPortionSize} keyboardType="decimal-pad" />
+                <InputText
+                  value={draftPortionSize}
+                  onChangeText={handleDraftPortionSizeChange}
+                  keyboardType="decimal-pad"
+                  disabled={isPastMenuDate || isSubmitting}
+                  errorMessage={portionSizeError ?? undefined}
+                />
               </YStack>
+
+              {submitError ? (
+                <SizableText ff="$body" fos="$sm" col="$danger">
+                  {submitError}
+                </SizableText>
+              ) : null}
 
               <XStack w="100%" ai="center" jc="space-between" gap="$space.md">
                 <SizableText ff="$body" fos="$md" fow="$semiBold" col="$text">
@@ -179,18 +333,22 @@ export function MenuItemDetailModal({
                 </SizableText>
 
                 <XStack gap="$space.sm">
-                  <ActionIconButton
-                    icon={Trash2}
-                    backgroundColor="$softDanger"
-                    iconColor="$danger"
-                    onPress={onDelete ? handleDelete : undefined}
-                  />
-                  <ActionIconButton
-                    icon={Check}
-                    backgroundColor="$softPrimary"
-                    iconColor="$primary"
-                    onPress={onLog ? handleLog : undefined}
-                  />
+                  {!isPastMenuDate ? (
+                    <ActionIconButton
+                      icon={Trash2}
+                      backgroundColor="$softDanger"
+                      iconColor="$danger"
+                      onPress={onDelete ? handleDelete : undefined}
+                    />
+                  ) : null}
+                  {!isPastMenuDate ? (
+                    <ActionIconButton
+                      icon={Check}
+                      backgroundColor="$softPrimary"
+                      iconColor="$primary"
+                      onPress={onLog ? handleLog : undefined}
+                    />
+                  ) : null}
                   <ActionIconButton
                     icon={ArrowRight}
                     backgroundColor="$softPrimary"
@@ -200,9 +358,19 @@ export function MenuItemDetailModal({
                 </XStack>
               </XStack>
 
-              <Button w="100%" h={53} br="$pill" size="large" color="primary" onPress={handleSave}>
-                <Button.Text>Save</Button.Text>
-              </Button>
+              {!isPastMenuDate ? (
+                <Button
+                  w="100%"
+                  h={53}
+                  br="$pill"
+                  size="large"
+                  color="primary"
+                  disabled={isSubmitting}
+                  onPress={handleSave}
+                >
+                  <Button.Text>{isSubmitting ? 'Saving...' : 'Save'}</Button.Text>
+                </Button>
+                ) : null}
             </YStack>
           </Pressable>
         </YStack>
@@ -221,3 +389,11 @@ const styles = StyleSheet.create({
     maxWidth: 360,
   },
 });
+
+function resolveActionErrorMessage(error: unknown, fallbackMessage: string) {
+  if (error instanceof Error && error.message.trim()) {
+    return error.message.trim();
+  }
+
+  return fallbackMessage;
+}

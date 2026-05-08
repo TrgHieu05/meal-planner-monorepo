@@ -19,8 +19,8 @@ export interface MenuMealItem {
   mealTime: MealTime;
   portionSize: number;
   eated: boolean;
-  cookTime: string;
-  difficulty: MenuDifficulty;
+  cookTime?: string;
+  difficulty?: MenuDifficulty;
   nutritionPerServing: MenuNutrition;
 }
 
@@ -103,6 +103,12 @@ export function sumMenuMealTimeNutrition(items: readonly MenuMealItem[]) {
       fiber: 0,
       fat: 0,
     },
+  );
+}
+
+export function sumLoggedMenuNutrition(groups: readonly MenuMealTimeGroup[]) {
+  return sumMenuMealTimeNutrition(
+    groups.flatMap((group) => group.items.filter((item) => item.eated)),
   );
 }
 

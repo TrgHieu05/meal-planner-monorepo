@@ -138,6 +138,19 @@ export default function MealDetailScreen() {
 		setReloadNonce((currentValue) => currentValue + 1);
 	}
 
+	function handleAddMealSuccess() {
+		if (!hasLockedAddMealContext || !dateParam) {
+			return;
+		}
+
+		router.replace({
+			pathname: '/menu',
+			params: {
+				date: dateParam,
+			},
+		});
+	}
+
 	function renderBackAction() {
 		return (
 			<XStack ai="center" gap="$space.sm" onPress={() => router.back()}>
@@ -312,6 +325,7 @@ export default function MealDetailScreen() {
 					hideDateAndMealTime={hasLockedAddMealContext}
 					lockedDate={dateParam}
 					lockedMealTime={mealTimeParam}
+					onSuccess={handleAddMealSuccess}
 				/>
 		</SafeAreaView>
 	);

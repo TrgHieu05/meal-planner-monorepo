@@ -5,8 +5,6 @@ import {
   fetchMenuScreenData,
 } from './menu.api';
 
-import { fetchMealDetail } from '@features/meal/api/meal.api';
-
 jest.mock('@/config/runtime-config', () => ({
   normalizeOptionalString: (value?: string | null) => {
     if (typeof value !== 'string') {
@@ -29,24 +27,6 @@ jest.mock('axios', () => {
   };
 });
 
-jest.mock('@features/meal/api/meal.api', () => ({
-  fetchMealDetail: jest.fn(),
-  formatCookTimeLabel: (minutes: number) => {
-    if (minutes < 60) {
-      return `${minutes} mins`;
-    }
-
-    const hours = Math.floor(minutes / 60);
-    const remainingMinutes = minutes % 60;
-
-    if (remainingMinutes === 0) {
-      return hours === 1 ? '1 hour' : `${hours} hours`;
-    }
-
-    return `${hours === 1 ? '1 hour' : `${hours} hours`} ${remainingMinutes} mins`;
-  },
-}));
-
 type MockClient = {
   get: jest.Mock;
   post: jest.Mock;
@@ -66,7 +46,6 @@ type MockClient = {
 
 describe('menu.api', () => {
   const mockedAxios = axios as jest.Mocked<typeof axios>;
-  const mockedFetchMealDetail = fetchMealDetail as jest.MockedFunction<typeof fetchMealDetail>;
 
   function createClient(): MockClient {
     return {
@@ -91,6 +70,12 @@ describe('menu.api', () => {
                     mealName: 'Turkey Quinoa Salad',
                     portionSize: 1.25,
                     eated: false,
+                    nutritionPerServing: {
+                      calories: 340,
+                      protein: 27,
+                      fiber: 7.5,
+                      fat: 11,
+                    },
                   },
                 ],
                 DINNER: [],
@@ -134,33 +119,13 @@ describe('menu.api', () => {
 
   beforeEach(() => {
     mockedAxios.create.mockImplementation(() => createClient() as never);
-    mockedFetchMealDetail.mockResolvedValue({
-      id: 7,
-      name: 'Turkey Quinoa Salad',
-      meal_image_key: null,
-      description: 'Bright lemon dressing over quinoa and turkey.',
-      cuisine_type: {
-        id: 3,
-        name: 'Mediterranean',
-        description: null,
-      },
-      difficulty: 'hard',
-      cook_time_min: 60,
-      total_calories: 340,
-      total_protein: 27,
-      total_fat: 11,
-      total_fiber: 7.5,
-      ingredients: [
-        { id: 1, name: 'Turkey', quantity: 120 },
-      ],
-    });
   });
 
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  it('maps menu day data into numeric mealId menu groups enriched by meal details', async () => {
+  it('maps menu day data into numeric mealId menu groups without loading meal details per item', async () => {
     const client = createClient();
     mockedAxios.create.mockImplementationOnce(() => client as never);
 
@@ -170,11 +135,6 @@ describe('menu.api', () => {
     });
 
     expect(client.get).toHaveBeenCalledWith('/v1/menus/day/2026-05-06');
-    expect(mockedFetchMealDetail).toHaveBeenCalledWith({
-      accessToken: 'token-123',
-      apiBaseUrl: undefined,
-      mealId: 7,
-    });
     expect(result.mealTimeGroups).toEqual([
       {
         mealTime: 'BREAKFAST',
@@ -195,8 +155,6 @@ describe('menu.api', () => {
             mealTime: 'LUNCH',
             portionSize: 1.25,
             eated: false,
-            cookTime: '1 hour',
-            difficulty: 'Hard',
             nutritionPerServing: {
               calories: 340,
               protein: 27,

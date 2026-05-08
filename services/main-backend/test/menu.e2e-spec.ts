@@ -83,7 +83,7 @@ describe('Menu API (e2e)', () => {
     expect(menuService.getMenuByDay).toHaveBeenCalledWith(userId, '2026-03-24');
   });
 
-  it('GET /api/v1/menus/day/:date should return mealName and menuItemId fields', async () => {
+  it('GET /api/v1/menus/day/:date should return list item fields required by the menu screen', async () => {
     menuService.getMenuByDay.mockResolvedValue({
       date: '2026-03-24',
       hasMenu: true,
@@ -101,6 +101,12 @@ describe('Menu API (e2e)', () => {
             mealName: 'Overnight Oats',
             portionSize: 1,
             eated: false,
+            nutritionPerServing: {
+              calories: 320,
+              protein: 15,
+              fat: 8,
+              fiber: 6,
+            },
           },
         ],
         LUNCH: [],
@@ -119,6 +125,12 @@ describe('Menu API (e2e)', () => {
       mealName: 'Overnight Oats',
       portionSize: 1,
       eated: false,
+      nutritionPerServing: {
+        calories: 320,
+        protein: 15,
+        fat: 8,
+        fiber: 6,
+      },
     });
   });
 

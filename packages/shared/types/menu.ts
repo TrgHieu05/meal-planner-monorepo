@@ -25,6 +25,7 @@ export const MenuDayMealItemSchema = z.object({
   mealName: z.string().min(1),
   portionSize: z.number().positive(),
   eated: z.boolean(),
+  nutritionPerServing: MenuNutritionTotalSchema,
 });
 
 export const MenuDayMealItemListSchema = z.array(MenuDayMealItemSchema);

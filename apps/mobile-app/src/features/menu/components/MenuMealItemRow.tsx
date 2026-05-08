@@ -28,7 +28,7 @@ export function MenuMealItemRow({ item, onPress }: MenuMealItemRowProps) {
 
       <YStack f={1} gap={4}>
         <SizableText ff="$body" fos="$md" fow="$semiBold" col="$text">
-          {item.mealName}
+          {item.mealName} x {item.portionSize}
         </SizableText>
         <XStack gap="$space.sm" flexWrap="wrap">
           <SizableText ff="$body" fos="$sm" fow="$semiBold" color="$yellow6">

@@ -103,6 +103,10 @@ describe('MenuService', () => {
             portionSize: 1,
             meal: {
               name: 'Overnight Oats',
+              totalCalories: 320,
+              totalProtein: 15,
+              totalFat: 8,
+              totalFiber: 6,
             },
           },
         ],
@@ -127,6 +131,12 @@ describe('MenuService', () => {
               mealName: 'Overnight Oats',
               portionSize: 1,
               eated: false,
+              nutritionPerServing: {
+                calories: 320,
+                protein: 15,
+                fat: 8,
+                fiber: 6,
+              },
             },
           ],
           LUNCH: [],
@@ -152,6 +162,13 @@ describe('MenuService', () => {
             mealTime: 'BREAKFAST',
             eated: 'false',
             portionSize: 1,
+            meal: {
+              name: 'Invalid Meal',
+              totalCalories: 100,
+              totalProtein: 10,
+              totalFat: 5,
+              totalFiber: 2,
+            },
           },
         ],
       });

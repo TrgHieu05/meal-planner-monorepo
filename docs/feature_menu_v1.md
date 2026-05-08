@@ -6,7 +6,7 @@
 - Mục tiêu: Cho phép người dùng tạo và quản lý thực đơn theo ngày thông qua `menu_items` theo từng bữa
 - Phạm vi nền tảng: Mobile App (Expo React Native) + Backend API (NestJS)
 - Trạng thái: Official_v1
-- Ngày cập nhật: 2026-03-24
+- Ngày cập nhật: 2026-05-06
 
 ## 2) Bối cảnh hiện tại
 
@@ -14,7 +14,7 @@
 - `menu_items` là bảng trung gian lưu món (`mealId`) và bữa ăn (`mealTime`) của một ngày cụ thể thông qua `menuId`
 - Trên UI, mỗi ngày luôn hiển thị trạng thái thực đơn; có ngày không có món nào
 - Theo nghiệp vụ cần chốt cho v1: một ngày chỉ được xem là “có menu thực” khi tồn tại ít nhất một `menu_item`
-- Module API `menu` chưa được triển khai trong backend hiện tại
+- Module API `menu` đã được triển khai trong backend hiện tại
 
 ### Quyết định đã chốt
 
@@ -37,13 +37,14 @@
 
 - Tạo/cập nhật thực đơn theo ngày dựa trên thao tác với `menu_items`
 - Quản lý món theo từng bữa: `BREAKFAST`, `LUNCH`, `DINNER`
-- Lấy dữ liệu thực đơn theo ngày và theo khoảng ngày
+- Lấy dữ liệu thực đơn theo ngày
 - Cho phép xóa item; nếu xóa item cuối cùng thì xử lý trạng thái menu rỗng theo quy tắc v1
 - Chuẩn hóa response để mobile render trực tiếp theo cấu trúc ngày -> bữa -> danh sách món
 
 ### Ngoài phạm vi
 
 - AI gợi ý thực đơn tự động
+- Đọc menu nhiều ngày cùng lúc
 - Lập lịch lặp lại theo tuần/tháng
 - Chia sẻ thực đơn giữa người dùng
 - Tối ưu hóa meal prep nhiều ngày
@@ -60,7 +61,6 @@
 - Là người dùng, tôi muốn xem toàn bộ món theo từng bữa trong ngày đã chọn
 - Là người dùng, tôi muốn chỉnh `portionSize` hoặc đánh dấu món đã ăn
 - Là người dùng, tôi muốn xóa món khỏi thực đơn và ngày đó trở về trạng thái trống nếu không còn món nào
-- Là người dùng, tôi muốn xem nhanh một dải ngày để biết ngày nào đã có món
 
 ## 7) Yêu cầu chức năng
 
@@ -80,19 +80,13 @@
 
 - Cho phép cập nhật `portionSize` và `eated`
 - Không cho phép đổi `menuId` trực tiếp
-- Có thể hỗ trợ đổi `mealTime` trong cùng ngày ở v1
+- Không cho phép đổi `mealTime` trong v1; chỉ cập nhật `portionSize` và `eated`
 
 ### FR-04: Xóa menu item
 
 - Xóa item theo `id`
 - Sau khi xóa, nếu menu không còn item nào thì xem như ngày trống
 - Cách xử lý bản ghi `menus` rỗng được chốt theo quy tắc dữ liệu mục 10
-
-### FR-05: Xem thực đơn theo khoảng ngày
-
-- API nhận `fromDate`, `toDate`
-- Trả danh sách ngày trong khoảng và trạng thái từng ngày
-- Bao gồm cả ngày không có món để UI render lịch đồng nhất
 
 ## 8) Yêu cầu phi chức năng
 
@@ -103,7 +97,6 @@
 - Đảm bảo idempotent ở thao tác đọc; thao tác ghi cần tính nhất quán tổng dinh dưỡng
 - Thời gian phản hồi mục tiêu:
   - GET theo ngày: p95 < 300ms
-  - GET theo khoảng ngày (<= 31 ngày): p95 < 500ms
 
 ### Ghi chú triển khai v1.1
 
@@ -114,9 +107,8 @@
 ### 9.1 Danh sách endpoint
 
 - Menu Day
-  - `GET /api/v1/menus/day?date=YYYY-MM-DD`
-  - `GET /api/v1/menus/range?fromDate=YYYY-MM-DD&toDate=YYYY-MM-DD`
-  - `DELETE /api/v1/menus/day?date=YYYY-MM-DD`
+  - `GET /api/v1/menus/day/:date`
+  - `DELETE /api/v1/menus/day/:date`
 - Menu Item
   - `POST /api/v1/menu-items`
   - `PATCH /api/v1/menu-items/:id`
@@ -136,7 +128,7 @@
 
 ### 9.3 Request/response mẫu
 
-- `GET /api/v1/menus/day?date=2026-03-24`
+- `GET /api/v1/menus/day/2026-03-24`
   - Response `200`:
 
 ```json
@@ -156,7 +148,13 @@
         "mealId": 12,
         "mealName": "Overnight Oats",
         "portionSize": 1,
-        "eated": false
+        "eated": false,
+        "nutritionPerServing": {
+          "calories": 320,
+          "protein": 18,
+          "fat": 9,
+          "fiber": 7
+        }
       }
     ],
     "LUNCH": [],
@@ -211,12 +209,12 @@
 - `401`: token không hợp lệ/thiếu token
 - `404`: không tìm thấy `meal`, `menu_item` hoặc user
 - `409`: conflict nghiệp vụ khi thêm món trùng trong cùng ngày + cùng bữa
-- `422`: payload/query không hợp lệ
+- `422`: payload/path param không hợp lệ
 - `500`: lỗi hệ thống
 
 ### Quyết định đã chốt
 
-- Có endpoint `DELETE /api/v1/menus/day?date=...` để xóa toàn bộ item trong ngày
+- Có endpoint `DELETE /api/v1/menus/day/:date` để xóa toàn bộ item trong ngày
 
 ## 10) Quy tắc dữ liệu & validation
 
@@ -253,10 +251,10 @@
 
 ## 11) Trải nghiệm người dùng (UX flow)
 
-- Mở màn hình lập thực đơn tuần:
-  - Gọi `GET /menus/range` để render tất cả ngày trong dải
+- Mở màn hình lập thực đơn:
+  - UI khởi tạo danh sách ngày cục bộ theo tuần đang xem
 - Chọn ngày:
-  - Gọi `GET /menus/day` hoặc dùng dữ liệu range đã có
+  - Gọi `GET /menus/day/:date` để lấy dữ liệu cho ngày được chọn
 - Thêm món vào bữa:
   - Gọi `POST /menu-items`, cập nhật UI theo response
 - Chỉnh phần ăn/đánh dấu đã ăn:
@@ -285,7 +283,7 @@ Chuyển trạng thái:
 ## 14) Quy tắc Edit và Save thủ công theo nhóm
 
 - Mỗi thao tác với item gọi API độc lập, không cần commit cả ngày
-- UI cần optimistic update có rollback khi request thất bại
+- UI chờ API thành công rồi mới cập nhật state hoặc refetch slice cần thiết
 - Save theo hành động người dùng:
   - Add item -> gọi POST ngay
   - Edit item -> gọi PATCH ngay
@@ -293,21 +291,14 @@ Chuyển trạng thái:
 
 ## 15) Đặc tả status code và error chi tiết
 
-### 15.1 `GET /api/v1/menus/day`
+### 15.1 `GET /api/v1/menus/day/:date`
 
 - `200`: trả cấu trúc ngày, kể cả rỗng
 - `401`: token không hợp lệ hoặc đã hết hạn
 - `422`: `date` không đúng định dạng hoặc không hợp lệ theo lịch
 - `500`: lỗi nội bộ khi mapping dữ liệu ngày
 
-### 15.2 `GET /api/v1/menus/range`
-
-- `200`: trả danh sách ngày trong khoảng
-- `401`: token không hợp lệ hoặc đã hết hạn
-- `422`: `fromDate`, `toDate` không hợp lệ hoặc khoảng ngày vượt giới hạn
-- `500`: lỗi nội bộ khi tổng hợp dữ liệu range
-
-### 15.3 `POST /api/v1/menu-items`
+### 15.2 `POST /api/v1/menu-items`
 
 - `201`: tạo item thành công
 - `401`: token không hợp lệ hoặc đã hết hạn
@@ -316,7 +307,7 @@ Chuyển trạng thái:
 - `422`: payload không hợp lệ
 - `500`: lỗi nội bộ khi tạo item/cập nhật totals
 
-### 15.4 `PATCH /api/v1/menu-items/:id`
+### 15.3 `PATCH /api/v1/menu-items/:id`
 
 - `200`: cập nhật item thành công
 - `401`: token không hợp lệ hoặc đã hết hạn
@@ -325,14 +316,14 @@ Chuyển trạng thái:
 - `422`: payload không hợp lệ
 - `500`: lỗi nội bộ khi cập nhật item/totals
 
-### 15.5 `DELETE /api/v1/menu-items/:id`
+### 15.4 `DELETE /api/v1/menu-items/:id`
 
 - `204`: xóa item thành công
 - `401`: token không hợp lệ hoặc đã hết hạn
 - `404`: `Menu item not found.`
 - `500`: lỗi nội bộ khi xóa item/totals
 
-### 15.6 `DELETE /api/v1/menus/day`
+### 15.6 `DELETE /api/v1/menus/day/:date`
 
 - `204`: xóa toàn bộ item của ngày thành công
 - `401`: token không hợp lệ hoặc đã hết hạn
@@ -365,8 +356,8 @@ Danh sách `code` đề xuất:
 - Có thể thêm món vào một ngày và một bữa cụ thể bằng `POST /menu-items`
 - Có thể cập nhật `portionSize` và `eated` bằng `PATCH /menu-items/:id`
 - Có thể xóa item bằng `DELETE /menu-items/:id`
-- Có thể xóa toàn bộ item theo ngày bằng `DELETE /menus/day?date=...`
-- Có thể đọc dữ liệu theo ngày/range và luôn nhận đủ cấu trúc 3 bữa
+- Có thể xóa toàn bộ item theo ngày bằng `DELETE /menus/day/:date`
+- Có thể đọc dữ liệu theo ngày và luôn nhận đủ cấu trúc 3 bữa
 - Khi ngày không có item, API vẫn trả ngày ở trạng thái rỗng
 
 ## 17) Dependencies kỹ thuật
@@ -379,7 +370,7 @@ Danh sách `code` đề xuất:
 ## 18) Definition of Done
 
 - Backend
-  - Có endpoint đọc ngày/range và CRUD item theo contract v1
+  - Có endpoint đọc ngày và CRUD item theo contract v1
   - Validate request/response bằng zod schema
   - Tính và đồng bộ `totalCalories/totalProtein/totalFat/totalFiber` chính xác
   - Xử lý đúng trạng thái ngày trống theo quy tắc v1
@@ -394,16 +385,15 @@ Danh sách `code` đề xuất:
 - Unit test backend
   - Validate schema create/update menu item
   - Tính lại tổng dinh dưỡng khi add/edit/delete item
-  - Mapping response day/range đúng cấu trúc
+  - Mapping response day đúng cấu trúc
 - Integration test backend
-  - `GET /menus/day` trả `200` với ngày rỗng
+  - `GET /menus/day/:date` trả `200` với ngày rỗng
   - `POST /menu-items` payload hợp lệ trả `201`
   - `PATCH /menu-items/:id` payload sai trả `422`
   - `DELETE /menu-items/:id` id không tồn tại trả `404`
-  - `DELETE /menus/day` với date hợp lệ trả `204`
-  - `GET /menus/range` thiếu token trả `401`
+  - `DELETE /menus/day/:date` với date hợp lệ trả `204`
 - Contract test
-  - Khóa shape response cho endpoint day/range
+  - Khóa shape response cho endpoint day
   - Khóa enum `mealTime` chỉ gồm `BREAKFAST/LUNCH/DINNER`
 
 ## 20) Quyết định đã chốt v1
@@ -413,5 +403,5 @@ Danh sách `code` đề xuất:
 - API đọc vẫn phải trả đủ cấu trúc ngày kể cả khi không có món
 - Giữ enum bữa ăn theo schema hiện tại: `BREAKFAST | LUNCH | DINNER`
 - Áp dụng unique nghiệp vụ `(menuId, mealTime, mealId)` để tránh thêm trùng món cùng bữa
-- Có endpoint xóa toàn bộ item theo ngày: `DELETE /api/v1/menus/day?date=...`
+- Có endpoint xóa toàn bộ item theo ngày: `DELETE /api/v1/menus/day/:date`
 - Khi xóa item cuối cùng, backend xóa luôn bản ghi `menus` của ngày đó

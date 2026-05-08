@@ -1,4 +1,4 @@
-import { View, Progress, SizableText, YStack, XStack } from 'tamagui';
+import { View, Progress, SizableText, YStack, XStack, getTokens } from 'tamagui';
 
 const numberFormatter = new Intl.NumberFormat('en-US');
 
@@ -38,7 +38,7 @@ function MacroProgressItem({ color, current, label, target }: MacroProgressItemP
 
   return (
     <YStack f={1} ai="center" gap="$space.xs">
-      <SizableText ff="$body" fos="$sm" fow="$medium" color="$text">
+      <SizableText ff="$body" fos="$sm" fow="$medium" color="$textSubtle">
         {label}
       </SizableText>
 
@@ -48,7 +48,7 @@ function MacroProgressItem({ color, current, label, target }: MacroProgressItemP
         </Progress>
       ) : null}
 
-      <SizableText ff="$body" fos={12} fow="$medium" color="$textSubtle">
+      <SizableText ff="$body" fos="$md" fow="$semiBold" color={color}>
         {hasTarget
           ? `${formatAmount(current)} / ${formatAmount(target)} g`
           : `${formatAmount(current)} g`}

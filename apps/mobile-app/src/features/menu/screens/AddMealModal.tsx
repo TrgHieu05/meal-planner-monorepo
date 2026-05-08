@@ -11,6 +11,10 @@ import {
   parseMenuFlowDateParam,
   toMealTimeFromMenuFlowParam,
 } from '@features/menu/utils/menu-flow';
+import {
+  MENU_ACTION_SUCCESS_MESSAGES,
+  showMenuSuccessAlert,
+} from '@features/menu/utils/menu-success-alert';
 import { createTodayCalendarDate } from '@features/menu/utils/week-date';
 
 export interface AddMealModalProps {
@@ -109,6 +113,7 @@ export function AddMealModal({
       });
 
       onOpenChange(false);
+      showMenuSuccessAlert(MENU_ACTION_SUCCESS_MESSAGES.addItem);
       onSuccess?.();
     } catch (error) {
       setSubmitError(resolveMenuMutationErrorMessage(error, 'Unable to add this meal to your menu.'));

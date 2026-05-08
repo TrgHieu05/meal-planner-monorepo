@@ -9,11 +9,20 @@ import { useSession } from '@/providers/AuthProvider';
 import { fetchMealDetailViewModel } from '@features/meal/api/meal.api';
 import { MacroStatDetailCard } from './MacroStatDetailCard';
 import {
+  isPastCalendarDate,
   scaleMenuNutrition,
   type MenuMealItem,
 } from '@features/menu/utils/menu-meal-times';
-import { toMenuFlowMealTimeParam } from '@features/menu/utils/menu-flow';
+import {
+  parseMenuFlowDateParam,
+  toMenuFlowMealTimeParam,
+} from '@features/menu/utils/menu-flow';
 import { parsePositivePortionSize } from '@features/menu/utils/menu-state';
+import { createTodayCalendarDate } from '@features/menu/utils/week-date';
+import {
+  MENU_ACTION_SUCCESS_MESSAGES,
+  showMenuSuccessAlert,
+} from '@features/menu/utils/menu-success-alert';
 
 export interface MenuItemDetailModalProps {
   item: MenuMealItem | null;
@@ -61,6 +70,7 @@ export function MenuItemDetailModal({
 }: MenuItemDetailModalProps) {
   const router = useRouter();
   const { session } = useSession();
+  const today = useMemo(() => createTodayCalendarDate(), []);
   const [draftPortionSize, setDraftPortionSize] = useState('1');
   const [portionSizeError, setPortionSizeError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -139,6 +149,15 @@ export function MenuItemDetailModal({
 
   const resolvedCookTime = item?.cookTime ?? fetchedCookTime;
   const resolvedDifficulty = item?.difficulty ?? fetchedDifficulty;
+  const isPastMenuDate = useMemo(() => {
+    if (!item) {
+      return false;
+    }
+
+    const itemDate = parseMenuFlowDateParam(item.date);
+
+    return itemDate ? isPastCalendarDate(itemDate, today) : false;
+  }, [item, today]);
 
   if (!item || !nutrition) {
     return null;
@@ -158,7 +177,10 @@ export function MenuItemDetailModal({
     setSubmitError(null);
   };
 
-  const runMutation = async (action: () => Promise<void> | void) => {
+  const runMutation = async (
+    action: () => Promise<void> | void,
+    successMessage?: string,
+  ) => {
     if (isSubmitting) {
       return;
     }
@@ -169,6 +191,9 @@ export function MenuItemDetailModal({
     try {
       await action();
       onOpenChange(false);
+      if (successMessage) {
+        showMenuSuccessAlert(successMessage);
+      }
     } catch (error) {
       setSubmitError(resolveActionErrorMessage(error, 'Unable to update this menu item right now.'));
     } finally {
@@ -177,6 +202,10 @@ export function MenuItemDetailModal({
   };
 
   const handleSave = () => {
+    if (isPastMenuDate) {
+      return;
+    }
+
     const resolvedPortionSize = parsePositivePortionSize(draftPortionSize);
 
     if (resolvedPortionSize == null) {
@@ -184,21 +213,40 @@ export function MenuItemDetailModal({
       return;
     }
 
-    void runMutation(async () => {
-      await onSave?.(item, resolvedPortionSize);
-    });
+    void runMutation(
+      async () => {
+        await onSave?.(item, resolvedPortionSize);
+      },
+      MENU_ACTION_SUCCESS_MESSAGES.updateItem,
+    );
   };
 
   const handleDelete = () => {
-    void runMutation(async () => {
-      await onDelete?.(item);
-    });
+    if (isPastMenuDate) {
+      return;
+    }
+
+    void runMutation(
+      async () => {
+        await onDelete?.(item);
+      },
+      MENU_ACTION_SUCCESS_MESSAGES.deleteItem,
+    );
   };
 
   const handleLog = () => {
-    void runMutation(async () => {
-      await onLog?.(item);
-    });
+    if (isPastMenuDate) {
+      return;
+    }
+
+    void runMutation(
+      async () => {
+        await onLog?.(item);
+      },
+      item.eated
+        ? MENU_ACTION_SUCCESS_MESSAGES.updateItem
+        : MENU_ACTION_SUCCESS_MESSAGES.logItem,
+    );
   };
 
   const handleNavigateToMealDetail = () => {
@@ -268,6 +316,7 @@ export function MenuItemDetailModal({
                   value={draftPortionSize}
                   onChangeText={handleDraftPortionSizeChange}
                   keyboardType="decimal-pad"
+                  disabled={isPastMenuDate || isSubmitting}
                   errorMessage={portionSizeError ?? undefined}
                 />
               </YStack>
@@ -284,18 +333,22 @@ export function MenuItemDetailModal({
                 </SizableText>
 
                 <XStack gap="$space.sm">
-                  <ActionIconButton
-                    icon={Trash2}
-                    backgroundColor="$softDanger"
-                    iconColor="$danger"
-                    onPress={onDelete ? handleDelete : undefined}
-                  />
-                  <ActionIconButton
-                    icon={Check}
-                    backgroundColor="$softPrimary"
-                    iconColor="$primary"
-                    onPress={onLog ? handleLog : undefined}
-                  />
+                  {!isPastMenuDate ? (
+                    <ActionIconButton
+                      icon={Trash2}
+                      backgroundColor="$softDanger"
+                      iconColor="$danger"
+                      onPress={onDelete ? handleDelete : undefined}
+                    />
+                  ) : null}
+                  {!isPastMenuDate ? (
+                    <ActionIconButton
+                      icon={Check}
+                      backgroundColor="$softPrimary"
+                      iconColor="$primary"
+                      onPress={onLog ? handleLog : undefined}
+                    />
+                  ) : null}
                   <ActionIconButton
                     icon={ArrowRight}
                     backgroundColor="$softPrimary"
@@ -305,9 +358,19 @@ export function MenuItemDetailModal({
                 </XStack>
               </XStack>
 
-              <Button w="100%" h={53} br="$pill" size="large" color="primary" onPress={handleSave}>
-                <Button.Text>{isSubmitting ? 'Saving...' : 'Save'}</Button.Text>
-              </Button>
+              {!isPastMenuDate ? (
+                <Button
+                  w="100%"
+                  h={53}
+                  br="$pill"
+                  size="large"
+                  color="primary"
+                  disabled={isSubmitting}
+                  onPress={handleSave}
+                >
+                  <Button.Text>{isSubmitting ? 'Saving...' : 'Save'}</Button.Text>
+                </Button>
+                ) : null}
             </YStack>
           </Pressable>
         </YStack>

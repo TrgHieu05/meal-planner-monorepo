@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { ScrollView, YStack, XStack, SizableText } from 'tamagui';
@@ -78,6 +78,8 @@ export default function MenuScreen() {
     const [targetCalories, setTargetCalories] = useState<number | null>(null);
     const [screenError, setScreenError] = useState<string | null>(null);
     const [isLoadingMenu, setIsLoadingMenu] = useState(true);
+    const [isAddMealNavigationPending, setIsAddMealNavigationPending] = useState(false);
+    const isAddMealNavigationPendingRef = useRef(false);
     const routeSelectedDate = useMemo(
         () => parseMenuFlowDateParam(routeDateParam),
         [routeDateParam],
@@ -180,6 +182,9 @@ export default function MenuScreen() {
         useCallback(() => {
             let isActive = true;
 
+            isAddMealNavigationPendingRef.current = false;
+            setIsAddMealNavigationPending(false);
+
             void loadMenuData({
                 isActive: () => isActive,
             });
@@ -217,6 +222,13 @@ export default function MenuScreen() {
     };
 
     const handleAddMeal = (mealTime: 'BREAKFAST' | 'LUNCH' | 'DINNER') => {
+        if (isAddMealNavigationPendingRef.current) {
+            return;
+        }
+
+        isAddMealNavigationPendingRef.current = true;
+        setIsAddMealNavigationPending(true);
+
         router.push({
             pathname: '/meal-search',
             params: {
@@ -379,7 +391,7 @@ export default function MenuScreen() {
                         <MenuMealTimeCard
                             key={mealTimeGroup.mealTime}
                             mealTimeGroup={mealTimeGroup}
-                            allowAddMeal={allowAddMeal}
+                            allowAddMeal={allowAddMeal && !isAddMealNavigationPending}
                             onAddMeal={handleAddMeal}
                             onItemPress={setSelectedItem}
                         />

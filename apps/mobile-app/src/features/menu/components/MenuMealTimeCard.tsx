@@ -75,6 +75,7 @@ export function MenuMealTimeCard({
                 jc="center"
                 br="$pill"
                 borderWidth={1}
+                borderStyle="dotted"
                 borderColor="$color.gray6"
                 onPress={() => onAddMeal?.(mealTimeGroup.mealTime)}
                 pressStyle={{ opacity: 0.86, scale: 0.98 }}

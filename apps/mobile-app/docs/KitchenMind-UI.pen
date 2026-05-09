@@ -18352,8 +18352,7 @@
               "type": "frame",
               "id": "BVFMl",
               "name": "Frame 3",
-              "width": "fit_content(354)",
-              "height": 520,
+              "width": "fill_container",
               "layout": "vertical",
               "gap": 16,
               "children": [
@@ -18392,12 +18391,88 @@
                     },
                     {
                       "type": "frame",
+                      "id": "C6UoS",
+                      "name": "Frame 6",
+                      "width": "fill_container",
+                      "layout": "vertical",
+                      "gap": 8,
+                      "padding": 16,
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "JHIsW",
+                          "name": "c1Head",
+                          "width": "fill_container",
+                          "justifyContent": "space_between",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "9QZ2B",
+                              "fill": "#1A1A1A",
+                              "content": "High Protein Week",
+                              "fontFamily": "Bricolage Grotesque",
+                              "fontSize": 18,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "icon_font",
+                              "id": "tjTDs",
+                              "name": "menuBtn",
+                              "width": 24,
+                              "height": 24,
+                              "iconFontName": "more_vert",
+                              "iconFontFamily": "Material Symbols Outlined",
+                              "weight": 300,
+                              "fill": "#1A1A1A"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "DI8DK",
+                          "name": "c1Days",
+                          "gap": 6,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon_font",
+                              "id": "vsMC5",
+                              "width": 24,
+                              "height": 24,
+                              "iconFontName": "event",
+                              "iconFontFamily": "Material Symbols Outlined",
+                              "weight": 300,
+                              "fill": "#00BF8D"
+                            },
+                            {
+                              "type": "text",
+                              "id": "PrSs9",
+                              "fill": "#00BF8D",
+                              "content": "7 Days Plan",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 14,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "kikVr",
+                          "fill": "#6B7280",
+                          "content": "1750 kcal • 85g P • 170g C • 50g F",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
                       "id": "MQp8v",
                       "layoutPosition": "absolute",
-                      "x": 124,
-                      "y": 44,
+                      "x": 123,
+                      "y": 51,
                       "name": "dropdown",
-                      "enabled": false,
                       "width": 210,
                       "fill": "#FFFFFF",
                       "cornerRadius": 16,
@@ -18518,315 +18593,6 @@
                           ]
                         }
                       ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "C6UoS",
-                      "name": "Frame 6",
-                      "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 8,
-                      "padding": 16,
-                      "children": [
-                        {
-                          "type": "frame",
-                          "id": "JHIsW",
-                          "name": "c1Head",
-                          "width": "fill_container",
-                          "justifyContent": "space_between",
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "9QZ2B",
-                              "fill": "#1A1A1A",
-                              "content": "High Protein Week",
-                              "fontFamily": "Bricolage Grotesque",
-                              "fontSize": 18,
-                              "fontWeight": "700"
-                            },
-                            {
-                              "type": "icon_font",
-                              "id": "tjTDs",
-                              "name": "menuBtn",
-                              "width": 24,
-                              "height": 24,
-                              "iconFontName": "more_vert",
-                              "iconFontFamily": "Material Symbols Outlined",
-                              "weight": 300,
-                              "fill": "#1A1A1A"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "DI8DK",
-                          "name": "c1Days",
-                          "gap": 6,
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "icon_font",
-                              "id": "vsMC5",
-                              "width": 24,
-                              "height": 24,
-                              "iconFontName": "event",
-                              "iconFontFamily": "Material Symbols Outlined",
-                              "weight": 300,
-                              "fill": "#00BF8D"
-                            },
-                            {
-                              "type": "text",
-                              "id": "PrSs9",
-                              "fill": "#00BF8D",
-                              "content": "7 Days Plan",
-                              "fontFamily": "DM Sans",
-                              "fontSize": 14,
-                              "fontWeight": "600"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "text",
-                          "id": "kikVr",
-                          "fill": "#6B7280",
-                          "content": "1750 kcal • 85g P • 170g C • 50g F",
-                          "fontFamily": "DM Sans",
-                          "fontSize": 12,
-                          "fontWeight": "normal"
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "type": "frame",
-                  "id": "gbslU",
-                  "name": "Card 2",
-                  "width": "fill_container",
-                  "cornerRadius": 24,
-                  "stroke": {
-                    "thickness": 1,
-                    "fill": "#E5E7EB"
-                  },
-                  "layout": "vertical",
-                  "gap": 16,
-                  "padding": 20,
-                  "children": [
-                    {
-                      "type": "frame",
-                      "id": "jjSPY",
-                      "name": "Template Hero Image",
-                      "metadata": {
-                        "type": "unsplash",
-                        "username": "jtbean",
-                        "link": "https://unsplash.com/@jtbean",
-                        "author": "Josh Bean"
-                      },
-                      "clip": true,
-                      "width": 314,
-                      "height": 128,
-                      "fill": {
-                        "type": "image",
-                        "enabled": true,
-                        "url": "https://images.unsplash.com/photo-1514573427993-53fb869eb83e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3Nzc5NjAxNjB8&ixlib=rb-4.1.0&q=80&w=1080",
-                        "mode": "fill"
-                      },
-                      "cornerRadius": 18
-                    },
-                    {
-                      "type": "frame",
-                      "id": "YqInl",
-                      "name": "c1Head",
-                      "width": "fill_container",
-                      "justifyContent": "space_between",
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "h33xb",
-                          "fill": "#1A1A1A",
-                          "content": "Low Carb Week",
-                          "fontFamily": "Bricolage Grotesque",
-                          "fontSize": 18,
-                          "fontWeight": "700"
-                        },
-                        {
-                          "type": "icon_font",
-                          "id": "m4YSf",
-                          "name": "menuBtn",
-                          "width": 24,
-                          "height": 24,
-                          "iconFontName": "more_vert",
-                          "iconFontFamily": "Material Symbols Outlined",
-                          "weight": 300,
-                          "fill": "#1A1A1A"
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "xKVjy",
-                      "name": "c1Days",
-                      "gap": 6,
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "icon_font",
-                          "id": "MXQel",
-                          "width": 24,
-                          "height": 24,
-                          "iconFontName": "event",
-                          "iconFontFamily": "Material Symbols Outlined",
-                          "weight": 300,
-                          "fill": "#00BF8D"
-                        },
-                        {
-                          "type": "text",
-                          "id": "Z6hiB",
-                          "fill": "#00BF8D",
-                          "content": "7 Days Plan",
-                          "fontFamily": "DM Sans",
-                          "fontSize": 14,
-                          "fontWeight": "600"
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "LJup4",
-                      "layoutPosition": "absolute",
-                      "x": 4000,
-                      "y": 40,
-                      "name": "dropdown",
-                      "enabled": false,
-                      "width": 210,
-                      "fill": "#FFFFFF",
-                      "cornerRadius": 16,
-                      "stroke": {
-                        "thickness": 1,
-                        "fill": "#E5E7EB"
-                      },
-                      "effect": {
-                        "type": "shadow",
-                        "shadowType": "outer",
-                        "color": "#0000001A",
-                        "offset": {
-                          "x": 0,
-                          "y": 4
-                        },
-                        "blur": 20
-                      },
-                      "layout": "vertical",
-                      "padding": [
-                        8,
-                        0
-                      ],
-                      "children": [
-                        {
-                          "type": "frame",
-                          "id": "i5ab6",
-                          "name": "dd1",
-                          "width": "fill_container",
-                          "gap": 12,
-                          "padding": [
-                            12,
-                            16
-                          ],
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "icon_font",
-                              "id": "KJOSC",
-                              "width": 20,
-                              "height": 20,
-                              "iconFontName": "edit",
-                              "iconFontFamily": "Material Symbols Outlined",
-                              "fill": "#1A1A1A"
-                            },
-                            {
-                              "type": "text",
-                              "id": "1DO4f",
-                              "fill": "#1A1A1A",
-                              "content": "Edit template",
-                              "fontFamily": "DM Sans",
-                              "fontSize": 14,
-                              "fontWeight": "500"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "fkLO1",
-                          "name": "dd2",
-                          "width": "fill_container",
-                          "gap": 12,
-                          "padding": [
-                            12,
-                            16
-                          ],
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "icon_font",
-                              "id": "e2a7k",
-                              "width": 20,
-                              "height": 20,
-                              "iconFontName": "publish",
-                              "iconFontFamily": "Material Symbols Outlined",
-                              "fill": "#1A1A1A"
-                            },
-                            {
-                              "type": "text",
-                              "id": "GYvzc",
-                              "fill": "#1A1A1A",
-                              "content": "Apply to date...",
-                              "fontFamily": "DM Sans",
-                              "fontSize": 14,
-                              "fontWeight": "500"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "w9pM3",
-                          "name": "dd3",
-                          "width": "fill_container",
-                          "gap": 12,
-                          "padding": [
-                            12,
-                            16
-                          ],
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "icon_font",
-                              "id": "HU07T",
-                              "width": 20,
-                              "height": 20,
-                              "iconFontName": "delete",
-                              "iconFontFamily": "Material Symbols Outlined",
-                              "fill": "#EF4444"
-                            },
-                            {
-                              "type": "text",
-                              "id": "uL2Lx",
-                              "fill": "#EF4444",
-                              "content": "Delete template",
-                              "fontFamily": "DM Sans",
-                              "fontSize": 14,
-                              "fontWeight": "500"
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "type": "text",
-                      "id": "k8aFh",
-                      "fill": "#6B7280",
-                      "content": "1750 kcal • 85g P • 170g C • 50g F",
-                      "fontFamily": "DM Sans",
-                      "fontSize": 12,
-                      "fontWeight": "normal"
                     }
                   ]
                 }
@@ -20544,8 +20310,8 @@
       "type": "frame",
       "id": "Z4jHr",
       "x": -226,
-      "y": 3574,
-      "name": "TemplateDayDeleteModal",
+      "y": 4505,
+      "name": "QuitEditingTemplateModal",
       "width": "fill_container(354)",
       "fill": "#FFFFFF",
       "cornerRadius": 24,
@@ -20560,7 +20326,7 @@
           "fill": "#1A1A1A",
           "textGrowth": "fixed-width",
           "width": "fill_container",
-          "content": "Delete Day 1",
+          "content": "Quit Editing Template",
           "textAlign": "center",
           "fontFamily": "Bricolage Grotesque",
           "fontSize": 20,
@@ -20573,7 +20339,7 @@
           "fill": "#6B7280",
           "textGrowth": "fixed-width",
           "width": "fill_container",
-          "content": "Are you sure you want to delete this day? This action cannot be undone.",
+          "content": "Are you sure to quit editing template ? All your changes made on this template will be lost.",
           "textAlign": "center",
           "fontFamily": "DM Sans",
           "fontSize": 15,
@@ -20625,7 +20391,7 @@
                   "id": "4m62M",
                   "name": "tConfirm",
                   "fill": "#FFFFFF",
-                  "content": "Delete",
+                  "content": "Quit",
                   "fontFamily": "DM Sans",
                   "fontSize": 15,
                   "fontWeight": "600"
@@ -23309,7 +23075,7 @@
       "id": "IjmjH",
       "x": -226,
       "y": 3828,
-      "name": "ApplyTo Modal",
+      "name": "ApplyTemplateModal",
       "width": "fill_container(354)",
       "fill": "#FFFFFF",
       "cornerRadius": 32,
@@ -28624,6 +28390,198 @@
                       ]
                     }
                   ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "K5I7k0",
+      "x": -226,
+      "y": 3574,
+      "name": "DeleteTemplateModal",
+      "width": "fill_container(354)",
+      "fill": "#FFFFFF",
+      "cornerRadius": 24,
+      "layout": "vertical",
+      "gap": 24,
+      "padding": 24,
+      "children": [
+        {
+          "type": "text",
+          "id": "bHdV1",
+          "name": "modalTitle",
+          "fill": "#1A1A1A",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "Delete Template",
+          "textAlign": "center",
+          "fontFamily": "Bricolage Grotesque",
+          "fontSize": 20,
+          "fontWeight": "700"
+        },
+        {
+          "type": "text",
+          "id": "tr7eh",
+          "name": "modalText",
+          "fill": "#6B7280",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "Are you sure you want to delete this template? This action cannot be undone.",
+          "textAlign": "center",
+          "fontFamily": "DM Sans",
+          "fontSize": 15,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "frame",
+          "id": "q3OFo",
+          "name": "modalBtns",
+          "width": "fill_container",
+          "gap": 12,
+          "children": [
+            {
+              "type": "frame",
+              "id": "PlWOm",
+              "name": "btnCancel",
+              "width": "fill_container",
+              "height": 48,
+              "fill": "#F6F7F8",
+              "cornerRadius": 12,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "m6m3uM",
+                  "name": "tCancel",
+                  "fill": "#1A1A1A",
+                  "content": "Cancel",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 15,
+                  "fontWeight": "600"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "Uq5ZN",
+              "name": "btnConfirm",
+              "width": "fill_container",
+              "height": 48,
+              "fill": "#EF4444",
+              "cornerRadius": 12,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "FdNj8",
+                  "name": "tConfirm",
+                  "fill": "#FFFFFF",
+                  "content": "Delete",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 15,
+                  "fontWeight": "600"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "OuJ22",
+      "x": -226,
+      "y": 4217,
+      "name": "QuitCreatingTemplateModal",
+      "width": "fill_container(354)",
+      "fill": "#FFFFFF",
+      "cornerRadius": 24,
+      "layout": "vertical",
+      "gap": 24,
+      "padding": 24,
+      "children": [
+        {
+          "type": "text",
+          "id": "rLR6n",
+          "name": "modalTitle",
+          "fill": "#1A1A1A",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "Quit Creating Template",
+          "textAlign": "center",
+          "fontFamily": "Bricolage Grotesque",
+          "fontSize": 20,
+          "fontWeight": "700"
+        },
+        {
+          "type": "text",
+          "id": "F7SViQ",
+          "name": "modalText",
+          "fill": "#6B7280",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "Are you sure to quit creating template ? All your changes made on this template will be lost.",
+          "textAlign": "center",
+          "fontFamily": "DM Sans",
+          "fontSize": 15,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "frame",
+          "id": "wsi3E",
+          "name": "modalBtns",
+          "width": "fill_container",
+          "gap": 12,
+          "children": [
+            {
+              "type": "frame",
+              "id": "xx036",
+              "name": "btnCancel",
+              "width": "fill_container",
+              "height": 48,
+              "fill": "#F6F7F8",
+              "cornerRadius": 12,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "SzplF",
+                  "name": "tCancel",
+                  "fill": "#1A1A1A",
+                  "content": "Cancel",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 15,
+                  "fontWeight": "600"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "jYEkz",
+              "name": "btnConfirm",
+              "width": "fill_container",
+              "height": 48,
+              "fill": "#EF4444",
+              "cornerRadius": 12,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "rQktP",
+                  "name": "tConfirm",
+                  "fill": "#FFFFFF",
+                  "content": "Quit",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 15,
+                  "fontWeight": "600"
                 }
               ]
             }

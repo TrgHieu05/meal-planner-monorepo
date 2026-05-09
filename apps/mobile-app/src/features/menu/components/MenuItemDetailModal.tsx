@@ -26,6 +26,7 @@ import {
 
 export interface MenuItemDetailModalProps {
   item: MenuMealItem | null;
+  mode?: 'menu' | 'template-detail' | 'template-edit';
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onDelete?: (item: MenuMealItem) => Promise<void> | void;
@@ -62,6 +63,7 @@ function ActionIconButton({
 
 export function MenuItemDetailModal({
   item,
+  mode = 'menu',
   open,
   onOpenChange,
   onDelete,
@@ -78,6 +80,8 @@ export function MenuItemDetailModal({
   const [fetchedCookTime, setFetchedCookTime] = useState<string | null>(null);
   const [fetchedDifficulty, setFetchedDifficulty] = useState<string | null>(null);
   const [mealDetailError, setMealDetailError] = useState<string | null>(null);
+  const isReadOnlyMode = mode === 'template-detail';
+  const isTemplateMode = mode !== 'menu';
 
   useEffect(() => {
     if (!open || !item) {
@@ -150,6 +154,10 @@ export function MenuItemDetailModal({
   const resolvedCookTime = item?.cookTime ?? fetchedCookTime;
   const resolvedDifficulty = item?.difficulty ?? fetchedDifficulty;
   const isPastMenuDate = useMemo(() => {
+    if (mode !== 'menu') {
+      return false;
+    }
+
     if (!item) {
       return false;
     }
@@ -162,6 +170,12 @@ export function MenuItemDetailModal({
   if (!item || !nutrition) {
     return null;
   }
+
+  const canEditPortionSize = !isReadOnlyMode && !isPastMenuDate && !isSubmitting;
+  const canDeleteItem = !isReadOnlyMode && Boolean(onDelete) && !isPastMenuDate;
+  const canLogItem = !isTemplateMode && Boolean(onLog) && !isPastMenuDate;
+  const showActionSection = !isReadOnlyMode;
+  const showSaveButton = !isReadOnlyMode && Boolean(onSave) && !isPastMenuDate;
 
   const handleClose = () => {
     if (isSubmitting) {
@@ -202,7 +216,7 @@ export function MenuItemDetailModal({
   };
 
   const handleSave = () => {
-    if (isPastMenuDate) {
+    if (isPastMenuDate || !onSave) {
       return;
     }
 
@@ -222,7 +236,7 @@ export function MenuItemDetailModal({
   };
 
   const handleDelete = () => {
-    if (isPastMenuDate) {
+    if (isPastMenuDate || !onDelete) {
       return;
     }
 
@@ -235,7 +249,7 @@ export function MenuItemDetailModal({
   };
 
   const handleLog = () => {
-    if (isPastMenuDate) {
+    if (isPastMenuDate || !onLog) {
       return;
     }
 
@@ -296,10 +310,12 @@ export function MenuItemDetailModal({
                     <Tag.Text>{resolvedDifficulty}</Tag.Text>
                   </Tag>
                 ) : null}
-                <Tag status={item.eated ? 'brand' : 'danger'}>
-                  <Tag.Icon icon={Check} size={16} />
-                  <Tag.Text>{item.eated ? 'Logged' : 'Not logged'}</Tag.Text>
-                </Tag>
+                {!isTemplateMode ? (
+                  <Tag status={item.eated ? 'brand' : 'danger'}>
+                    <Tag.Icon icon={Check} size={16} />
+                    <Tag.Text>{item.eated ? 'Logged' : 'Not logged'}</Tag.Text>
+                  </Tag>
+                ) : null}
               </XStack>
 
               {mealDetailError ? (
@@ -316,7 +332,7 @@ export function MenuItemDetailModal({
                   value={draftPortionSize}
                   onChangeText={handleDraftPortionSizeChange}
                   keyboardType="decimal-pad"
-                  disabled={isPastMenuDate || isSubmitting}
+                  disabled={!canEditPortionSize}
                   errorMessage={portionSizeError ?? undefined}
                 />
               </YStack>
@@ -327,38 +343,40 @@ export function MenuItemDetailModal({
                 </SizableText>
               ) : null}
 
-              <XStack w="100%" ai="center" jc="space-between" gap="$space.md">
-                <SizableText ff="$body" fos="$md" fow="$semiBold" col="$text">
-                  Action:
-                </SizableText>
+              {showActionSection ? (
+                <XStack w="100%" ai="center" jc="space-between" gap="$space.md">
+                  <SizableText ff="$body" fos="$md" fow="$semiBold" col="$text">
+                    Action:
+                  </SizableText>
 
-                <XStack gap="$space.sm">
-                  {!isPastMenuDate ? (
+                  <XStack gap="$space.sm">
+                    {canDeleteItem ? (
+                      <ActionIconButton
+                        icon={Trash2}
+                        backgroundColor="$softDanger"
+                        iconColor="$danger"
+                        onPress={handleDelete}
+                      />
+                    ) : null}
+                    {canLogItem ? (
+                      <ActionIconButton
+                        icon={Check}
+                        backgroundColor="$softPrimary"
+                        iconColor="$primary"
+                        onPress={handleLog}
+                      />
+                    ) : null}
                     <ActionIconButton
-                      icon={Trash2}
-                      backgroundColor="$softDanger"
-                      iconColor="$danger"
-                      onPress={onDelete ? handleDelete : undefined}
-                    />
-                  ) : null}
-                  {!isPastMenuDate ? (
-                    <ActionIconButton
-                      icon={Check}
+                      icon={ArrowRight}
                       backgroundColor="$softPrimary"
                       iconColor="$primary"
-                      onPress={onLog ? handleLog : undefined}
+                      onPress={handleNavigateToMealDetail}
                     />
-                  ) : null}
-                  <ActionIconButton
-                    icon={ArrowRight}
-                    backgroundColor="$softPrimary"
-                    iconColor="$primary"
-                    onPress={handleNavigateToMealDetail}
-                  />
+                  </XStack>
                 </XStack>
-              </XStack>
+              ) : null}
 
-              {!isPastMenuDate ? (
+              {showSaveButton ? (
                 <Button
                   w="100%"
                   h={53}
@@ -370,7 +388,7 @@ export function MenuItemDetailModal({
                 >
                   <Button.Text>{isSubmitting ? 'Saving...' : 'Save'}</Button.Text>
                 </Button>
-                ) : null}
+              ) : null}
             </YStack>
           </Pressable>
         </YStack>

@@ -1,11 +1,21 @@
-import { YStack, XStack, SizableText } from 'tamagui';
+import { ScrollView, YStack, XStack, SizableText } from 'tamagui';
 import { ChevronLeft, Plus, SlidersHorizontal, Grid2x2Plus } from '@tamagui/lucide-icons-2';
 import { useRouter } from 'expo-router';
 import { Button } from '@components';
+import { TemplateCard } from '@features/template/components/TemplateCard';
+
+const SAMPLE_TEMPLATES = [
+    {
+        id: 'high-protein-week',
+        title: 'High Protein Week',
+        dayCount: 7,
+        nutritionSummary: '1750 kcal • 85g P • 170g C • 50g F',
+    },
+];
 
 export default function TemplateListScreen() {
     const router = useRouter();
-    const isEmpty = true;
+    const isEmpty = SAMPLE_TEMPLATES.length === 0;
 
     return (
         <YStack f={1} ai="center" bg="$background" p="$space.md" gap="$space.lg">
@@ -29,11 +39,27 @@ export default function TemplateListScreen() {
                     <Button.Icon icon={SlidersHorizontal} />
                     <Button.Text>Filter</Button.Text>
                 </Button>
-                <Button color="primary" size="medium" br="$radius.pill" onPress={() => router.push('template/create-template')}>
+                <Button color="primary" size="medium" br="$radius.pill" onPress={() => router.push('/template/create-template')}>
                     <Button.Icon icon={Plus} />
                     <Button.Text>Create</Button.Text>
                 </Button>
             </XStack>
+
+            {!isEmpty ? (
+                <ScrollView w="100%" f={1} showsVerticalScrollIndicator={false}>
+                    <YStack w="100%" gap="$space.md" pb="$space.xl">
+                        {SAMPLE_TEMPLATES.map((template) => (
+                            <TemplateCard
+                                key={template.id}
+                                templateId={template.id}
+                                title={template.title}
+                                dayCount={template.dayCount}
+                                nutritionSummary={template.nutritionSummary}
+                            />
+                        ))}
+                    </YStack>
+                </ScrollView>
+            ) : null}
 
             {isEmpty && 
                 <YStack f={1} ai="center" jc="center" px="$space.md" gap="$space.lg">

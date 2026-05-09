@@ -15,6 +15,7 @@ export default function TemplateLayout() {
             <Stack>
                 <Stack.Screen name="index" options={{ headerShown: false }} />
                 <Stack.Screen name="create-template" options={{ headerShown: false }} />
+                <Stack.Screen name="[id]" options={{ headerShown: false }} />
             </Stack>
         </SafeAreaView>
     );

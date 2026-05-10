@@ -15,7 +15,6 @@ import {
     updateTemplate,
     upsertTemplateDay,
 } from '../api/template.api';
-import { createTemplateDay, createTemplateDraftSeed } from '@features/template/utils/template-screen-data';
 import { useSession } from '@/providers/AuthProvider';
 
 export default function EditTemplateScreen() {
@@ -54,7 +53,7 @@ export default function EditTemplateScreen() {
                 templateId,
             });
 
-            setEditorData(normalizeEditorData(result));
+            setEditorData(result);
         } catch (error) {
             setEditorData(null);
 
@@ -142,8 +141,6 @@ export default function EditTemplateScreen() {
         [editorData, isSubmitting, router, session?.accessToken, templateId],
     );
 
-    const fallbackDraft = useMemo(() => createTemplateDraftSeed(), []);
-
     if (isLoading) {
         return (
             <YStack f={1} bg="$background" ai="center" jc="center" px="$space.md" gap="$space.sm">
@@ -182,22 +179,11 @@ export default function EditTemplateScreen() {
             onClearSubmitError={handleClearSubmitError}
             onSubmitDraft={handleSubmitDraft}
             quitModalVariant="edit"
-            initialTemplateName={editorData.initialTemplateName ?? fallbackDraft.name}
-            initialDescription={editorData.initialDescription ?? fallbackDraft.description}
-            initialDays={editorData.initialDays.length > 0 ? editorData.initialDays : fallbackDraft.days}
+            initialTemplateName={editorData.initialTemplateName}
+            initialDescription={editorData.initialDescription}
+            initialDays={editorData.initialDays}
         />
     );
-}
-
-function normalizeEditorData(editorData: TemplateEditorData): TemplateEditorData {
-    if (editorData.initialDays.length > 0) {
-        return editorData;
-    }
-
-    return {
-        ...editorData,
-        initialDays: [createTemplateDay({ dayNumber: 1 })],
-    };
 }
 
 function normalizeTemplateIdParam(value?: string | string[]) {

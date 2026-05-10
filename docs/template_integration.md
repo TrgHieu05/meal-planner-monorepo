@@ -55,6 +55,7 @@ Ngoài phạm vi mặc định của tài liệu này:
 - [x] Mobile `TemplateDetailScreen` đã fetch detail theo `templateId` route param và không còn dùng fallback `sample-template`.
 - [x] Mobile `CreateTemplateScreen` đã khởi tạo bằng `1` day rỗng local đúng rule mới.
 - [x] Mobile `EditTemplateScreen` đã load dữ liệu backend thật trước khi mở editor và không còn khởi tạo từ seed local.
+- [x] Front-end template flow không còn phụ thuộc vào helper sample/seed ở runtime; create dùng blank draft thật còn edit chỉ phản ánh dữ liệu backend.
 - [x] `TemplateEditor` đã nối `handleAddMeal` với meal search/detail flow thật và local draft được giữ nguyên khi round-trip qua stack.
 - [x] `TemplateEditor` đã có submit flow thật cho create/edit theo strategy `template metadata + upsert day + delete day`.
 - [x] `TemplateActionsMenu` đã nối mutation thật cho delete/apply, chờ promise async và giữ lỗi/pending state ngay trong modal.
@@ -89,7 +90,7 @@ Ngoài phạm vi mặc định của tài liệu này:
 - [x] Refactor `TemplateDayState` để chứa `dayNumber` thật từ backend, không chỉ `id` local.
 - [x] Tách `uiKey` khỏi `dayNumber` để add/delete/reorder day không làm mất mapping với backend.
 - [x] Khi delete day trong editor, renumber lại toàn bộ `dayNumber` trước khi save.
-- [ ] Bỏ các seed sample ra khỏi flow chính của create/edit/detail; sample chỉ nên tồn tại cho preview hoặc storybook nếu cần.
+- [x] Bỏ các seed sample ra khỏi flow chính của create/edit/detail; sample chỉ nên tồn tại cho preview hoặc storybook nếu cần.
 
 ### 4. Chốt chiến lược lưu create/edit template
 
@@ -241,7 +242,7 @@ Hiện tại không còn mục nghiệp vụ mở trong tài liệu này. Phần
 5. [x] Hoàn thiện create/edit submit flow theo strategy `template metadata + upsert day + delete day`.
 6. [x] Hoàn thiện reuse meal search/detail cho flow chọn món của template và cập nhật editor local state.
 7. [x] Nối delete template thật và hoàn thiện apply template mutation theo UX hiện tại.
-8. [ ] Dọn lại toàn bộ front-end để loại bỏ các phần liên quan đến mock và seed, đảm bảo mọi dữ liệu template đều đến từ backend.
+8. [x] Dọn lại toàn bộ front-end để loại bỏ các phần liên quan đến mock và seed, đảm bảo mọi dữ liệu template đều đến từ backend.
 9. [ ] Bổ sung backend e2e còn thiếu, mobile tests cho template adapter/editor và manual QA checklist.
 
 ## Ghi chú triển khai
@@ -254,6 +255,7 @@ Hiện tại không còn mục nghiệp vụ mở trong tài liệu này. Phần
 - Bước 5 đã hoàn tất ở create/edit submit flow: `TemplateEditor` đã nhận callback submit thật với pending/error state, `CreateTemplateScreen` gọi `POST template` rồi upsert day và rollback nếu create bị lỗi giữa chừng, còn `EditTemplateScreen` load dữ liệu thật, `PATCH` metadata, `PUT` toàn bộ day hiện tại và `DELETE` các day biến mất khỏi snapshot ban đầu trước khi quay về detail.
 - Bước 6 đã hoàn tất ở flow chọn món cho template: `TemplateEditor` đẩy draft context sang meal search, `MealSearchScreen` chuyển tiếp context sang detail và tự pop về editor khi đã có selection, còn `MealDetailScreen` branch theo `source=template` để stage item local với nutrition thật trước khi quay lại editor.
 - Bước 7 đã hoàn tất ở actions menu và modal: `TemplateActionsMenu` giờ await callback async và giữ error/pending state trong `ApplyTemplateModal` hoặc `DeleteTemplateModal`, `TemplateListScreen` đã apply/delete thật từ card và sync lại list sau delete, còn `TemplateDetailScreen` đã apply thật hoặc delete rồi điều hướng về list.
+- Bước 8 đã hoàn tất ở cleanup front-end: runtime đã bỏ hẳn helper sample/seed của template, `CreateTemplateScreen` khởi tạo trực tiếp từ blank state, còn `EditTemplateScreen` không bơm fallback sample khi backend trả dữ liệu rỗng nên editor chỉ phản ánh state thật từ server cộng local edits của user.
 - Scope hiện tại đã được khóa theo hướng rộng hơn tài liệu `feature_template_v1.md`: giữ macro UI và hoàn thiện `Apply Template`.
 - Để tận dụng lại `calculateTemplateNutrition(...)`, contract template mới nên ưu tiên trả nutrition data ngay trong response thay vì buộc mobile fetch chi tiết từng meal sau đó mới tính tổng.
 - Sau mọi thay đổi ở `packages/shared`, cần build lại shared package trước khi kiểm tra runtime backend/mobile vì backend hiện dùng runtime export từ package workspace.

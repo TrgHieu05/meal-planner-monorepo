@@ -9,7 +9,7 @@ import {
     mapTemplateDaysToUpsertRequests,
     upsertTemplateDay,
 } from '../api/template.api';
-import { createTemplateDay, createTemplateDraftSeed } from '@features/template/utils/template-screen-data';
+import { createTemplateDay } from '@features/template/utils/template-screen-data';
 import { useSession } from '@/providers/AuthProvider';
 
 export default function CreateTemplateScreen() {
@@ -17,15 +17,7 @@ export default function CreateTemplateScreen() {
     const { session } = useSession();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
-    const createTemplateDraft = useMemo(
-        () =>
-            createTemplateDraftSeed({
-                name: '',
-                description: '',
-                days: [createTemplateDay({ dayNumber: 1 })],
-            }),
-        [],
-    );
+    const initialDays = useMemo(() => [createTemplateDay({ dayNumber: 1 })], []);
 
     const handleClearSubmitError = useCallback(() => {
         setSubmitError(null);
@@ -99,9 +91,9 @@ export default function CreateTemplateScreen() {
             onClearSubmitError={handleClearSubmitError}
             onSubmitDraft={handleSubmitDraft}
             quitModalVariant="create"
-            initialTemplateName={createTemplateDraft.name}
-            initialDescription={createTemplateDraft.description}
-            initialDays={createTemplateDraft.days}
+            initialTemplateName=""
+            initialDescription=""
+            initialDays={initialDays}
         />
     );
 }

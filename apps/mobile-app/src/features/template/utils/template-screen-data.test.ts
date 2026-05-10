@@ -3,7 +3,6 @@ import { describe, expect, it } from '@jest/globals';
 import {
   createTemplateDay,
   createTemplateDayUiKey,
-  createTemplateDraftSeed,
   createTemplateEditorMealItem,
   getNextTemplateMealItemId,
   renumberTemplateDays,
@@ -33,18 +32,14 @@ describe('template-screen-data helpers', () => {
   });
 
   it('supports create flow starting from a single empty day instead of sample days', () => {
-    const draft = createTemplateDraftSeed({
-      name: '',
-      description: '',
-      days: [createTemplateDay({ dayNumber: 1 })],
-    });
+    const draftDays = [createTemplateDay({ dayNumber: 1 })];
 
-    expect(draft.days).toHaveLength(1);
-    expect(draft.days[0]).toMatchObject({
+    expect(draftDays).toHaveLength(1);
+    expect(draftDays[0]).toMatchObject({
       dayNumber: 1,
       uiKey: createTemplateDayUiKey(1),
     });
-    expect(draft.days[0]?.mealTimeGroups.flatMap((group) => group.items)).toEqual([]);
+    expect(draftDays[0]?.mealTimeGroups.flatMap((group) => group.items)).toEqual([]);
   });
 
   it('creates a local template editor meal item with stable day label and nutrition payload', () => {

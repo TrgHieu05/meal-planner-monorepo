@@ -47,7 +47,7 @@ Ngoài phạm vi mặc định của tài liệu này:
 - [x] `packages/shared/types/meal-template.ts` đã có request/response schema cho contract template v1.
 - [x] Shared/backend contract template đã mở rộng để trả nutrition data cho list/detail/item và contract apply flow.
 - [x] Backend unit test cho `meal-template` đang pass.
-- [x] Backend e2e test cho `meal-template` đang pass ở các route `POST /api/v1/meal-templates`, `GET /api/v1/meal-templates` và `POST /api/v1/meal-templates/:id/apply`.
+- [x] Backend e2e test cho `meal-template` đang pass cho toàn bộ route chính của template: `create`, `list`, `detail`, `update`, `delete`, `upsert day`, `add/update/delete item`, `delete day` và `apply`.
 - [x] Mobile app đã có routing và UI shell cho các màn `TemplateList`, `TemplateDetail`, `CreateTemplate`, `EditTemplate`.
 - [x] Mobile app đã có `ApplyTemplateModal` với UX cơ bản gồm `selectedDate` và `replaceExistingMeals`.
 - [x] Mobile app đã có data layer riêng cho feature template tại `src/features/template/api/template.api.ts`.
@@ -61,7 +61,8 @@ Ngoài phạm vi mặc định của tài liệu này:
 - [x] `TemplateActionsMenu` đã nối mutation thật cho delete/apply, chờ promise async và giữ lỗi/pending state ngay trong modal.
 - [x] Meal search/detail flow đã mang đủ draft context cho template (`source`, `dayUiKey`, `dayNumber`, `mealTime`) để quay về editor local state.
 - [x] Mobile template UI hiện giữ `nutritionSummary` và `MacroStatDetailCard`; list/detail/editor đã dùng dữ liệu thật cho load/save hiện có.
-- [x] Mobile app đã có test utility/api riêng cho feature template; screen-level integration test vẫn chưa có.
+- [x] Mobile app đã có test utility/api riêng cho feature template; adapter/detail mapping và editor state helper đã có coverage riêng, còn screen-level integration test vẫn chưa có.
+- [x] Đã có manual QA checklist riêng cho template tại `docs/manual_test_template.md`.
 
 ## Blocker ưu tiên cao
 
@@ -130,15 +131,15 @@ Ngoài phạm vi mặc định của tài liệu này:
 ### C. Backend `services/main-backend`
 
 - [x] Giữ nguyên CRUD hiện có cho template/day/item làm nền tích hợp.
-- [ ] Bổ sung e2e test cho các route còn thiếu:
-- [ ] `GET /api/v1/meal-templates/:id`
-- [ ] `PATCH /api/v1/meal-templates/:id`
-- [ ] `DELETE /api/v1/meal-templates/:id`
-- [ ] `PUT /api/v1/meal-templates/:id/days/:dayNumber`
-- [ ] `POST /api/v1/meal-templates/:id/items`
-- [ ] `PATCH /api/v1/meal-templates/:id/items/:itemId`
-- [ ] `DELETE /api/v1/meal-templates/:id/items/:itemId`
-- [ ] `DELETE /api/v1/meal-templates/:id/days/:dayNumber`
+- [x] Bổ sung e2e test cho các route còn thiếu:
+- [x] `GET /api/v1/meal-templates/:id`
+- [x] `PATCH /api/v1/meal-templates/:id`
+- [x] `DELETE /api/v1/meal-templates/:id`
+- [x] `PUT /api/v1/meal-templates/:id/days/:dayNumber`
+- [x] `POST /api/v1/meal-templates/:id/items`
+- [x] `PATCH /api/v1/meal-templates/:id/items/:itemId`
+- [x] `DELETE /api/v1/meal-templates/:id/items/:itemId`
+- [x] `DELETE /api/v1/meal-templates/:id/days/:dayNumber`
 - [x] Thiết kế endpoint và service riêng cho apply flow.
 - [x] Mở rộng response list/detail template để trả nutrition data đúng với UI hiện tại.
 - [x] Regenerate OpenAPI nếu contract template thay đổi.
@@ -204,6 +205,7 @@ Ngoài phạm vi mặc định của tài liệu này:
 
 ### E. Kiểm thử và QA
 
+- [x] Tạo manual QA checklist riêng cho feature template tại `docs/manual_test_template.md`.
 - [ ] Tạo template mới từ mobile với state khởi tạo đúng.
 - [ ] Thêm day mới, copy/paste day và xóa day.
 - [ ] Xóa day ở giữa và xác nhận `dayNumber` được dồn lại liên tục.
@@ -243,7 +245,7 @@ Hiện tại không còn mục nghiệp vụ mở trong tài liệu này. Phần
 6. [x] Hoàn thiện reuse meal search/detail cho flow chọn món của template và cập nhật editor local state.
 7. [x] Nối delete template thật và hoàn thiện apply template mutation theo UX hiện tại.
 8. [x] Dọn lại toàn bộ front-end để loại bỏ các phần liên quan đến mock và seed, đảm bảo mọi dữ liệu template đều đến từ backend.
-9. [ ] Bổ sung backend e2e còn thiếu, mobile tests cho template adapter/editor và manual QA checklist.
+9. [x] Bổ sung backend e2e còn thiếu, mobile tests cho template adapter/editor và manual QA checklist.
 
 ## Ghi chú triển khai
 
@@ -256,6 +258,7 @@ Hiện tại không còn mục nghiệp vụ mở trong tài liệu này. Phần
 - Bước 6 đã hoàn tất ở flow chọn món cho template: `TemplateEditor` đẩy draft context sang meal search, `MealSearchScreen` chuyển tiếp context sang detail và tự pop về editor khi đã có selection, còn `MealDetailScreen` branch theo `source=template` để stage item local với nutrition thật trước khi quay lại editor.
 - Bước 7 đã hoàn tất ở actions menu và modal: `TemplateActionsMenu` giờ await callback async và giữ error/pending state trong `ApplyTemplateModal` hoặc `DeleteTemplateModal`, `TemplateListScreen` đã apply/delete thật từ card và sync lại list sau delete, còn `TemplateDetailScreen` đã apply thật hoặc delete rồi điều hướng về list.
 - Bước 8 đã hoàn tất ở cleanup front-end: runtime đã bỏ hẳn helper sample/seed của template, `CreateTemplateScreen` khởi tạo trực tiếp từ blank state, còn `EditTemplateScreen` không bơm fallback sample khi backend trả dữ liệu rỗng nên editor chỉ phản ánh state thật từ server cộng local edits của user.
+- Bước 9 đã hoàn tất ở coverage và QA assets: backend e2e đã phủ đủ các route template còn thiếu, mobile đã thêm coverage cho adapter/detail mapping và editor state helper, đồng thời đã có tài liệu `docs/manual_test_template.md` để chạy manual QA riêng cho feature template.
 - Scope hiện tại đã được khóa theo hướng rộng hơn tài liệu `feature_template_v1.md`: giữ macro UI và hoàn thiện `Apply Template`.
 - Để tận dụng lại `calculateTemplateNutrition(...)`, contract template mới nên ưu tiên trả nutrition data ngay trong response thay vì buộc mobile fetch chi tiết từng meal sau đó mới tính tổng.
 - Sau mọi thay đổi ở `packages/shared`, cần build lại shared package trước khi kiểm tra runtime backend/mobile vì backend hiện dùng runtime export từ package workspace.

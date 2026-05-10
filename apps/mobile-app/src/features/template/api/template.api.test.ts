@@ -3,7 +3,10 @@ import axios from 'axios';
 import {
   buildTemplateEditDayPlan,
   buildApplyTemplatePayload,
+  buildCreateTemplatePayload,
+  buildUpdateTemplatePayload,
   fetchTemplateEditorData,
+  fetchTemplateDetailScreenData,
   fetchTemplateListScreenData,
   mapTemplateDaysToUpsertRequests,
 } from './template.api';
@@ -246,6 +249,42 @@ describe('template.api', () => {
     });
   });
 
+  it('maps template detail API data into detail screen data with numeric nutrition totals', async () => {
+    const client = createClient();
+    mockedAxios.create.mockImplementationOnce(() => client as never);
+
+    const result = await fetchTemplateDetailScreenData({
+      accessToken: 'token-123',
+      templateId: '550e8400-e29b-41d4-a716-446655440001',
+    });
+
+    expect(result).toMatchObject({
+      templateId: '550e8400-e29b-41d4-a716-446655440001',
+      title: 'High Protein Week',
+      description: 'Protein focused plan',
+      nutritionTotal: {
+        calories: 1750,
+        protein: 85,
+        fiber: 22.5,
+        fat: 50,
+      },
+    });
+    expect(result.days[0]).toMatchObject({
+      dayNumber: 1,
+      uiKey: 'template-day-1',
+    });
+    expect(result.days[0]?.mealTimeGroups[0]?.items[0]).toMatchObject({
+      mealName: 'Avocado Toast',
+      mealTime: 'BREAKFAST',
+      nutritionPerServing: {
+        calories: 320,
+        protein: 12,
+        fiber: 6,
+        fat: 14,
+      },
+    });
+  });
+
   it('builds apply payloads and day upsert payloads from mobile template state', () => {
     const applyPayload = buildApplyTemplatePayload({
       selectedDate: new Date('2026-05-10T08:30:00.000Z'),
@@ -373,5 +412,26 @@ describe('template.api', () => {
         },
       },
     ]);
+  });
+
+  it('normalizes create and update metadata payloads before sending them to the API', () => {
+    expect(
+      buildCreateTemplatePayload({
+        name: '  Lean Week  ',
+        description: '   ',
+      }),
+    ).toEqual({
+      name: 'Lean Week',
+    });
+
+    expect(
+      buildUpdateTemplatePayload({
+        name: '  Lean Week  ',
+        description: '  Balanced and simple  ',
+      }),
+    ).toEqual({
+      name: 'Lean Week',
+      description: 'Balanced and simple',
+    });
   });
 });

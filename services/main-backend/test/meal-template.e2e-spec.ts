@@ -11,6 +11,8 @@ describe('MealTemplate API (e2e)', () => {
   let service: any;
   let token: string;
   const userId = '550e8400-e29b-41d4-a716-446655440000';
+  const templateId = '550e8400-e29b-41d4-a716-446655440001';
+  const itemId = '550e8400-e29b-41d4-a716-446655440010';
 
   beforeEach(async () => {
     service = {
@@ -95,7 +97,7 @@ describe('MealTemplate API (e2e)', () => {
 
   it('POST /api/v1/meal-templates/:id/apply should return 200', async () => {
     service.applyTemplate.mockResolvedValue({
-      templateId: '550e8400-e29b-41d4-a716-446655440001',
+      templateId,
       startDate: '2026-05-10',
       endDate: '2026-05-12',
       appliedDayCount: 3,
@@ -108,7 +110,7 @@ describe('MealTemplate API (e2e)', () => {
     });
 
     const res = await request(app.getHttpServer())
-      .post('/api/v1/meal-templates/550e8400-e29b-41d4-a716-446655440001/apply')
+      .post(`/api/v1/meal-templates/${templateId}/apply`)
       .set('Authorization', `Bearer ${token}`)
       .send({ startDate: '2026-05-10' })
       .expect(200);
@@ -116,8 +118,164 @@ describe('MealTemplate API (e2e)', () => {
     expect(res.body.appliedDayCount).toBe(3);
     expect(service.applyTemplate).toHaveBeenCalledWith(
       userId,
-      '550e8400-e29b-41d4-a716-446655440001',
+      templateId,
       { startDate: '2026-05-10', replaceExistingMeals: true },
     );
+  });
+
+  it('GET /api/v1/meal-templates/:id should return 200', async () => {
+    service.getTemplateDetail.mockResolvedValue({
+      id: templateId,
+      name: 'T1',
+      description: 'Template detail',
+      nutritionTotal: { calories: 800, protein: 45, fat: 25, fiber: 8 },
+      days: [
+        {
+          dayNumber: 1,
+          nutritionTotal: { calories: 800, protein: 45, fat: 25, fiber: 8 },
+          meals: {
+            BREAKFAST: [],
+            LUNCH: [],
+            DINNER: [],
+          },
+        },
+      ],
+    });
+
+    const res = await request(app.getHttpServer())
+      .get(`/api/v1/meal-templates/${templateId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+
+    expect(res.body.id).toBe(templateId);
+    expect(service.getTemplateDetail).toHaveBeenCalledWith(userId, templateId);
+  });
+
+  it('PATCH /api/v1/meal-templates/:id should return 200', async () => {
+    service.updateTemplate.mockResolvedValue({
+      id: templateId,
+      name: 'Updated Template',
+      description: 'Updated description',
+    });
+
+    const res = await request(app.getHttpServer())
+      .patch(`/api/v1/meal-templates/${templateId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'Updated Template', description: 'Updated description' })
+      .expect(200);
+
+    expect(res.body.name).toBe('Updated Template');
+    expect(service.updateTemplate).toHaveBeenCalledWith(userId, templateId, {
+      name: 'Updated Template',
+      description: 'Updated description',
+    });
+  });
+
+  it('DELETE /api/v1/meal-templates/:id should return 204', async () => {
+    service.deleteTemplate.mockResolvedValue(undefined);
+
+    await request(app.getHttpServer())
+      .delete(`/api/v1/meal-templates/${templateId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(204);
+
+    expect(service.deleteTemplate).toHaveBeenCalledWith(userId, templateId);
+  });
+
+  it('PUT /api/v1/meal-templates/:id/days/:dayNumber should return 201', async () => {
+    service.upsertDay.mockResolvedValue(undefined);
+
+    const res = await request(app.getHttpServer())
+      .put(`/api/v1/meal-templates/${templateId}/days/2`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        meals: {
+          BREAKFAST: [{ mealId: 11, portionSize: 1 }],
+          LUNCH: [],
+          DINNER: [{ mealId: 33, portionSize: 1.5 }],
+        },
+      })
+      .expect(201);
+
+    expect(res.body).toEqual({ success: true });
+    expect(service.upsertDay).toHaveBeenCalledWith(userId, templateId, 2, {
+      meals: {
+        BREAKFAST: [{ mealId: 11, portionSize: 1 }],
+        LUNCH: [],
+        DINNER: [{ mealId: 33, portionSize: 1.5 }],
+      },
+    });
+  });
+
+  it('POST /api/v1/meal-templates/:id/items should return 201', async () => {
+    service.addItem.mockResolvedValue({
+      itemId,
+      mealId: 33,
+      mealName: 'Tofu Stir Fry',
+      portionSize: 1.5,
+      nutritionPerServing: { calories: 560, protein: 27, fat: 20, fiber: 11 },
+    });
+
+    const res = await request(app.getHttpServer())
+      .post(`/api/v1/meal-templates/${templateId}/items`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        dayNumber: 2,
+        mealId: 33,
+        mealTime: 'DINNER',
+        portionSize: 1.5,
+      })
+      .expect(201);
+
+    expect(res.body.itemId).toBe(itemId);
+    expect(service.addItem).toHaveBeenCalledWith(userId, templateId, {
+      dayNumber: 2,
+      mealId: 33,
+      mealTime: 'DINNER',
+      portionSize: 1.5,
+    });
+  });
+
+  it('PATCH /api/v1/meal-templates/:id/items/:itemId should return 200', async () => {
+    service.updateItem.mockResolvedValue({
+      itemId,
+      mealId: 33,
+      mealName: 'Tofu Stir Fry',
+      portionSize: 2,
+      nutritionPerServing: { calories: 560, protein: 27, fat: 20, fiber: 11 },
+    });
+
+    const res = await request(app.getHttpServer())
+      .patch(`/api/v1/meal-templates/${templateId}/items/${itemId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ portionSize: 2 })
+      .expect(200);
+
+    expect(res.body.portionSize).toBe(2);
+    expect(service.updateItem).toHaveBeenCalledWith(userId, templateId, itemId, {
+      portionSize: 2,
+    });
+  });
+
+  it('DELETE /api/v1/meal-templates/:id/items/:itemId should return 204', async () => {
+    service.deleteItem.mockResolvedValue(undefined);
+
+    await request(app.getHttpServer())
+      .delete(`/api/v1/meal-templates/${templateId}/items/${itemId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(204);
+
+    expect(service.deleteItem).toHaveBeenCalledWith(userId, templateId, itemId);
+  });
+
+  it('DELETE /api/v1/meal-templates/:id/days/:dayNumber should return 204', async () => {
+    service.deleteDay.mockResolvedValue(undefined);
+
+    await request(app.getHttpServer())
+      .delete(`/api/v1/meal-templates/${templateId}/days/2`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(204);
+
+    expect(service.deleteDay).toHaveBeenCalledWith(userId, templateId, 2);
   });
 });

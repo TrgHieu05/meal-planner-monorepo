@@ -1,6 +1,8 @@
 import { describe, expect, it } from '@jest/globals';
 
 import {
+  calculateTemplateNutrition,
+  cloneTemplateDays,
   createTemplateDay,
   createTemplateDayUiKey,
   createTemplateEditorMealItem,
@@ -123,5 +125,94 @@ describe('template-screen-data helpers', () => {
     ];
 
     expect(getNextTemplateMealItemId(days)).toBe(9);
+  });
+
+  it('clones template days deeply so editor mutations do not leak back to the original state', () => {
+    const originalDays = [
+      createTemplateDay({
+        dayNumber: 1,
+        mealsByTime: {
+          BREAKFAST: [
+            createTemplateEditorMealItem({
+              dayNumber: 1,
+              menuItemId: 3,
+              mealId: 11,
+              mealName: 'Avocado Toast',
+              mealTime: 'BREAKFAST',
+              nutritionPerServing: {
+                calories: 320,
+                protein: 12,
+                fiber: 6,
+                fat: 14,
+              },
+            }),
+          ],
+        },
+      }),
+    ];
+
+    const clonedDays = cloneTemplateDays(originalDays);
+    const clonedItem = clonedDays[0]?.mealTimeGroups[0]?.items[0];
+
+    if (!clonedItem) {
+      throw new Error('Expected a cloned item for deep-clone test');
+    }
+
+    clonedItem.portionSize = 2;
+    clonedItem.nutritionPerServing.calories = 640;
+
+    expect(originalDays[0]?.mealTimeGroups[0]?.items[0]).toMatchObject({
+      portionSize: 1,
+      nutritionPerServing: {
+        calories: 320,
+      },
+    });
+  });
+
+  it('calculates editor nutrition totals from portion-scaled local items', () => {
+    const day = createTemplateDay({
+      dayNumber: 1,
+      mealsByTime: {
+        BREAKFAST: [
+          createTemplateEditorMealItem({
+            dayNumber: 1,
+            menuItemId: 1,
+            mealId: 11,
+            mealName: 'Avocado Toast',
+            mealTime: 'BREAKFAST',
+            portionSize: 1.5,
+            nutritionPerServing: {
+              calories: 320,
+              protein: 12,
+              fiber: 6,
+              fat: 14,
+            },
+          }),
+        ],
+        DINNER: [
+          createTemplateEditorMealItem({
+            dayNumber: 1,
+            menuItemId: 2,
+            mealId: 33,
+            mealName: 'Tofu Stir Fry',
+            mealTime: 'DINNER',
+            portionSize: 2,
+            nutritionPerServing: {
+              calories: 560,
+              protein: 27,
+              fiber: 11,
+              fat: 20,
+            },
+          }),
+        ],
+      },
+    });
+
+    expect(calculateTemplateNutrition(day.mealTimeGroups)).toEqual({
+      calories: 1600,
+      protein: 72,
+      fiber: 31,
+      fat: 61,
+    });
   });
 });

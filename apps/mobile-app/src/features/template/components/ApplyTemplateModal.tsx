@@ -13,12 +13,20 @@ export interface ApplyTemplateSelection {
 }
 
 export interface ApplyTemplateModalProps {
-    onApply?: (selection: ApplyTemplateSelection) => void;
+    isSubmitting?: boolean;
+    onApply?: (selection: ApplyTemplateSelection) => Promise<void> | void;
     onOpenChange: (open: boolean) => void;
     open: boolean;
+    submitError?: string | null;
 }
 
-export function ApplyTemplateModal({ onApply, onOpenChange, open }: ApplyTemplateModalProps) {
+export function ApplyTemplateModal({
+    isSubmitting = false,
+    onApply,
+    onOpenChange,
+    open,
+    submitError,
+}: ApplyTemplateModalProps) {
     const [selectedDate, setSelectedDate] = useState<Date>(() => createTodayCalendarDate());
     const [replaceExistingMeals, setReplaceExistingMeals] = useState(true);
 
@@ -36,7 +44,6 @@ export function ApplyTemplateModal({ onApply, onOpenChange, open }: ApplyTemplat
             selectedDate,
             replaceExistingMeals,
         });
-        onOpenChange(false);
     };
 
     const handleCheckedChange = (checked: boolean | 'indeterminate') => {
@@ -51,7 +58,10 @@ export function ApplyTemplateModal({ onApply, onOpenChange, open }: ApplyTemplat
             description="Choose the date you want to apply this template to your menu."
             cancelLabel="Cancel"
             confirmLabel="Apply"
+            submittingLabel="Applying..."
+            isSubmitting={isSubmitting}
             onConfirm={handleApply}
+            submitError={submitError}
         >
 
             <YStack w="100%" gap="$space.lg">

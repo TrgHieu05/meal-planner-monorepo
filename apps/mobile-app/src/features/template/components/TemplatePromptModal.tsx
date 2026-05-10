@@ -8,11 +8,15 @@ type TemplatePromptModalProps = {
     cancelLabel: string;
     children?: ReactNode;
     confirmColor?: 'danger' | 'primary';
+    confirmDisabled?: boolean;
     confirmLabel: string;
     description?: string;
+    isSubmitting?: boolean;
     onConfirm: () => void;
     onOpenChange: (open: boolean) => void;
     open: boolean;
+    submitError?: string | null;
+    submittingLabel?: string;
     title: string;
 };
 
@@ -20,14 +24,22 @@ export function TemplatePromptModal({
     cancelLabel,
     children,
     confirmColor = 'primary',
+    confirmDisabled = false,
     confirmLabel,
     description,
+    isSubmitting = false,
     onConfirm,
     onOpenChange,
     open,
+    submitError,
+    submittingLabel,
     title,
 }: TemplatePromptModalProps) {
     const handleClose = () => {
+        if (isSubmitting) {
+            return;
+        }
+
         onOpenChange(false);
     };
 
@@ -76,13 +88,33 @@ export function TemplatePromptModal({
 
                         {children ? <YStack w="100%">{children}</YStack> : null}
 
+                        {submitError ? (
+                            <SizableText ff="$body" fos="$sm" col="$danger" ta="center" w="100%">
+                                {submitError}
+                            </SizableText>
+                        ) : null}
+
                         <XStack w="100%" gap="$space.md">
-                            <Button f={1} size="medium" br="$pill" color="secondary" onPress={handleClose}>
+                            <Button
+                                f={1}
+                                size="medium"
+                                br="$pill"
+                                color="secondary"
+                                disabled={isSubmitting}
+                                onPress={handleClose}
+                            >
                                 <Button.Text>{cancelLabel}</Button.Text>
                             </Button>
 
-                            <Button f={1} size="medium" br="$pill" color={confirmColor} onPress={onConfirm}>
-                                <Button.Text>{confirmLabel}</Button.Text>
+                            <Button
+                                f={1}
+                                size="medium"
+                                br="$pill"
+                                color={confirmColor}
+                                disabled={isSubmitting || confirmDisabled}
+                                onPress={onConfirm}
+                            >
+                                <Button.Text>{isSubmitting ? (submittingLabel ?? confirmLabel) : confirmLabel}</Button.Text>
                             </Button>
                         </XStack>
                     </YStack>

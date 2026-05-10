@@ -57,7 +57,7 @@ Ngoài phạm vi mặc định của tài liệu này:
 - [x] Mobile `EditTemplateScreen` đã load dữ liệu backend thật trước khi mở editor và không còn khởi tạo từ seed local.
 - [x] `TemplateEditor` đã nối `handleAddMeal` với meal search/detail flow thật và local draft được giữ nguyên khi round-trip qua stack.
 - [x] `TemplateEditor` đã có submit flow thật cho create/edit theo strategy `template metadata + upsert day + delete day`.
-- [ ] `TemplateActionsMenu` mới chỉ mở modal `Apply` và `Delete`; mobile chưa nối mutation thật cho delete/apply dù backend hiện đã có apply endpoint.
+- [x] `TemplateActionsMenu` đã nối mutation thật cho delete/apply, chờ promise async và giữ lỗi/pending state ngay trong modal.
 - [x] Meal search/detail flow đã mang đủ draft context cho template (`source`, `dayUiKey`, `dayNumber`, `mealTime`) để quay về editor local state.
 - [x] Mobile template UI hiện giữ `nutritionSummary` và `MacroStatDetailCard`; list/detail/editor đã dùng dữ liệu thật cho load/save hiện có.
 - [x] Mobile app đã có test utility/api riêng cho feature template; screen-level integration test vẫn chưa có.
@@ -161,15 +161,15 @@ Ngoài phạm vi mặc định của tài liệu này:
 - [x] Thêm loading state.
 - [x] Thêm empty state thật khi backend trả list rỗng.
 - [x] Thêm error state và retry.
-- [ ] Sau khi delete/create thành công, refetch hoặc đồng bộ list state đúng.
+- [x] Sau khi delete/create thành công, refetch hoặc đồng bộ list state đúng.
 
 #### Detail screen
 
 - [x] Bỏ fallback `sample-template`.
 - [x] Fetch detail theo `templateId` route param.
 - [x] Thêm loading/error/not-found state.
-- [ ] Đồng bộ `TemplateActionsMenu` với mutation delete thật.
-- [ ] Nối `ApplyTemplateModal` với apply mutation thật và refresh UI sau khi apply thành công.
+- [x] Đồng bộ `TemplateActionsMenu` với mutation delete thật.
+- [x] Nối `ApplyTemplateModal` với apply mutation thật và giữ success/error feedback đúng theo UX modal hiện tại.
 
 #### Create screen
 
@@ -198,8 +198,8 @@ Ngoài phạm vi mặc định của tài liệu này:
 
 #### Actions menu và modal
 
-- [ ] Nối `DeleteTemplateModal` với delete API thật và refresh điều hướng sau khi xóa.
-- [ ] Nối `ApplyTemplateModal` với apply API thật, giữ UX `selectedDate + replaceExistingMeals` hiện tại.
+- [x] Nối `DeleteTemplateModal` với delete API thật và refresh điều hướng sau khi xóa.
+- [x] Nối `ApplyTemplateModal` với apply API thật, giữ UX `selectedDate + replaceExistingMeals` hiện tại.
 
 ### E. Kiểm thử và QA
 
@@ -240,7 +240,7 @@ Hiện tại không còn mục nghiệp vụ mở trong tài liệu này. Phần
 4. [x] Nối list screen và detail screen với API thật, đồng thời thay `nutritionSummary` sample bằng dữ liệu thật.
 5. [x] Hoàn thiện create/edit submit flow theo strategy `template metadata + upsert day + delete day`.
 6. [x] Hoàn thiện reuse meal search/detail cho flow chọn món của template và cập nhật editor local state.
-7. [ ] Nối delete template thật và hoàn thiện apply template mutation theo UX hiện tại.
+7. [x] Nối delete template thật và hoàn thiện apply template mutation theo UX hiện tại.
 8. [ ] Dọn lại toàn bộ front-end để loại bỏ các phần liên quan đến mock và seed, đảm bảo mọi dữ liệu template đều đến từ backend.
 9. [ ] Bổ sung backend e2e còn thiếu, mobile tests cho template adapter/editor và manual QA checklist.
 
@@ -253,6 +253,7 @@ Hiện tại không còn mục nghiệp vụ mở trong tài liệu này. Phần
 - Bước 4 đã hoàn tất ở list/detail screens: `TemplateListScreen` và `TemplateDetailScreen` đã fetch dữ liệu thật theo session/templateId, có loading/error/empty/not-found state phù hợp và `nutritionSummary`/macro ở list-detail không còn phụ thuộc sample data.
 - Bước 5 đã hoàn tất ở create/edit submit flow: `TemplateEditor` đã nhận callback submit thật với pending/error state, `CreateTemplateScreen` gọi `POST template` rồi upsert day và rollback nếu create bị lỗi giữa chừng, còn `EditTemplateScreen` load dữ liệu thật, `PATCH` metadata, `PUT` toàn bộ day hiện tại và `DELETE` các day biến mất khỏi snapshot ban đầu trước khi quay về detail.
 - Bước 6 đã hoàn tất ở flow chọn món cho template: `TemplateEditor` đẩy draft context sang meal search, `MealSearchScreen` chuyển tiếp context sang detail và tự pop về editor khi đã có selection, còn `MealDetailScreen` branch theo `source=template` để stage item local với nutrition thật trước khi quay lại editor.
+- Bước 7 đã hoàn tất ở actions menu và modal: `TemplateActionsMenu` giờ await callback async và giữ error/pending state trong `ApplyTemplateModal` hoặc `DeleteTemplateModal`, `TemplateListScreen` đã apply/delete thật từ card và sync lại list sau delete, còn `TemplateDetailScreen` đã apply thật hoặc delete rồi điều hướng về list.
 - Scope hiện tại đã được khóa theo hướng rộng hơn tài liệu `feature_template_v1.md`: giữ macro UI và hoàn thiện `Apply Template`.
 - Để tận dụng lại `calculateTemplateNutrition(...)`, contract template mới nên ưu tiên trả nutrition data ngay trong response thay vì buộc mobile fetch chi tiết từng meal sau đó mới tính tổng.
 - Sau mọi thay đổi ở `packages/shared`, cần build lại shared package trước khi kiểm tra runtime backend/mobile vì backend hiện dùng runtime export từ package workspace.

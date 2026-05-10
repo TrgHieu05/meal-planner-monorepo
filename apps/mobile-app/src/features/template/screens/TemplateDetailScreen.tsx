@@ -11,14 +11,23 @@ import { MenuItemDetailModal } from '@features/menu/components/MenuItemDetailMod
 import { MenuMealTimeCard } from '@features/menu/components/MenuMealTimeCard';
 import { TemplateActionsMenu } from '@features/template/components/TemplateActionsMenu';
 import { DayTab } from '@features/template/components/DayTab';
+import type { ApplyTemplateSelection } from '@features/template/components/ApplyTemplateModal';
 import { useSession } from '@/providers/AuthProvider';
 import { isApiErrorWithStatus } from '@/services/api/http-client';
 import {
+    applyTemplate,
+    buildApplyTemplatePayload,
+    deleteTemplate,
     fetchTemplateDetailScreenData,
     type TemplateDetailScreenData,
 } from '@features/template/api/template.api';
 import type { MenuMealItem, MenuNutrition } from '@features/menu/utils/menu-meal-times';
 import { calculateTemplateNutrition } from '@features/template/utils/template-screen-data';
+import {
+    buildTemplateApplySuccessMessage,
+    showTemplateSuccessAlert,
+    TEMPLATE_ACTION_SUCCESS_MESSAGES,
+} from '@features/template/utils/template-success-alert';
 
 type TemplateDetailScreenState = 'loading' | 'ready' | 'notFound' | 'error';
 
@@ -171,6 +180,45 @@ export default function TemplateDetailScreen() {
         }
     };
 
+    const handleApplyTemplate = useCallback(
+        async (selection: ApplyTemplateSelection) => {
+            if (!session?.accessToken) {
+                throw new Error('Missing access token. Please sign in again.');
+            }
+
+            if (!templateDetailData) {
+                throw new Error('Template details are unavailable right now.');
+            }
+
+            const response = await applyTemplate({
+                accessToken: session.accessToken,
+                payload: buildApplyTemplatePayload(selection),
+                templateId: templateDetailData.templateId,
+            });
+
+            showTemplateSuccessAlert(buildTemplateApplySuccessMessage(response));
+        },
+        [session?.accessToken, templateDetailData],
+    );
+
+    const handleDeleteTemplate = useCallback(async () => {
+        if (!session?.accessToken) {
+            throw new Error('Missing access token. Please sign in again.');
+        }
+
+        if (!templateDetailData) {
+            throw new Error('Template details are unavailable right now.');
+        }
+
+        await deleteTemplate({
+            accessToken: session.accessToken,
+            templateId: templateDetailData.templateId,
+        });
+
+        showTemplateSuccessAlert(TEMPLATE_ACTION_SUCCESS_MESSAGES.delete);
+        router.replace('/template');
+    }, [router, session?.accessToken, templateDetailData]);
+
     const renderHeader = () => {
         return (
             <XStack h={40} ai="center" jc="center" pos="relative" w="100%">
@@ -188,7 +236,12 @@ export default function TemplateDetailScreen() {
                 </SizableText>
                 {screenState === 'ready' && templateDetailData ? (
                     <XStack pos="absolute" r={0}>
-                        <TemplateActionsMenu templateId={templateDetailData.templateId} triggerColor="$text" />
+                        <TemplateActionsMenu
+                            templateId={templateDetailData.templateId}
+                            triggerColor="$text"
+                            onApplyToDate={handleApplyTemplate}
+                            onDelete={handleDeleteTemplate}
+                        />
                     </XStack>
                 ) : null}
             </XStack>

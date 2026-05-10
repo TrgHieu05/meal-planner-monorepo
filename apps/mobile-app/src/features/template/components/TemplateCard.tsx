@@ -9,8 +9,8 @@ import type { ApplyTemplateSelection } from '@features/template/components/Apply
 export interface TemplateCardProps {
     dayCount: number;
     nutritionSummary: string;
-    onApplyToDate?: (selection: ApplyTemplateSelection) => void;
-    onDelete?: () => void;
+    onApplyToDate?: (selection: ApplyTemplateSelection) => Promise<void> | void;
+    onDelete?: () => Promise<void> | void;
     templateId: string;
     title: string;
 }

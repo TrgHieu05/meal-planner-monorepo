@@ -8,10 +8,19 @@ import { useRouter } from 'expo-router';
 import { Button } from '@components';
 import { useSession } from '@/providers/AuthProvider';
 import {
+    applyTemplate,
+    buildApplyTemplatePayload,
+    deleteTemplate,
     fetchTemplateListScreenData,
     type TemplateListItemScreenData,
 } from '@features/template/api/template.api';
+import type { ApplyTemplateSelection } from '@features/template/components/ApplyTemplateModal';
 import { TemplateCard } from '@features/template/components/TemplateCard';
+import {
+    buildTemplateApplySuccessMessage,
+    showTemplateSuccessAlert,
+    TEMPLATE_ACTION_SUCCESS_MESSAGES,
+} from '@features/template/utils/template-success-alert';
 
 function resolveTemplateListErrorMessage(error: unknown, fallbackMessage: string) {
     if (error instanceof Error && error.message.trim()) {
@@ -97,6 +106,42 @@ export default function TemplateListScreen() {
         });
     }, [loadTemplates]);
 
+    const handleApplyTemplate = useCallback(
+        async (templateId: string, selection: ApplyTemplateSelection) => {
+            if (!session?.accessToken) {
+                throw new Error('Missing access token. Please sign in again.');
+            }
+
+            const response = await applyTemplate({
+                accessToken: session.accessToken,
+                payload: buildApplyTemplatePayload(selection),
+                templateId,
+            });
+
+            showTemplateSuccessAlert(buildTemplateApplySuccessMessage(response));
+        },
+        [session?.accessToken],
+    );
+
+    const handleDeleteTemplate = useCallback(
+        async (templateId: string) => {
+            if (!session?.accessToken) {
+                throw new Error('Missing access token. Please sign in again.');
+            }
+
+            await deleteTemplate({
+                accessToken: session.accessToken,
+                templateId,
+            });
+
+            setTemplates((currentTemplates) =>
+                currentTemplates.filter((template) => template.templateId !== templateId),
+            );
+            showTemplateSuccessAlert(TEMPLATE_ACTION_SUCCESS_MESSAGES.delete);
+        },
+        [session?.accessToken],
+    );
+
     return (
         <YStack f={1} ai="center" bg="$background" p="$space.md" gap="$space.lg">
             <XStack h={40} ai="center" jc="center" pos="relative" w="100%">
@@ -157,6 +202,8 @@ export default function TemplateListScreen() {
                                 title={template.title}
                                 dayCount={template.dayCount}
                                 nutritionSummary={template.nutritionSummary}
+                                onApplyToDate={(selection) => handleApplyTemplate(template.templateId, selection)}
+                                onDelete={() => handleDeleteTemplate(template.templateId)}
                             />
                         ))}
                     </YStack>

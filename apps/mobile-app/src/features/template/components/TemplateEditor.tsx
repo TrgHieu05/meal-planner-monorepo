@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { ChevronLeft, Clipboard, Copy, Plus, Trash2 } from '@tamagui/lucide-icons-2';
 import { Label, ScrollView, SizableText, XStack, YStack } from 'tamagui';
 
@@ -15,10 +16,17 @@ import {
     calculateTemplateNutrition,
     cloneMealTimeGroups,
     cloneTemplateDays,
+    createTemplateEditorMealItem,
     createTemplateDay,
+    getNextTemplateMealItemId,
     type TemplateDayState,
     renumberTemplateDays,
 } from '@features/template/utils/template-screen-data';
+import {
+    buildTemplateMealPickerParams,
+    clearPendingTemplateMealSelection,
+    consumePendingTemplateMealSelection,
+} from '@features/template/utils/template-meal-picker';
 import { type MenuMealItem, type MenuMealTimeGroup } from '@features/menu/utils/menu-meal-times';
 
 export interface TemplateEditorDraft {
@@ -56,6 +64,7 @@ export function TemplateEditor({
 }: TemplateEditorProps) {
     const router = useRouter();
     const nextDaySequenceRef = useRef(initialDays.length + 1);
+    const nextMenuItemIdRef = useRef(getNextTemplateMealItemId(initialDays));
     const [templateName, setTemplateName] = useState(initialTemplateName);
     const [description, setDescription] = useState(initialDescription);
     const [days, setDays] = useState<TemplateDayState[]>(() => cloneTemplateDays(initialDays));
@@ -82,6 +91,57 @@ export function TemplateEditor({
     const clearSubmitError = useCallback(() => {
         onClearSubmitError?.();
     }, [onClearSubmitError]);
+
+    useFocusEffect(
+        useCallback(() => {
+            const selection = consumePendingTemplateMealSelection();
+
+            if (!selection) {
+                return;
+            }
+
+            clearSubmitError();
+            setSelectedDayUiKey(selection.dayUiKey);
+            setDays((currentDays) => {
+                const targetDay = currentDays.find((day) => day.uiKey === selection.dayUiKey);
+
+                if (!targetDay) {
+                    return currentDays;
+                }
+
+                const nextMenuItemId = nextMenuItemIdRef.current;
+                nextMenuItemIdRef.current += 1;
+
+                return currentDays.map((day) =>
+                    day.uiKey !== selection.dayUiKey
+                        ? day
+                        : {
+                              ...day,
+                              mealTimeGroups: day.mealTimeGroups.map((group) =>
+                                  group.mealTime !== selection.mealTime
+                                      ? group
+                                      : {
+                                            ...group,
+                                            items: [
+                                                ...group.items,
+                                                createTemplateEditorMealItem({
+                                                    cookTime: selection.cookTime,
+                                                    dayNumber: day.dayNumber,
+                                                    difficulty: selection.difficulty,
+                                                    mealId: selection.mealId,
+                                                    mealName: selection.mealName,
+                                                    mealTime: selection.mealTime,
+                                                    menuItemId: nextMenuItemId,
+                                                    nutritionPerServing: selection.nutritionPerServing,
+                                                }),
+                                            ],
+                                        },
+                              ),
+                          },
+                );
+            });
+        }, [clearSubmitError]),
+    );
 
     const handleTemplateNameChange = useCallback(
         (value: string) => {
@@ -173,7 +233,26 @@ export function TemplateEditor({
         }
     }, [clearSubmitError, days, isSubmitting, selectedDay]);
 
-    const handleAddMeal = useCallback((_mealTime: MenuMealTimeGroup['mealTime']) => undefined, []);
+    const handleAddMeal = useCallback(
+        (mealTime: MenuMealTimeGroup['mealTime']) => {
+            if (isSubmitting || !selectedDay) {
+                return;
+            }
+
+            clearPendingTemplateMealSelection();
+            clearSubmitError();
+            router.push({
+                pathname: '/meal-search',
+                params: buildTemplateMealPickerParams({
+                    source: 'template',
+                    dayNumber: selectedDay.dayNumber,
+                    dayUiKey: selectedDay.uiKey,
+                    mealTime,
+                }),
+            });
+        },
+        [clearSubmitError, isSubmitting, router, selectedDay],
+    );
     const handleItemDetailOpenChange = useCallback((open: boolean) => {
         if (!open) {
             setSelectedMealItem(null);

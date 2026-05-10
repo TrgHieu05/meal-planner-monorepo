@@ -1,6 +1,7 @@
 import {
     createEmptyMenuMealTimeGroups,
     sumMenuMealTimeNutrition,
+    type MenuDifficulty,
     type MenuMealItem,
     type MenuMealTimeGroup,
     type MenuNutrition,
@@ -20,6 +21,18 @@ interface CreateTemplateDayOptions {
     dayNumber: number;
     mealsByTime?: TemplateMealItemsByTime;
     uiKey?: string;
+}
+
+interface CreateTemplateEditorMealItemOptions {
+    cookTime?: string;
+    dayNumber: number;
+    difficulty?: MenuDifficulty;
+    mealId: number;
+    mealName: string;
+    mealTime: MenuMealTimeGroup['mealTime'];
+    menuItemId: number;
+    nutritionPerServing: MenuNutrition;
+    portionSize?: number;
 }
 
 export interface TemplateDraftSeed {
@@ -108,6 +121,40 @@ export function calculateTemplateNutrition(groups: readonly MenuMealTimeGroup[])
     const items = groups.flatMap((group) => group.items);
 
     return items.length > 0 ? sumMenuMealTimeNutrition(items) : EMPTY_TEMPLATE_NUTRITION;
+}
+
+export function createTemplateEditorMealItem({
+    cookTime,
+    dayNumber,
+    difficulty,
+    mealId,
+    mealName,
+    mealTime,
+    menuItemId,
+    nutritionPerServing,
+    portionSize = 1,
+}: CreateTemplateEditorMealItemOptions): MenuMealItem {
+    return {
+        menuItemId,
+        mealId,
+        mealName,
+        date: `Day ${dayNumber}`,
+        mealTime,
+        portionSize,
+        eated: false,
+        cookTime,
+        difficulty,
+        nutritionPerServing: {
+            ...nutritionPerServing,
+        },
+    };
+}
+
+export function getNextTemplateMealItemId(days: readonly TemplateDayState[]) {
+    return (
+        days.flatMap((day) => day.mealTimeGroups.flatMap((group) => group.items))
+            .reduce((highestMenuItemId, item) => Math.max(highestMenuItemId, item.menuItemId), 0) + 1
+    );
 }
 
 export function createTemplateDay({

@@ -55,10 +55,10 @@ Ngoài phạm vi mặc định của tài liệu này:
 - [x] Mobile `TemplateDetailScreen` đã fetch detail theo `templateId` route param và không còn dùng fallback `sample-template`.
 - [x] Mobile `CreateTemplateScreen` đã khởi tạo bằng `1` day rỗng local đúng rule mới.
 - [x] Mobile `EditTemplateScreen` đã load dữ liệu backend thật trước khi mở editor và không còn khởi tạo từ seed local.
-- [ ] `TemplateEditor` hiện vẫn còn `handleAddMeal` là no-op, nên flow chọn món cho template chưa hoàn tất.
+- [x] `TemplateEditor` đã nối `handleAddMeal` với meal search/detail flow thật và local draft được giữ nguyên khi round-trip qua stack.
 - [x] `TemplateEditor` đã có submit flow thật cho create/edit theo strategy `template metadata + upsert day + delete day`.
 - [ ] `TemplateActionsMenu` mới chỉ mở modal `Apply` và `Delete`; mobile chưa nối mutation thật cho delete/apply dù backend hiện đã có apply endpoint.
-- [ ] Meal search/detail flow hiện chỉ mang context add-to-menu bằng `date` và `mealTime`; chưa có context `templateId` hoặc `dayNumber` để tái dùng trực tiếp cho template.
+- [x] Meal search/detail flow đã mang đủ draft context cho template (`source`, `dayUiKey`, `dayNumber`, `mealTime`) để quay về editor local state.
 - [x] Mobile template UI hiện giữ `nutritionSummary` và `MacroStatDetailCard`; list/detail/editor đã dùng dữ liệu thật cho load/save hiện có.
 - [x] Mobile app đã có test utility/api riêng cho feature template; screen-level integration test vẫn chưa có.
 
@@ -104,10 +104,10 @@ Ngoài phạm vi mặc định của tài liệu này:
 
 - [x] Reuse meal search/detail hiện tại và mở rộng context để phục vụ template.
 - [x] Item add/edit/delete vẫn stage local; chỉ persist khi `Save Template`.
-- [ ] Thiết kế lại `handleAddMeal` trong `TemplateEditor`.
-- [ ] Mở rộng route/query context hoặc return flow để truyền đủ `templateId` hoặc draft context, `dayNumber`, `mealTime` và dữ liệu cần để quay về editor.
-- [ ] Ở `MealDetailScreen`, thêm branch cho source=`template` để thay flow `Add to Menu` bằng flow chọn item cho template draft.
-- [ ] Đảm bảo khi chọn meal từ flow template, editor nhận được cả item data và nutrition data cần cho macro local.
+- [x] Thiết kế lại `handleAddMeal` trong `TemplateEditor`.
+- [x] Mở rộng route/query context hoặc return flow để truyền đủ draft context, `dayUiKey`, `dayNumber`, `mealTime` và dữ liệu cần để quay về editor.
+- [x] Ở `MealDetailScreen`, thêm branch cho source=`template` để thay flow `Add to Menu` bằng flow chọn item cho template draft.
+- [x] Đảm bảo khi chọn meal từ flow template, editor nhận được cả item data và nutrition data thật cần cho macro local.
 
 ## Checklist triển khai theo lớp
 
@@ -190,11 +190,11 @@ Ngoài phạm vi mặc định của tài liệu này:
 
 #### Editor interactions
 
-- [ ] Thay `handleAddMeal` no-op bằng flow chọn meal thật.
+- [x] Thay `handleAddMeal` no-op bằng flow chọn meal thật.
 - [x] Thay `handleSubmit` no-op bằng save flow thật.
 - [x] Giữ behavior copy/paste/delete day nhưng đảm bảo không làm sai `dayNumber` backend.
 - [x] Đồng bộ `MenuItemDetailModal` với item template thật khi sửa portion hoặc xóa item.
-- [ ] Dùng nutrition data thật từ adapter để tiếp tục render các macro card hiện tại.
+- [x] Dùng nutrition data thật từ adapter/detail flow để tiếp tục render các macro card hiện tại.
 
 #### Actions menu và modal
 
@@ -239,7 +239,7 @@ Hiện tại không còn mục nghiệp vụ mở trong tài liệu này. Phần
 3. [x] Tạo data layer `template.api.ts` và adapter map response backend sang list/detail/editor state.
 4. [x] Nối list screen và detail screen với API thật, đồng thời thay `nutritionSummary` sample bằng dữ liệu thật.
 5. [x] Hoàn thiện create/edit submit flow theo strategy `template metadata + upsert day + delete day`.
-6. [ ] Hoàn thiện reuse meal search/detail cho flow chọn món của template và cập nhật editor local state.
+6. [x] Hoàn thiện reuse meal search/detail cho flow chọn món của template và cập nhật editor local state.
 7. [ ] Nối delete template thật và hoàn thiện apply template mutation theo UX hiện tại.
 8. [ ] Dọn lại toàn bộ front-end để loại bỏ các phần liên quan đến mock và seed, đảm bảo mọi dữ liệu template đều đến từ backend.
 9. [ ] Bổ sung backend e2e còn thiếu, mobile tests cho template adapter/editor và manual QA checklist.
@@ -252,6 +252,7 @@ Hiện tại không còn mục nghiệp vụ mở trong tài liệu này. Phần
 - Bước 3 đã hoàn tất ở data layer: mobile đã có `template.api.ts` với authenticated fetch/mutation, schema parsing từ shared, adapter cho list/detail/editor state và builder cho payload create/edit/day/item/apply, kèm Jest coverage.
 - Bước 4 đã hoàn tất ở list/detail screens: `TemplateListScreen` và `TemplateDetailScreen` đã fetch dữ liệu thật theo session/templateId, có loading/error/empty/not-found state phù hợp và `nutritionSummary`/macro ở list-detail không còn phụ thuộc sample data.
 - Bước 5 đã hoàn tất ở create/edit submit flow: `TemplateEditor` đã nhận callback submit thật với pending/error state, `CreateTemplateScreen` gọi `POST template` rồi upsert day và rollback nếu create bị lỗi giữa chừng, còn `EditTemplateScreen` load dữ liệu thật, `PATCH` metadata, `PUT` toàn bộ day hiện tại và `DELETE` các day biến mất khỏi snapshot ban đầu trước khi quay về detail.
+- Bước 6 đã hoàn tất ở flow chọn món cho template: `TemplateEditor` đẩy draft context sang meal search, `MealSearchScreen` chuyển tiếp context sang detail và tự pop về editor khi đã có selection, còn `MealDetailScreen` branch theo `source=template` để stage item local với nutrition thật trước khi quay lại editor.
 - Scope hiện tại đã được khóa theo hướng rộng hơn tài liệu `feature_template_v1.md`: giữ macro UI và hoàn thiện `Apply Template`.
 - Để tận dụng lại `calculateTemplateNutrition(...)`, contract template mới nên ưu tiên trả nutrition data ngay trong response thay vì buộc mobile fetch chi tiết từng meal sau đó mới tính tổng.
 - Sau mọi thay đổi ở `packages/shared`, cần build lại shared package trước khi kiểm tra runtime backend/mobile vì backend hiện dùng runtime export từ package workspace.

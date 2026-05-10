@@ -12,6 +12,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { SizableText, ScrollView, XStack, YStack, useTheme } from 'tamagui';
 
 import { fetchMealDetailViewModel } from '../api/meal.api';
+import {
+	buildTemplateMealPickerLabel,
+	parseTemplateMealPickerContext,
+	stagePendingTemplateMealSelection,
+} from '@features/template/utils/template-meal-picker';
 
 import type { MealDetailViewModel } from '../types';
 
@@ -69,12 +74,32 @@ export default function MealDetailScreen() {
 	const [screenState, setScreenState] = useState<MealDetailScreenState>('loading');
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 	const [reloadNonce, setReloadNonce] = useState(0);
-	const params = useLocalSearchParams<{ mealId?: string | string[]; mealTime?: string | string[]; date?: string | string[] }>();
+	const params = useLocalSearchParams<{
+		date?: string | string[];
+		mealId?: string | string[];
+		mealTime?: string | string[];
+		source?: string | string[];
+		templateDayNumber?: string | string[];
+		templateDayUiKey?: string | string[];
+	}>();
 	const mealIdParam = getSingleSearchParam(params.mealId);
 	const mealId = useMemo(() => parseMealIdParam(mealIdParam), [mealIdParam]);
 	const mealTimeParam = getSingleSearchParam(params.mealTime);
 	const dateParam = getSingleSearchParam(params.date);
+	const templatePickerContext = useMemo(
+		() =>
+			parseTemplateMealPickerContext({
+				mealTime: params.mealTime,
+				source: params.source,
+				templateDayNumber: params.templateDayNumber,
+				templateDayUiKey: params.templateDayUiKey,
+			}),
+		[params.mealTime, params.source, params.templateDayNumber, params.templateDayUiKey],
+	);
 	const addToMenuLabel = buildAddToMenuLabel(mealTimeParam, dateParam) ?? 'Add to Menu';
+	const actionButtonLabel = templatePickerContext
+		? buildTemplateMealPickerLabel(templatePickerContext)
+		: addToMenuLabel;
 	const hasLockedAddMealContext = Boolean(mealTimeParam && dateParam);
 
 	useEffect(() => {
@@ -149,6 +174,28 @@ export default function MealDetailScreen() {
 				date: dateParam,
 			},
 		});
+	}
+
+	function handleAddTemplateMeal() {
+		if (!meal || !templatePickerContext) {
+			return;
+		}
+
+		stagePendingTemplateMealSelection({
+			...templatePickerContext,
+			mealId: meal.mealId,
+			mealName: meal.mealName,
+			cookTime: meal.cookTime,
+			difficulty: meal.difficulty,
+			nutritionPerServing: {
+				calories: parseMealNutritionValue(meal.totalCalories),
+				protein: parseMealNutritionValue(meal.totalProtein),
+				fiber: parseMealNutritionValue(meal.totalFiber),
+				fat: parseMealNutritionValue(meal.totalFat),
+			},
+		});
+
+		router.back();
 	}
 
 	function renderBackAction() {
@@ -313,20 +360,40 @@ export default function MealDetailScreen() {
 
 				
             <YStack p="$space.md"  bg="$background" >
-					<Button w="100%" color="primary" size="large" onPress={() => setIsAddMealModalOpen(true)}>
-                    <Button.Text>{addToMenuLabel}</Button.Text>
+						<Button
+							w="100%"
+							color="primary"
+							size="large"
+							onPress={() => {
+								if (templatePickerContext) {
+									handleAddTemplateMeal();
+									return;
+								}
+
+								setIsAddMealModalOpen(true);
+							}}
+						>
+					    <Button.Text>{actionButtonLabel}</Button.Text>
                 </Button>
             </YStack>
 
-				<AddMealModal
-					open={isAddMealModalOpen}
-					onOpenChange={setIsAddMealModalOpen}
-					mealId={meal.mealId}
-					hideDateAndMealTime={hasLockedAddMealContext}
-					lockedDate={dateParam}
-					lockedMealTime={mealTimeParam}
-					onSuccess={handleAddMealSuccess}
-				/>
+					{!templatePickerContext ? (
+						<AddMealModal
+							open={isAddMealModalOpen}
+							onOpenChange={setIsAddMealModalOpen}
+							mealId={meal.mealId}
+							hideDateAndMealTime={hasLockedAddMealContext}
+							lockedDate={dateParam}
+							lockedMealTime={mealTimeParam}
+							onSuccess={handleAddMealSuccess}
+						/>
+					) : null}
 		</SafeAreaView>
 	);
 }
+
+	function parseMealNutritionValue(value: string) {
+		const parsedValue = Number.parseFloat(value);
+
+		return Number.isFinite(parsedValue) ? parsedValue : 0;
+	}

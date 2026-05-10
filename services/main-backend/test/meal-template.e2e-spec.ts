@@ -17,6 +17,7 @@ describe('MealTemplate API (e2e)', () => {
       createTemplate: jest.fn(),
       getTemplates: jest.fn(),
       getTemplateDetail: jest.fn(),
+      applyTemplate: jest.fn(),
       updateTemplate: jest.fn(),
       deleteTemplate: jest.fn(),
       upsertDay: jest.fn(),
@@ -72,7 +73,16 @@ describe('MealTemplate API (e2e)', () => {
   });
 
   it('GET /api/v1/meal-templates should return 200', async () => {
-    service.getTemplates.mockResolvedValue({ list: [{ id: 'uuid-1', name: 'T1', dayCount: 1 }] });
+    service.getTemplates.mockResolvedValue({
+      list: [
+        {
+          id: '550e8400-e29b-41d4-a716-446655440001',
+          name: 'T1',
+          dayCount: 1,
+          nutritionTotal: { calories: 100, protein: 10, fat: 5, fiber: 2 },
+        },
+      ],
+    });
 
     const res = await request(app.getHttpServer())
       .get('/api/v1/meal-templates')
@@ -81,5 +91,33 @@ describe('MealTemplate API (e2e)', () => {
 
     expect(res.body.list).toHaveLength(1);
     expect(service.getTemplates).toHaveBeenCalledWith(userId);
+  });
+
+  it('POST /api/v1/meal-templates/:id/apply should return 200', async () => {
+    service.applyTemplate.mockResolvedValue({
+      templateId: '550e8400-e29b-41d4-a716-446655440001',
+      startDate: '2026-05-10',
+      endDate: '2026-05-12',
+      appliedDayCount: 3,
+      replaceExistingMeals: true,
+      createdMenuCount: 2,
+      updatedMenuCount: 1,
+      deletedMenuCount: 0,
+      createdItemCount: 6,
+      skippedExistingItemCount: 0,
+    });
+
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/meal-templates/550e8400-e29b-41d4-a716-446655440001/apply')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ startDate: '2026-05-10' })
+      .expect(200);
+
+    expect(res.body.appliedDayCount).toBe(3);
+    expect(service.applyTemplate).toHaveBeenCalledWith(
+      userId,
+      '550e8400-e29b-41d4-a716-446655440001',
+      { startDate: '2026-05-10', replaceExistingMeals: true },
+    );
   });
 });

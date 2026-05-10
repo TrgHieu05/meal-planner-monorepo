@@ -3,9 +3,12 @@ import {
   NotFoundException,
   ForbiddenException,
   ConflictException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import {
+  ApplyMealTemplateRequest,
+  ApplyMealTemplateResponse,
   CreateMealTemplateRequest,
   UpdateMealTemplateRequest,
   MealTemplateListResponse,
@@ -14,12 +17,20 @@ import {
   UpdateMealTemplateItemRequest,
   UpsertMealTemplateDayRequest,
   MealTemplateItemResponse,
+  MealTemplateNutrition,
   MealTime,
 } from '@meal/shared';
 
 @Injectable()
 export class MealTemplateService {
   constructor(private readonly prisma: PrismaService) {}
+
+  private readonly emptyNutrition: MealTemplateNutrition = {
+    calories: 0,
+    protein: 0,
+    fat: 0,
+    fiber: 0,
+  };
 
   // Helpers
   private async checkOwnership(templateId: string, userId: string) {
@@ -35,6 +46,140 @@ export class MealTemplateService {
     if (template.userId !== userId) {
       throw new ForbiddenException('You do not have access to this template.');
     }
+  }
+
+  private roundTo2(value: number) {
+    return Math.round(value * 100) / 100;
+  }
+
+  private buildNutritionFromMeal(meal: {
+    totalCalories: number;
+    totalProtein: number;
+    totalFat: number;
+    totalFiber: number;
+  }): MealTemplateNutrition {
+    return {
+      calories: this.roundTo2(meal.totalCalories),
+      protein: this.roundTo2(meal.totalProtein),
+      fat: this.roundTo2(meal.totalFat),
+      fiber: this.roundTo2(meal.totalFiber),
+    };
+  }
+
+  private sumItemNutrition(items: Array<{
+    portionSize: number;
+    meal: {
+      totalCalories: number;
+      totalProtein: number;
+      totalFat: number;
+      totalFiber: number;
+    };
+  }>): MealTemplateNutrition {
+    const totals = items.reduce(
+      (accumulator, item) => {
+        accumulator.calories += item.meal.totalCalories * item.portionSize;
+        accumulator.protein += item.meal.totalProtein * item.portionSize;
+        accumulator.fat += item.meal.totalFat * item.portionSize;
+        accumulator.fiber += item.meal.totalFiber * item.portionSize;
+        return accumulator;
+      },
+      { calories: 0, protein: 0, fat: 0, fiber: 0 },
+    );
+
+    return {
+      calories: this.roundTo2(totals.calories),
+      protein: this.roundTo2(totals.protein),
+      fat: this.roundTo2(totals.fat),
+      fiber: this.roundTo2(totals.fiber),
+    };
+  }
+
+  private mapTemplateItemsByMealTime(
+    items: Array<{
+      id: string;
+      mealId: number;
+      mealTime: MealTime;
+      portionSize: number;
+      meal: {
+        name: string;
+        totalCalories: number;
+        totalProtein: number;
+        totalFat: number;
+        totalFiber: number;
+      };
+    }>,
+    mealTime: MealTime,
+  ): MealTemplateItemResponse[] {
+    return items
+      .filter((item) => item.mealTime === mealTime)
+      .map((item) => ({
+        itemId: item.id,
+        mealId: item.mealId,
+        mealName: item.meal.name,
+        portionSize: item.portionSize,
+        nutritionPerServing: this.buildNutritionFromMeal(item.meal),
+      }));
+  }
+
+  private addDaysToDateString(dateString: string, dayOffset: number) {
+    const [year, month, day] = dateString.split('-').map(Number);
+    const utcDate = new Date(Date.UTC(year, (month ?? 1) - 1, day ?? 1));
+    utcDate.setUTCDate(utcDate.getUTCDate() + dayOffset);
+
+    const nextYear = utcDate.getUTCFullYear();
+    const nextMonth = `${utcDate.getUTCMonth() + 1}`.padStart(2, '0');
+    const nextDay = `${utcDate.getUTCDate()}`.padStart(2, '0');
+    return `${nextYear}-${nextMonth}-${nextDay}`;
+  }
+
+  private toBusinessDayStartUtc(date: string) {
+    return new Date(`${date}T00:00:00.000+07:00`);
+  }
+
+  private isUniqueConstraintError(error: unknown) {
+    if (!error || typeof error !== 'object') {
+      return false;
+    }
+
+    const value = error as { code?: unknown };
+    return value.code === 'P2002';
+  }
+
+  private async recalculateAndPersistMenuTotals(tx: any, menuId: number) {
+    const items = await tx.menuItem.findMany({
+      where: { menuId },
+      include: {
+        meal: {
+          select: {
+            totalCalories: true,
+            totalProtein: true,
+            totalFat: true,
+            totalFiber: true,
+          },
+        },
+      },
+    });
+
+    const totals = items.reduce(
+      (accumulator: { calories: number; protein: number; fat: number; fiber: number }, item: any) => {
+        accumulator.calories += item.meal.totalCalories * item.portionSize;
+        accumulator.protein += item.meal.totalProtein * item.portionSize;
+        accumulator.fat += item.meal.totalFat * item.portionSize;
+        accumulator.fiber += item.meal.totalFiber * item.portionSize;
+        return accumulator;
+      },
+      { calories: 0, protein: 0, fat: 0, fiber: 0 },
+    );
+
+    await tx.menu.update({
+      where: { id: menuId },
+      data: {
+        totalCalories: this.roundTo2(totals.calories),
+        totalProtein: this.roundTo2(totals.protein),
+        totalFat: this.roundTo2(totals.fat),
+        totalFiber: this.roundTo2(totals.fiber),
+      },
+    });
   }
 
   // --- Core Template Operations ---
@@ -57,6 +202,22 @@ export class MealTemplateService {
         _count: {
           select: { days: true },
         },
+        days: {
+          include: {
+            items: {
+              include: {
+                meal: {
+                  select: {
+                    totalCalories: true,
+                    totalProtein: true,
+                    totalFat: true,
+                    totalFiber: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -67,6 +228,7 @@ export class MealTemplateService {
         name: t.name,
         description: t.description,
         dayCount: t._count.days,
+        nutritionTotal: this.sumItemNutrition(t.days.flatMap((day) => day.items)),
       })),
     };
   }
@@ -92,27 +254,18 @@ export class MealTemplateService {
       throw new NotFoundException('Meal template not found.');
     }
 
-    const mapItems = (items: any[], mealTime: MealTime): MealTemplateItemResponse[] => {
-      return items
-        .filter((i) => i.mealTime === mealTime)
-        .map((i) => ({
-          itemId: i.id,
-          mealId: i.mealId,
-          mealName: i.meal.name,
-          portionSize: i.portionSize,
-        }));
-    };
-
     return {
       id: template.id,
       name: template.name,
       description: template.description,
+      nutritionTotal: this.sumItemNutrition(template.days.flatMap((day) => day.items)),
       days: template.days.map((day) => ({
         dayNumber: day.dayNumber,
+        nutritionTotal: this.sumItemNutrition(day.items),
         meals: {
-          BREAKFAST: mapItems(day.items, 'BREAKFAST'),
-          LUNCH: mapItems(day.items, 'LUNCH'),
-          DINNER: mapItems(day.items, 'DINNER'),
+          BREAKFAST: this.mapTemplateItemsByMealTime(day.items, 'BREAKFAST'),
+          LUNCH: this.mapTemplateItemsByMealTime(day.items, 'LUNCH'),
+          DINNER: this.mapTemplateItemsByMealTime(day.items, 'DINNER'),
         },
       })),
     };
@@ -134,6 +287,192 @@ export class MealTemplateService {
   async deleteTemplate(userId: string, id: string) {
     await this.checkOwnership(id, userId);
     await this.prisma.mealTemplate.delete({ where: { id } });
+  }
+
+  async applyTemplate(
+    userId: string,
+    templateId: string,
+    data: ApplyMealTemplateRequest,
+  ): Promise<ApplyMealTemplateResponse> {
+    await this.checkOwnership(templateId, userId);
+
+    const template = await this.prisma.mealTemplate.findUnique({
+      where: { id: templateId },
+      include: {
+        days: {
+          include: {
+            items: {
+              orderBy: { createdAt: 'asc' },
+            },
+          },
+          orderBy: { dayNumber: 'asc' },
+        },
+      },
+    });
+
+    if (!template) {
+      throw new NotFoundException('Meal template not found.');
+    }
+
+    if (template.days.length === 0) {
+      throw new UnprocessableEntityException('Template has no days to apply.');
+    }
+
+    const maxDayNumber = template.days.reduce(
+      (currentMax, day) => Math.max(currentMax, day.dayNumber),
+      0,
+    );
+
+    const counters = await this.prisma.$transaction(async (tx) => {
+      const result = {
+        createdMenuCount: 0,
+        updatedMenuCount: 0,
+        deletedMenuCount: 0,
+        createdItemCount: 0,
+        skippedExistingItemCount: 0,
+      };
+
+      for (const day of template.days) {
+        const targetDate = this.addDaysToDateString(data.startDate, day.dayNumber - 1);
+        const menuDate = this.toBusinessDayStartUtc(targetDate);
+        const nextItems = day.items.map((item) => ({
+          mealId: item.mealId,
+          mealTime: item.mealTime,
+          portionSize: item.portionSize,
+          eated: false,
+        }));
+
+        let menu = await tx.menu.findFirst({
+          where: { userId, date: menuDate },
+          select: { id: true },
+        });
+        const hadExistingMenu = Boolean(menu);
+
+        if (data.replaceExistingMeals) {
+          if (nextItems.length === 0) {
+            if (menu) {
+              await tx.menuItem.deleteMany({ where: { menuId: menu.id } });
+              await tx.menu.delete({ where: { id: menu.id } });
+              result.deletedMenuCount += 1;
+            }
+            continue;
+          }
+
+          if (!menu) {
+            menu = await tx.menu.create({
+              data: {
+                userId,
+                date: menuDate,
+                totalCalories: 0,
+                totalProtein: 0,
+                totalFat: 0,
+                totalFiber: 0,
+              },
+              select: { id: true },
+            });
+            result.createdMenuCount += 1;
+          } else {
+            await tx.menuItem.deleteMany({ where: { menuId: menu.id } });
+            result.updatedMenuCount += 1;
+          }
+
+          if (!menu) {
+            throw new UnprocessableEntityException('Unable to resolve target menu for template apply.');
+          }
+
+          const replaceTargetMenuId = menu.id;
+
+          await tx.menuItem.createMany({
+            data: nextItems.map((item) => ({
+              menuId: replaceTargetMenuId,
+              mealId: item.mealId,
+              mealTime: item.mealTime,
+              portionSize: item.portionSize,
+              eated: item.eated,
+            })),
+          });
+          result.createdItemCount += nextItems.length;
+          await this.recalculateAndPersistMenuTotals(tx, replaceTargetMenuId);
+          continue;
+        }
+
+        if (nextItems.length === 0) {
+          continue;
+        }
+
+        if (!menu) {
+          try {
+            menu = await tx.menu.create({
+              data: {
+                userId,
+                date: menuDate,
+                totalCalories: 0,
+                totalProtein: 0,
+                totalFat: 0,
+                totalFiber: 0,
+              },
+              select: { id: true },
+            });
+            result.createdMenuCount += 1;
+          } catch (error) {
+            if (!this.isUniqueConstraintError(error)) {
+              throw error;
+            }
+
+            menu = await tx.menu.findFirst({
+              where: { userId, date: menuDate },
+              select: { id: true },
+            });
+
+            if (!menu) {
+              throw error;
+            }
+          }
+        }
+
+        if (!menu) {
+          throw new UnprocessableEntityException('Unable to resolve target menu for template apply.');
+        }
+
+        const mergeTargetMenuId = menu.id;
+
+        const created = await tx.menuItem.createMany({
+          data: nextItems.map((item) => ({
+            menuId: mergeTargetMenuId,
+            mealId: item.mealId,
+            mealTime: item.mealTime,
+            portionSize: item.portionSize,
+            eated: item.eated,
+          })),
+          skipDuplicates: true,
+        });
+
+        result.createdItemCount += created.count;
+        result.skippedExistingItemCount += nextItems.length - created.count;
+
+        if (created.count > 0) {
+          if (hadExistingMenu) {
+            result.updatedMenuCount += 1;
+          }
+          await this.recalculateAndPersistMenuTotals(tx, mergeTargetMenuId);
+        }
+      }
+
+      return result;
+    });
+
+    return {
+      templateId,
+      startDate: data.startDate,
+      endDate: this.addDaysToDateString(data.startDate, maxDayNumber - 1),
+      appliedDayCount: template.days.length,
+      replaceExistingMeals: data.replaceExistingMeals,
+      createdMenuCount: counters.createdMenuCount,
+      updatedMenuCount: counters.updatedMenuCount,
+      deletedMenuCount: counters.deletedMenuCount,
+      createdItemCount: counters.createdItemCount,
+      skippedExistingItemCount: counters.skippedExistingItemCount,
+    };
   }
 
   // --- Day & Item Operations ---
@@ -261,6 +600,7 @@ export class MealTemplateService {
       mealId: updated.mealId,
       mealName: updated.meal.name,
       portionSize: updated.portionSize,
+      nutritionPerServing: this.buildNutritionFromMeal(updated.meal),
     };
     return response;
   }

@@ -43,9 +43,11 @@ Ngoài phạm vi mặc định của tài liệu này:
 
 - [x] Backend đã có module `meal-template`, mount trong app backend và bảo vệ bằng `@RequireAuth()`.
 - [x] Backend đã có đủ các API v1 cho `list`, `detail`, `create`, `update`, `delete`, `upsert day`, `add item`, `update item`, `delete item`, `delete day`.
+- [x] Backend đã có endpoint apply template: `POST /api/v1/meal-templates/:id/apply`.
 - [x] `packages/shared/types/meal-template.ts` đã có request/response schema cho contract template v1.
+- [x] Shared/backend contract template đã mở rộng để trả nutrition data cho list/detail/item và contract apply flow.
 - [x] Backend unit test cho `meal-template` đang pass.
-- [x] Backend e2e test cho `meal-template` đang pass ở các route `POST /api/v1/meal-templates` và `GET /api/v1/meal-templates`.
+- [x] Backend e2e test cho `meal-template` đang pass ở các route `POST /api/v1/meal-templates`, `GET /api/v1/meal-templates` và `POST /api/v1/meal-templates/:id/apply`.
 - [x] Mobile app đã có routing và UI shell cho các màn `TemplateList`, `TemplateDetail`, `CreateTemplate`, `EditTemplate`.
 - [x] Mobile app đã có `ApplyTemplateModal` với UX cơ bản gồm `selectedDate` và `replaceExistingMeals`.
 - [ ] Mobile app chưa có data layer riêng cho feature template. Hiện không có file `src/features/template/api/template.api.ts`.
@@ -53,9 +55,9 @@ Ngoài phạm vi mặc định của tài liệu này:
 - [ ] Mobile `TemplateDetailScreen` vẫn dùng `createTemplateDraftSeed()` và fallback `sample-template` thay vì fetch theo `templateId` thật.
 - [ ] Mobile `CreateTemplateScreen` và `EditTemplateScreen` vẫn khởi tạo từ seed local thay vì dữ liệu backend.
 - [ ] `TemplateEditor` hiện có `handleAddMeal` và `handleSubmit` là no-op, nên create/edit chưa lưu được gì.
-- [ ] `TemplateActionsMenu` mới chỉ mở modal `Apply` và `Delete`; chưa có mutation thật cho delete, còn apply thì chưa có backend endpoint tương ứng.
+- [ ] `TemplateActionsMenu` mới chỉ mở modal `Apply` và `Delete`; mobile chưa nối mutation thật cho delete/apply dù backend hiện đã có apply endpoint.
 - [ ] Meal search/detail flow hiện chỉ mang context add-to-menu bằng `date` và `mealTime`; chưa có context `templateId` hoặc `dayNumber` để tái dùng trực tiếp cho template.
-- [ ] Mobile template UI hiện giữ `nutritionSummary` và `MacroStatDetailCard`, nhưng shared/backend contract hiện chưa trả đủ nutrition data để nuôi UI này bằng dữ liệu thật.
+- [ ] Mobile template UI hiện giữ `nutritionSummary` và `MacroStatDetailCard`; shared/backend contract đã mở rộng nutrition data nhưng mobile chưa map và dùng dữ liệu thật.
 - [ ] Chưa có test mobile riêng cho feature template.
 
 ## Blocker ưu tiên cao
@@ -65,16 +67,16 @@ Ngoài phạm vi mặc định của tài liệu này:
 - [x] Scope hiện tại không còn giới hạn ở CRUD v1; feature cần hoàn thiện thêm luồng `Apply Template`.
 - [x] Action `Apply Template` nằm trong scope hiện tại.
 - [x] Giữ entry point `Apply to date...` trên mobile và tích hợp thật thay vì ẩn/tắt.
-- [ ] Thiết kế backend contract cho apply flow bám UX hiện tại của `ApplyTemplateModal`: `selectedDate` + `replaceExistingMeals`.
-- [ ] Chốt chiến lược ghi dữ liệu khi apply template vào `menus` thật, ưu tiên transaction để tránh trạng thái nửa chừng.
-- [ ] Bổ sung unit test, e2e test và OpenAPI cho apply flow sau khi contract được khóa.
+- [x] Thiết kế backend contract cho apply flow bám UX hiện tại của `ApplyTemplateModal`: `selectedDate` + `replaceExistingMeals`.
+- [x] Chốt chiến lược ghi dữ liệu khi apply template vào `menus` thật, ưu tiên transaction để tránh trạng thái nửa chừng.
+- [x] Bổ sung unit test, e2e test và OpenAPI cho apply flow sau khi contract được khóa.
 
 ### 2. Chốt xử lý phần nutrition trên UI template
 
 - [x] Giữ `nutritionSummary` ở list và `MacroStatDetailCard` ở detail/editor.
 - [x] Chốt hướng kỹ thuật: shared/backend phải mở rộng contract template để trả đủ dữ liệu nutrition; mobile tiếp tục dùng `calculateTemplateNutrition(...)` để tính tổng cục bộ khi edit.
-- [ ] Mở rộng `MealTemplateListResponse` để list card có nutrition summary thật thay vì chuỗi hardcoded.
-- [ ] Mở rộng `MealTemplateDetailResponse` để item/day có đủ nutrition fields cho editor/detail state.
+- [x] Mở rộng `MealTemplateListResponse` để list card có nutrition summary thật thay vì chuỗi hardcoded.
+- [x] Mở rộng `MealTemplateDetailResponse` để item/day có đủ nutrition fields cho editor/detail state.
 - [ ] Đồng bộ adapter mobile để map response mới sang `MenuMealItem` hoặc `TemplateDayState` có nutrition thật.
 - [ ] Không dùng placeholder lâu dài và không dùng waterfall `fetch meal detail` cho từng item chỉ để dựng macro.
 
@@ -110,17 +112,17 @@ Ngoài phạm vi mặc định của tài liệu này:
 ### A. `packages/shared`
 
 - [x] Đã có file schema `packages/shared/types/meal-template.ts` cho contract cơ bản của template v1.
-- [ ] Nếu mobile cần import ổn định từ root package, rà soát lại export của `@meal/shared` cho các type/schema template đang dùng.
-- [ ] Mở rộng schema template cho nutrition contract mới của list/detail/editor.
-- [ ] Thêm schema request hoặc response cho apply template.
-- [ ] Sau mọi thay đổi contract shared, build lại package trước khi verify runtime backend/mobile.
+- [x] Nếu mobile cần import ổn định từ root package, rà soát lại export của `@meal/shared` cho các type/schema template đang dùng.
+- [x] Mở rộng schema template cho nutrition contract mới của list/detail/editor.
+- [x] Thêm schema request hoặc response cho apply template.
+- [x] Sau mọi thay đổi contract shared, build lại package trước khi verify runtime backend/mobile.
 
 ### B. `packages/database`
 
 - [x] Schema database cho template/day/item đã tồn tại theo tài liệu `feature_template_v1.md`.
 - [ ] Xác nhận lại migration hiện tại đã phản ánh đúng unique constraint cho `template_id + day_number` ở mọi môi trường.
 - [x] Không cần migration riêng chỉ để giữ macro UI nếu tái sử dụng nutrition đã có từ meal.
-- [ ] Với apply flow, đánh giá xem chỉ cần transaction trên các bảng menu hiện có hay cần thêm bảng/log phục vụ audit.
+- [x] Với apply flow, đánh giá xem chỉ cần transaction trên các bảng menu hiện có hay cần thêm bảng/log phục vụ audit.
 
 ### C. Backend `services/main-backend`
 
@@ -134,9 +136,9 @@ Ngoài phạm vi mặc định của tài liệu này:
 - [ ] `PATCH /api/v1/meal-templates/:id/items/:itemId`
 - [ ] `DELETE /api/v1/meal-templates/:id/items/:itemId`
 - [ ] `DELETE /api/v1/meal-templates/:id/days/:dayNumber`
-- [ ] Thiết kế endpoint và service riêng cho apply flow.
-- [ ] Mở rộng response list/detail template để trả nutrition data đúng với UI hiện tại.
-- [ ] Regenerate OpenAPI nếu contract template thay đổi.
+- [x] Thiết kế endpoint và service riêng cho apply flow.
+- [x] Mở rộng response list/detail template để trả nutrition data đúng với UI hiện tại.
+- [x] Regenerate OpenAPI nếu contract template thay đổi.
 
 ### D. Mobile app `apps/mobile-app`
 
@@ -230,7 +232,7 @@ Hiện tại không còn mục nghiệp vụ mở trong tài liệu này. Phần
 
 ## Thứ tự thực hiện khuyến nghị
 
-1. [ ] Mở rộng shared/backend contract cho hai phần còn thiếu: nutrition data của template và apply template flow.
+1. [x] Mở rộng shared/backend contract cho hai phần còn thiếu: nutrition data của template và apply template flow.
 2. [ ] Refactor model state của template trên mobile để có `dayNumber` thật, `uiKey` ổn định và quy tắc renumber liên tục.
 3. [ ] Tạo data layer `template.api.ts` và adapter map response backend sang list/detail/editor state.
 4. [ ] Nối list screen và detail screen với API thật, đồng thời thay `nutritionSummary` sample bằng dữ liệu thật.
@@ -243,6 +245,7 @@ Hiện tại không còn mục nghiệp vụ mở trong tài liệu này. Phần
 ## Ghi chú triển khai
 
 - `meal-template` backend hiện đã đủ để hoàn thành CRUD v1 nếu mobile đi theo hướng save bằng metadata + day upsert; phần apply và nutrition contract là phần mở rộng cần làm thêm.
+- Bước 1 đã hoàn tất ở backend/shared: contract shared đã có nutrition + apply schema, backend đã trả nutrition trong list/detail/item update, có `POST /api/v1/meal-templates/:id/apply`, unit/e2e pass và OpenAPI đã được regenerate.
 - Scope hiện tại đã được khóa theo hướng rộng hơn tài liệu `feature_template_v1.md`: giữ macro UI và hoàn thiện `Apply Template`.
 - Để tận dụng lại `calculateTemplateNutrition(...)`, contract template mới nên ưu tiên trả nutrition data ngay trong response thay vì buộc mobile fetch chi tiết từng meal sau đó mới tính tổng.
 - Sau mọi thay đổi ở `packages/shared`, cần build lại shared package trước khi kiểm tra runtime backend/mobile vì backend hiện dùng runtime export từ package workspace.

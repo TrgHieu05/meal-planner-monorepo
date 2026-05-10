@@ -11,6 +11,7 @@ describe('MealTemplateController', () => {
       createTemplate: jest.fn(),
       getTemplates: jest.fn(),
       getTemplateDetail: jest.fn(),
+      applyTemplate: jest.fn(),
       updateTemplate: jest.fn(),
       deleteTemplate: jest.fn(),
       upsertDay: jest.fn(),
@@ -54,6 +55,28 @@ describe('MealTemplateController', () => {
     it('calls service if valid', async () => {
       await controller.upsertDay({ user: { id: 'u1' } }, 't1', '1', { meals: { BREAKFAST: [{ mealId: 10, portionSize: 1 }] } });
       expect(service.upsertDay).toHaveBeenCalledWith('u1', 't1', 1, { meals: { BREAKFAST: [{ mealId: 10, portionSize: 1 }] } });
+    });
+  });
+
+  describe('applyTemplate', () => {
+    it('throws BadRequest if payload invalid', async () => {
+      await expect(
+        controller.applyTemplate({ user: { id: 'u1' } }, '550e8400-e29b-41d4-a716-446655440000', {}),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('calls service if payload valid', async () => {
+      await controller.applyTemplate(
+        { user: { id: 'u1' } },
+        '550e8400-e29b-41d4-a716-446655440000',
+        { startDate: '2026-05-10' },
+      );
+
+      expect(service.applyTemplate).toHaveBeenCalledWith(
+        'u1',
+        '550e8400-e29b-41d4-a716-446655440000',
+        { startDate: '2026-05-10', replaceExistingMeals: true },
+      );
     });
   });
 });

@@ -1119,6 +1119,77 @@
         ]
       }
     },
+    "/api/v1/meal-templates/{id}/apply": {
+      "post": {
+        "operationId": "MealTemplateController_applyTemplate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "startDate"
+                ],
+                "properties": {
+                  "startDate": {
+                    "type": "string",
+                    "example": "2026-05-10"
+                  },
+                  "replaceExistingMeals": {
+                    "type": "boolean",
+                    "example": true,
+                    "default": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Áp dụng meal template thành công"
+          },
+          "400": {
+            "description": "Invalid id or payload"
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          },
+          "403": {
+            "description": "You do not have access to this template."
+          },
+          "404": {
+            "description": "Meal template not found."
+          },
+          "422": {
+            "description": "Template has no days to apply or payload is invalid."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Áp dụng Meal Template vào menu thực tế",
+        "tags": [
+          "Meal Template"
+        ]
+      }
+    },
     "/api/v1/meal-templates/{id}/days/{dayNumber}": {
       "put": {
         "operationId": "MealTemplateController_upsertDay",

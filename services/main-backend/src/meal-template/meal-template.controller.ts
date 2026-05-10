@@ -19,6 +19,7 @@ import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiBody } from '@nes
 import { RequireAuth } from '../auth/jwt-auth.guard';
 import { MealTemplateService } from './meal-template.service';
 import {
+  ApplyMealTemplateRequestSchema,
   CreateMealTemplateRequestSchema,
   UpdateMealTemplateRequestSchema,
   AddMealTemplateItemRequestSchema,
@@ -97,6 +98,39 @@ export class MealTemplateController {
   ) {
     const userId = this.getUserId(request);
     return this.service.getTemplateDetail(userId, id);
+  }
+
+  @Post(':id/apply')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Áp dụng Meal Template vào menu thực tế' })
+  @ApiResponse({ status: 200, description: 'Áp dụng meal template thành công' })
+  @ApiResponse({ status: 400, description: 'Invalid id or payload' })
+  @ApiResponse({ status: 401, description: 'Token không hợp lệ hoặc đã hết hạn' })
+  @ApiResponse({ status: 403, description: 'You do not have access to this template.' })
+  @ApiResponse({ status: 404, description: 'Meal template not found.' })
+  @ApiResponse({ status: 422, description: 'Template has no days to apply or payload is invalid.' })
+  @ApiResponse({ status: 500, description: 'Internal server error.' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['startDate'],
+      properties: {
+        startDate: { type: 'string', example: '2026-05-10' },
+        replaceExistingMeals: { type: 'boolean', example: true, default: true },
+      },
+    },
+  })
+  async applyTemplate(
+    @Req() request: AuthenticatedRequest,
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Body() body: any,
+  ) {
+    const userId = this.getUserId(request);
+    const parsed = ApplyMealTemplateRequestSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new BadRequestException('Invalid payload');
+    }
+    return this.service.applyTemplate(userId, id, parsed.data);
   }
 
   @Patch(':id')

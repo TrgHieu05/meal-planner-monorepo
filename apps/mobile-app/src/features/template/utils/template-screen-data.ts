@@ -7,11 +7,20 @@ import {
 } from '@features/menu/utils/menu-meal-times';
 
 export type TemplateDayState = {
-    id: string;
+    dayNumber: number;
     mealTimeGroups: MenuMealTimeGroup[];
+    uiKey: string;
 };
 
+export const TEMPLATE_DAY_UI_KEY_PREFIX = 'template-day';
+
 type TemplateMealItemsByTime = Partial<Record<MenuMealTimeGroup['mealTime'], MenuMealItem[]>>;
+
+interface CreateTemplateDayOptions {
+    dayNumber: number;
+    mealsByTime?: TemplateMealItemsByTime;
+    uiKey?: string;
+}
 
 export interface TemplateDraftSeed {
     description: string;
@@ -84,15 +93,30 @@ export function cloneTemplateDays(days: readonly TemplateDayState[]) {
     }));
 }
 
+export function createTemplateDayUiKey(sequence: number) {
+    return `${TEMPLATE_DAY_UI_KEY_PREFIX}-${sequence}`;
+}
+
+export function renumberTemplateDays(days: readonly TemplateDayState[]) {
+    return days.map((day, index) => ({
+        ...day,
+        dayNumber: index + 1,
+    }));
+}
+
 export function calculateTemplateNutrition(groups: readonly MenuMealTimeGroup[]) {
     const items = groups.flatMap((group) => group.items);
 
     return items.length > 0 ? sumMenuMealTimeNutrition(items) : EMPTY_TEMPLATE_NUTRITION;
 }
 
-export function createTemplateDay(id: string, mealsByTime: TemplateMealItemsByTime = {}): TemplateDayState {
+export function createTemplateDay({
+    dayNumber,
+    mealsByTime = {},
+    uiKey = createTemplateDayUiKey(dayNumber),
+}: CreateTemplateDayOptions): TemplateDayState {
     return {
-        id,
+        dayNumber,
         mealTimeGroups: createEmptyMenuMealTimeGroups().map((group) => ({
             ...group,
             items: mealsByTime[group.mealTime]?.map((item) => ({
@@ -102,12 +126,15 @@ export function createTemplateDay(id: string, mealsByTime: TemplateMealItemsByTi
                 },
             })) ?? [],
         })),
+        uiKey,
     };
 }
 
 export function createSampleTemplateDays() {
     return [
-        createTemplateDay('day-1', {
+        createTemplateDay({
+            dayNumber: 1,
+            mealsByTime: {
             BREAKFAST: [
                 createTemplateMealItem({
                     menuItemId: 101,
@@ -134,8 +161,11 @@ export function createSampleTemplateDays() {
                     difficulty: 'Easy',
                 }),
             ],
+            },
         }),
-        createTemplateDay('day-2', {
+        createTemplateDay({
+            dayNumber: 2,
+            mealsByTime: {
             LUNCH: [
                 createTemplateMealItem({
                     menuItemId: 201,
@@ -164,8 +194,11 @@ export function createSampleTemplateDays() {
                     difficulty: 'Medium',
                 }),
             ],
+            },
         }),
-        createTemplateDay('day-3', {
+        createTemplateDay({
+            dayNumber: 3,
+            mealsByTime: {
             BREAKFAST: [
                 createTemplateMealItem({
                     menuItemId: 301,
@@ -208,6 +241,7 @@ export function createSampleTemplateDays() {
                     difficulty: 'Medium',
                 }),
             ],
+            },
         }),
     ];
 }

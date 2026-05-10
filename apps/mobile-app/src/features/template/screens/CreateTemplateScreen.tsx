@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import { TemplateEditor } from '../components/TemplateEditor';
-import { createTemplateDraftSeed } from '@features/template/utils/template-screen-data';
+import { createTemplateDay, createTemplateDraftSeed } from '@features/template/utils/template-screen-data';
 
 export default function CreateTemplateScreen() {
     const createTemplateDraft = useMemo(
@@ -9,6 +9,7 @@ export default function CreateTemplateScreen() {
             createTemplateDraftSeed({
                 name: '',
                 description: '',
+                days: [createTemplateDay({ dayNumber: 1 })],
             }),
         [],
     );

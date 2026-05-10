@@ -53,7 +53,8 @@ Ngoài phạm vi mặc định của tài liệu này:
 - [ ] Mobile app chưa có data layer riêng cho feature template. Hiện không có file `src/features/template/api/template.api.ts`.
 - [ ] Mobile `TemplateListScreen` vẫn render `SAMPLE_TEMPLATES` hardcoded.
 - [ ] Mobile `TemplateDetailScreen` vẫn dùng `createTemplateDraftSeed()` và fallback `sample-template` thay vì fetch theo `templateId` thật.
-- [ ] Mobile `CreateTemplateScreen` và `EditTemplateScreen` vẫn khởi tạo từ seed local thay vì dữ liệu backend.
+- [x] Mobile `CreateTemplateScreen` đã khởi tạo bằng `1` day rỗng local đúng rule mới.
+- [ ] Mobile `EditTemplateScreen` vẫn khởi tạo từ seed local thay vì dữ liệu backend.
 - [ ] `TemplateEditor` hiện có `handleAddMeal` và `handleSubmit` là no-op, nên create/edit chưa lưu được gì.
 - [ ] `TemplateActionsMenu` mới chỉ mở modal `Apply` và `Delete`; mobile chưa nối mutation thật cho delete/apply dù backend hiện đã có apply endpoint.
 - [ ] Meal search/detail flow hiện chỉ mang context add-to-menu bằng `date` và `mealTime`; chưa có context `templateId` hoặc `dayNumber` để tái dùng trực tiếp cho template.
@@ -84,9 +85,9 @@ Ngoài phạm vi mặc định của tài liệu này:
 
 - [x] Khi xóa một day ở giữa, app phải tự dồn lại `dayNumber`; không cho phép gap.
 - [x] Màn create template bắt đầu với `1` day rỗng mặc định.
-- [ ] Refactor `TemplateDayState` để chứa `dayNumber` thật từ backend, không chỉ `id` local.
-- [ ] Tách `uiKey` khỏi `dayNumber` để add/delete/reorder day không làm mất mapping với backend.
-- [ ] Khi delete day trong editor, renumber lại toàn bộ `dayNumber` trước khi save.
+- [x] Refactor `TemplateDayState` để chứa `dayNumber` thật từ backend, không chỉ `id` local.
+- [x] Tách `uiKey` khỏi `dayNumber` để add/delete/reorder day không làm mất mapping với backend.
+- [x] Khi delete day trong editor, renumber lại toàn bộ `dayNumber` trước khi save.
 - [ ] Bỏ các seed sample ra khỏi flow chính của create/edit/detail; sample chỉ nên tồn tại cho preview hoặc storybook nếu cần.
 
 ### 4. Chốt chiến lược lưu create/edit template
@@ -171,7 +172,7 @@ Ngoài phạm vi mặc định của tài liệu này:
 
 #### Create screen
 
-- [ ] Thay seed sample bằng initial state bắt đầu từ `1` day rỗng đúng theo quyết định đã chốt.
+- [x] Thay seed sample bằng initial state bắt đầu từ `1` day rỗng đúng theo quyết định đã chốt.
 - [ ] Gọi `POST /v1/meal-templates` khi submit.
 - [ ] Nếu có day/item local, persist tiếp bằng day upsert sau khi template được tạo.
 - [ ] Sau khi create thành công, điều hướng về detail hoặc list theo UX đã chốt.
@@ -233,7 +234,7 @@ Hiện tại không còn mục nghiệp vụ mở trong tài liệu này. Phần
 ## Thứ tự thực hiện khuyến nghị
 
 1. [x] Mở rộng shared/backend contract cho hai phần còn thiếu: nutrition data của template và apply template flow.
-2. [ ] Refactor model state của template trên mobile để có `dayNumber` thật, `uiKey` ổn định và quy tắc renumber liên tục.
+2. [x] Refactor model state của template trên mobile để có `dayNumber` thật, `uiKey` ổn định và quy tắc renumber liên tục.
 3. [ ] Tạo data layer `template.api.ts` và adapter map response backend sang list/detail/editor state.
 4. [ ] Nối list screen và detail screen với API thật, đồng thời thay `nutritionSummary` sample bằng dữ liệu thật.
 5. [ ] Hoàn thiện create/edit submit flow theo strategy `template metadata + upsert day + delete day`.
@@ -246,6 +247,7 @@ Hiện tại không còn mục nghiệp vụ mở trong tài liệu này. Phần
 
 - `meal-template` backend hiện đã đủ để hoàn thành CRUD v1 nếu mobile đi theo hướng save bằng metadata + day upsert; phần apply và nutrition contract là phần mở rộng cần làm thêm.
 - Bước 1 đã hoàn tất ở backend/shared: contract shared đã có nutrition + apply schema, backend đã trả nutrition trong list/detail/item update, có `POST /api/v1/meal-templates/:id/apply`, unit/e2e pass và OpenAPI đã được regenerate.
+- Bước 2 đã hoàn tất ở mobile state model: `TemplateDayState` dùng `dayNumber + uiKey`, editor renumber liên tục khi xóa day, create flow bắt đầu từ `1` day rỗng và đã có Jest coverage cho helper state.
 - Scope hiện tại đã được khóa theo hướng rộng hơn tài liệu `feature_template_v1.md`: giữ macro UI và hoàn thiện `Apply Template`.
 - Để tận dụng lại `calculateTemplateNutrition(...)`, contract template mới nên ưu tiên trả nutrition data ngay trong response thay vì buộc mobile fetch chi tiết từng meal sau đó mới tính tổng.
 - Sau mọi thay đổi ở `packages/shared`, cần build lại shared package trước khi kiểm tra runtime backend/mobile vì backend hiện dùng runtime export từ package workspace.

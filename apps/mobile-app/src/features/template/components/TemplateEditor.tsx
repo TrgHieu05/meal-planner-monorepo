@@ -15,9 +15,11 @@ import {
     calculateTemplateNutrition,
     cloneMealTimeGroups,
     cloneTemplateDays,
+    createTemplateDay,
     type TemplateDayState,
+    renumberTemplateDays,
 } from '@features/template/utils/template-screen-data';
-import { createEmptyMenuMealTimeGroups, type MenuMealItem, type MenuMealTimeGroup } from '@features/menu/utils/menu-meal-times';
+import { type MenuMealItem, type MenuMealTimeGroup } from '@features/menu/utils/menu-meal-times';
 
 export interface TemplateEditorProps {
     headerTitle: string;
@@ -43,12 +45,12 @@ export function TemplateEditor({
     const [days, setDays] = useState<TemplateDayState[]>(() => cloneTemplateDays(initialDays));
     const [isQuitModalOpen, setIsQuitModalOpen] = useState(false);
     const [selectedMealItem, setSelectedMealItem] = useState<MenuMealItem | null>(null);
-    const [selectedDayId, setSelectedDayId] = useState(() => initialDays[0]?.id ?? '');
+    const [selectedDayUiKey, setSelectedDayUiKey] = useState(() => initialDays[0]?.uiKey ?? '');
     const [copiedDayMealGroups, setCopiedDayMealGroups] = useState<MenuMealTimeGroup[] | null>(null);
 
     const selectedDay = useMemo(
-        () => days.find((day) => day.id === selectedDayId) ?? days[0],
-        [days, selectedDayId],
+        () => days.find((day) => day.uiKey === selectedDayUiKey) ?? days[0],
+        [days, selectedDayUiKey],
     );
     const totalNutrition = useMemo(
         () => calculateTemplateNutrition(days.flatMap((day) => day.mealTimeGroups)),
@@ -62,17 +64,18 @@ export function TemplateEditor({
     const canSubmit = templateName.trim().length > 0;
 
     const handleAddDay = useCallback(() => {
-        const nextDayId = `day-${nextDaySequenceRef.current}`;
+        const nextDayUiKey = `template-day-${nextDaySequenceRef.current}`;
 
         nextDaySequenceRef.current += 1;
-        setDays((currentDays) => [
-            ...currentDays,
-            {
-                id: nextDayId,
-                mealTimeGroups: createEmptyMenuMealTimeGroups(),
-            },
-        ]);
-        setSelectedDayId(nextDayId);
+        setDays((currentDays) => {
+            const nextDay = createTemplateDay({
+                dayNumber: currentDays.length + 1,
+                uiKey: nextDayUiKey,
+            });
+
+            return [...currentDays, nextDay];
+        });
+        setSelectedDayUiKey(nextDayUiKey);
     }, []);
 
     const handleCopyDay = useCallback(() => {
@@ -90,7 +93,7 @@ export function TemplateEditor({
 
         setDays((currentDays) =>
             currentDays.map((day) =>
-                day.id === selectedDay.id
+                day.uiKey === selectedDay.uiKey
                     ? {
                           ...day,
                           mealTimeGroups: cloneMealTimeGroups(copiedDayMealGroups),
@@ -105,13 +108,13 @@ export function TemplateEditor({
             return;
         }
 
-        const selectedDayIndex = days.findIndex((day) => day.id === selectedDay.id);
-        const nextDays = days.filter((day) => day.id !== selectedDay.id);
+        const selectedDayIndex = days.findIndex((day) => day.uiKey === selectedDay.uiKey);
+        const nextDays = renumberTemplateDays(days.filter((day) => day.uiKey !== selectedDay.uiKey));
         const fallbackDay = nextDays[Math.min(selectedDayIndex, nextDays.length - 1)];
 
         setDays(nextDays);
         if (fallbackDay) {
-            setSelectedDayId(fallbackDay.id);
+            setSelectedDayUiKey(fallbackDay.uiKey);
         }
     }, [days, selectedDay]);
 
@@ -205,10 +208,10 @@ export function TemplateEditor({
                         <XStack ai="center" gap="$space.sm" pr="$space.sm">
                             {days.map((day, index) => (
                                 <DayTab
-                                    key={day.id}
-                                    label={`Day ${index + 1}`}
-                                    isSelected={day.id === selectedDay?.id}
-                                    onPress={() => setSelectedDayId(day.id)}
+                                    key={day.uiKey}
+                                    label={`Day ${day.dayNumber}`}
+                                    isSelected={day.uiKey === selectedDay?.uiKey}
+                                    onPress={() => setSelectedDayUiKey(day.uiKey)}
                                 />
                             ))}
 

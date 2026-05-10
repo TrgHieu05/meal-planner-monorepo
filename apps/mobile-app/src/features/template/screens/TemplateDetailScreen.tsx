@@ -21,11 +21,11 @@ export default function TemplateDetailScreen() {
     const templateId = resolveRouteParam(params.id) ?? 'sample-template';
     const templateDetailDraft = useMemo(() => createTemplateDraftSeed(), []);
     const [selectedItem, setSelectedItem] = useState<MenuMealItem | null>(null);
-    const [selectedDayId, setSelectedDayId] = useState(() => templateDetailDraft.days[0]?.id ?? '');
+    const [selectedDayUiKey, setSelectedDayUiKey] = useState(() => templateDetailDraft.days[0]?.uiKey ?? '');
 
     const selectedDay = useMemo(
-        () => templateDetailDraft.days.find((day) => day.id === selectedDayId) ?? templateDetailDraft.days[0],
-        [selectedDayId, templateDetailDraft],
+        () => templateDetailDraft.days.find((day) => day.uiKey === selectedDayUiKey) ?? templateDetailDraft.days[0],
+        [selectedDayUiKey, templateDetailDraft],
     );
     const totalNutrition = useMemo(
         () => calculateTemplateNutrition(templateDetailDraft.days.flatMap((day) => day.mealTimeGroups)),
@@ -84,12 +84,12 @@ export default function TemplateDetailScreen() {
 
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ overflow: 'visible' }}>
                         <XStack ai="center" gap="$space.sm" pr="$space.sm">
-                            {templateDetailDraft.days.map((day, index) => (
+                            {templateDetailDraft.days.map((day) => (
                                 <DayTab
-                                    key={day.id}
-                                    label={`Day ${index + 1}`}
-                                    isSelected={day.id === selectedDay?.id}
-                                    onPress={() => setSelectedDayId(day.id)}
+                                    key={day.uiKey}
+                                    label={`Day ${day.dayNumber}`}
+                                    isSelected={day.uiKey === selectedDay?.uiKey}
+                                    onPress={() => setSelectedDayUiKey(day.uiKey)}
                                 />
                             ))}
                         </XStack>

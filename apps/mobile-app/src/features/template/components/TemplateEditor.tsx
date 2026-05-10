@@ -21,13 +21,24 @@ import {
 } from '@features/template/utils/template-screen-data';
 import { type MenuMealItem, type MenuMealTimeGroup } from '@features/menu/utils/menu-meal-times';
 
+export interface TemplateEditorDraft {
+    description: string;
+    days: TemplateDayState[];
+    templateName: string;
+}
+
 export interface TemplateEditorProps {
     headerTitle: string;
     initialDescription: string;
     initialDays: TemplateDayState[];
     initialTemplateName: string;
+    isSubmitting?: boolean;
+    onClearSubmitError?: () => void;
+    onSubmitDraft: (draft: TemplateEditorDraft) => Promise<void> | void;
     quitModalVariant: 'create' | 'edit';
     submitLabel: string;
+    submitError?: string | null;
+    submittingLabel: string;
 }
 
 export function TemplateEditor({
@@ -35,8 +46,13 @@ export function TemplateEditor({
     initialDescription,
     initialDays,
     initialTemplateName,
+    isSubmitting = false,
+    onClearSubmitError,
+    onSubmitDraft,
     quitModalVariant,
     submitLabel,
+    submitError,
+    submittingLabel,
 }: TemplateEditorProps) {
     const router = useRouter();
     const nextDaySequenceRef = useRef(initialDays.length + 1);
@@ -63,10 +79,35 @@ export function TemplateEditor({
     const canDeleteDay = days.length > 1;
     const canSubmit = templateName.trim().length > 0;
 
+    const clearSubmitError = useCallback(() => {
+        onClearSubmitError?.();
+    }, [onClearSubmitError]);
+
+    const handleTemplateNameChange = useCallback(
+        (value: string) => {
+            clearSubmitError();
+            setTemplateName(value);
+        },
+        [clearSubmitError],
+    );
+
+    const handleDescriptionChange = useCallback(
+        (value: string) => {
+            clearSubmitError();
+            setDescription(value);
+        },
+        [clearSubmitError],
+    );
+
     const handleAddDay = useCallback(() => {
+        if (isSubmitting) {
+            return;
+        }
+
         const nextDayUiKey = `template-day-${nextDaySequenceRef.current}`;
 
         nextDaySequenceRef.current += 1;
+        clearSubmitError();
         setDays((currentDays) => {
             const nextDay = createTemplateDay({
                 dayNumber: currentDays.length + 1,
@@ -76,9 +117,13 @@ export function TemplateEditor({
             return [...currentDays, nextDay];
         });
         setSelectedDayUiKey(nextDayUiKey);
-    }, []);
+    }, [clearSubmitError, isSubmitting]);
 
     const handleCopyDay = useCallback(() => {
+        if (isSubmitting) {
+            return;
+        }
+
         if (!selectedDay) {
             return;
         }
@@ -87,10 +132,15 @@ export function TemplateEditor({
     }, [selectedDay]);
 
     const handlePasteDay = useCallback(() => {
+        if (isSubmitting) {
+            return;
+        }
+
         if (!selectedDay || !copiedDayMealGroups) {
             return;
         }
 
+        clearSubmitError();
         setDays((currentDays) =>
             currentDays.map((day) =>
                 day.uiKey === selectedDay.uiKey
@@ -101,9 +151,13 @@ export function TemplateEditor({
                     : day,
             ),
         );
-    }, [copiedDayMealGroups, selectedDay]);
+    }, [clearSubmitError, copiedDayMealGroups, isSubmitting, selectedDay]);
 
     const handleDeleteDay = useCallback(() => {
+        if (isSubmitting) {
+            return;
+        }
+
         if (!selectedDay || days.length <= 1) {
             return;
         }
@@ -112,11 +166,12 @@ export function TemplateEditor({
         const nextDays = renumberTemplateDays(days.filter((day) => day.uiKey !== selectedDay.uiKey));
         const fallbackDay = nextDays[Math.min(selectedDayIndex, nextDays.length - 1)];
 
+        clearSubmitError();
         setDays(nextDays);
         if (fallbackDay) {
             setSelectedDayUiKey(fallbackDay.uiKey);
         }
-    }, [days, selectedDay]);
+    }, [clearSubmitError, days, isSubmitting, selectedDay]);
 
     const handleAddMeal = useCallback((_mealTime: MenuMealTimeGroup['mealTime']) => undefined, []);
     const handleItemDetailOpenChange = useCallback((open: boolean) => {
@@ -125,6 +180,7 @@ export function TemplateEditor({
         }
     }, []);
     const handleSaveMealItem = useCallback((item: MenuMealItem, portionSize: number) => {
+        clearSubmitError();
         setDays((currentDays) =>
             currentDays.map((day) => ({
                 ...day,
@@ -134,23 +190,38 @@ export function TemplateEditor({
                 }),
             })),
         );
-    }, []);
+    }, [clearSubmitError]);
     const handleDeleteMealItem = useCallback((item: MenuMealItem) => {
+        clearSubmitError();
         setDays((currentDays) =>
             currentDays.map((day) => ({
                 ...day,
                 mealTimeGroups: removeMenuMealItemFromGroups(day.mealTimeGroups, item.menuItemId),
             })),
         );
-    }, []);
+    }, [clearSubmitError]);
     const handleConfirmQuit = useCallback(() => {
         setIsQuitModalOpen(false);
         router.back();
     }, [router]);
     const handleRequestBack = useCallback(() => {
+        if (isSubmitting) {
+            return;
+        }
+
         setIsQuitModalOpen(true);
-    }, []);
-    const handleSubmit = useCallback(() => undefined, []);
+    }, [isSubmitting]);
+    const handleSubmit = useCallback(async () => {
+        if (!canSubmit || isSubmitting) {
+            return;
+        }
+
+        await onSubmitDraft({
+            description,
+            days: cloneTemplateDays(days),
+            templateName,
+        });
+    }, [canSubmit, days, description, isSubmitting, onSubmitDraft, templateName]);
 
     return (
         <YStack f={1} bg="$background" px="$space.md" pt="$space.md" gap="space.lg"  >
@@ -187,7 +258,7 @@ export function TemplateEditor({
                             </Label>
                             <InputText
                                 value={templateName}
-                                onChangeText={setTemplateName}
+                                onChangeText={handleTemplateNameChange}
                                 placeholder="e.g. High Protein Week"
                             />
                         </YStack>
@@ -198,7 +269,7 @@ export function TemplateEditor({
                             </Label>
                             <InputTextArea
                                 value={description}
-                                onChangeText={setDescription}
+                                onChangeText={handleDescriptionChange}
                                 placeholder="Add description of the template..."
                             />
                         </YStack>
@@ -239,14 +310,19 @@ export function TemplateEditor({
                         <Button
                             size="medium"
                             color="secondary"
-                            disabled={!copiedDayMealGroups}
+                            disabled={isSubmitting || !copiedDayMealGroups}
                             onPress={handlePasteDay}
                         >
                             <Button.Icon icon={Clipboard} />
                             <Button.Text>Paste</Button.Text>
                         </Button>
 
-                        <Button size="medium" color="danger" disabled={!canDeleteDay} onPress={handleDeleteDay}>
+                        <Button
+                            size="medium"
+                            color="danger"
+                            disabled={isSubmitting || !canDeleteDay}
+                            onPress={handleDeleteDay}
+                        >
                             <Button.Icon icon={Trash2} />
                             <Button.Text>Delete</Button.Text>
                         </Button>
@@ -274,8 +350,20 @@ export function TemplateEditor({
             </ScrollView>
 
             <YStack w="100%" py="$space.md" bg="$background">
-                <Button size="large" color="primary" w="100%" disabled={!canSubmit} onPress={handleSubmit}>
-                    <Button.Text>{submitLabel}</Button.Text>
+                {submitError ? (
+                    <SizableText ff="$body" fos="$sm" col="$danger" mb="$space.sm">
+                        {submitError}
+                    </SizableText>
+                ) : null}
+
+                <Button
+                    size="large"
+                    color="primary"
+                    w="100%"
+                    disabled={isSubmitting || !canSubmit}
+                    onPress={() => void handleSubmit()}
+                >
+                    <Button.Text>{isSubmitting ? submittingLabel : submitLabel}</Button.Text>
                 </Button>
             </YStack>
 

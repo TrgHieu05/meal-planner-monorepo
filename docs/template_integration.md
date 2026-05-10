@@ -54,11 +54,12 @@ Ngoài phạm vi mặc định của tài liệu này:
 - [x] Mobile `TemplateListScreen` đã fetch list thật từ backend và không còn render `SAMPLE_TEMPLATES` hardcoded.
 - [x] Mobile `TemplateDetailScreen` đã fetch detail theo `templateId` route param và không còn dùng fallback `sample-template`.
 - [x] Mobile `CreateTemplateScreen` đã khởi tạo bằng `1` day rỗng local đúng rule mới.
-- [ ] Mobile `EditTemplateScreen` vẫn khởi tạo từ seed local thay vì dữ liệu backend.
-- [ ] `TemplateEditor` hiện có `handleAddMeal` và `handleSubmit` là no-op, nên create/edit chưa lưu được gì.
+- [x] Mobile `EditTemplateScreen` đã load dữ liệu backend thật trước khi mở editor và không còn khởi tạo từ seed local.
+- [ ] `TemplateEditor` hiện vẫn còn `handleAddMeal` là no-op, nên flow chọn món cho template chưa hoàn tất.
+- [x] `TemplateEditor` đã có submit flow thật cho create/edit theo strategy `template metadata + upsert day + delete day`.
 - [ ] `TemplateActionsMenu` mới chỉ mở modal `Apply` và `Delete`; mobile chưa nối mutation thật cho delete/apply dù backend hiện đã có apply endpoint.
 - [ ] Meal search/detail flow hiện chỉ mang context add-to-menu bằng `date` và `mealTime`; chưa có context `templateId` hoặc `dayNumber` để tái dùng trực tiếp cho template.
-- [ ] Mobile template UI hiện giữ `nutritionSummary` và `MacroStatDetailCard`; list/detail đã dùng dữ liệu thật nhưng editor vẫn chưa nối mutation/save flow thật.
+- [x] Mobile template UI hiện giữ `nutritionSummary` và `MacroStatDetailCard`; list/detail/editor đã dùng dữ liệu thật cho load/save hiện có.
 - [x] Mobile app đã có test utility/api riêng cho feature template; screen-level integration test vẫn chưa có.
 
 ## Blocker ưu tiên cao
@@ -95,9 +96,9 @@ Ngoài phạm vi mặc định của tài liệu này:
 - [x] Stage local toàn bộ editor state và chỉ persist khi bấm `Save Template`.
 - [x] Strategy lưu chính là `POST/PATCH template` rồi `PUT` từng day theo `dayNumber`, cộng thêm `DELETE day` khi cần.
 - [x] Không dùng item-level endpoints làm primary path của editor; giữ chúng cho tương tác nhỏ hoặc future flows nếu cần.
-- [ ] Xác định rõ diff logic của edit flow: day mới, day sửa, day bị xóa, item thay portion, item bị xóa.
-- [ ] Thêm chống double submit và success/error feedback rõ ràng cho create/edit.
-- [ ] Sau khi save thành công, đồng bộ lại list/detail state thay vì tiếp tục dùng local seed.
+- [x] Xác định rõ diff logic của edit flow: luôn `PUT` toàn bộ day hiện tại theo `dayNumber` đã renumber; day biến mất khỏi snapshot ban đầu sẽ `DELETE`; thay portion hoặc xóa item được gom vào payload upsert day.
+- [x] Thêm chống double submit và feedback lỗi rõ ràng cho create/edit; success path điều hướng về detail screen.
+- [x] Sau khi save thành công, đồng bộ lại list/detail state thay vì tiếp tục dùng local seed.
 
 ### 5. Chốt flow chọn món để thêm vào template
 
@@ -173,26 +174,26 @@ Ngoài phạm vi mặc định của tài liệu này:
 #### Create screen
 
 - [x] Thay seed sample bằng initial state bắt đầu từ `1` day rỗng đúng theo quyết định đã chốt.
-- [ ] Gọi `POST /v1/meal-templates` khi submit.
-- [ ] Nếu có day/item local, persist tiếp bằng day upsert sau khi template được tạo.
-- [ ] Sau khi create thành công, điều hướng về detail hoặc list theo UX đã chốt.
+- [x] Gọi `POST /v1/meal-templates` khi submit.
+- [x] Nếu có day/item local, persist tiếp bằng day upsert sau khi template được tạo.
+- [x] Sau khi create thành công, điều hướng về detail screen của template vừa tạo.
 
 #### Edit screen
 
-- [ ] Load template detail thật trước khi mở editor.
-- [ ] Map dữ liệu backend vào state editor có `dayNumber` ổn định.
-- [ ] Persist thay đổi metadata bằng `PATCH /v1/meal-templates/:id`.
-- [ ] Persist thay đổi day bằng `PUT /v1/meal-templates/:id/days/:dayNumber`.
-- [ ] Persist day bị xóa bằng `DELETE /v1/meal-templates/:id/days/:dayNumber`.
-- [ ] Khi user xóa một day ở giữa, renumber lại toàn bộ day trước khi persist.
-- [ ] Đồng bộ UI sau save thành công, tránh tiếp tục hiển thị local state cũ.
+- [x] Load template detail thật trước khi mở editor.
+- [x] Map dữ liệu backend vào state editor có `dayNumber` ổn định.
+- [x] Persist thay đổi metadata bằng `PATCH /v1/meal-templates/:id`.
+- [x] Persist thay đổi day bằng `PUT /v1/meal-templates/:id/days/:dayNumber`.
+- [x] Persist day bị xóa bằng `DELETE /v1/meal-templates/:id/days/:dayNumber`.
+- [x] Khi user xóa một day ở giữa, renumber lại toàn bộ day trước khi persist.
+- [x] Đồng bộ UI sau save thành công, tránh tiếp tục hiển thị local state cũ.
 
 #### Editor interactions
 
 - [ ] Thay `handleAddMeal` no-op bằng flow chọn meal thật.
-- [ ] Thay `handleSubmit` no-op bằng save flow thật.
-- [ ] Giữ behavior copy/paste/delete day nhưng đảm bảo không làm sai `dayNumber` backend.
-- [ ] Đồng bộ `MenuItemDetailModal` với item template thật khi sửa portion hoặc xóa item.
+- [x] Thay `handleSubmit` no-op bằng save flow thật.
+- [x] Giữ behavior copy/paste/delete day nhưng đảm bảo không làm sai `dayNumber` backend.
+- [x] Đồng bộ `MenuItemDetailModal` với item template thật khi sửa portion hoặc xóa item.
 - [ ] Dùng nutrition data thật từ adapter để tiếp tục render các macro card hiện tại.
 
 #### Actions menu và modal
@@ -237,7 +238,7 @@ Hiện tại không còn mục nghiệp vụ mở trong tài liệu này. Phần
 2. [x] Refactor model state của template trên mobile để có `dayNumber` thật, `uiKey` ổn định và quy tắc renumber liên tục.
 3. [x] Tạo data layer `template.api.ts` và adapter map response backend sang list/detail/editor state.
 4. [x] Nối list screen và detail screen với API thật, đồng thời thay `nutritionSummary` sample bằng dữ liệu thật.
-5. [ ] Hoàn thiện create/edit submit flow theo strategy `template metadata + upsert day + delete day`.
+5. [x] Hoàn thiện create/edit submit flow theo strategy `template metadata + upsert day + delete day`.
 6. [ ] Hoàn thiện reuse meal search/detail cho flow chọn món của template và cập nhật editor local state.
 7. [ ] Nối delete template thật và hoàn thiện apply template mutation theo UX hiện tại.
 8. [ ] Dọn lại toàn bộ front-end để loại bỏ các phần liên quan đến mock và seed, đảm bảo mọi dữ liệu template đều đến từ backend.
@@ -250,6 +251,7 @@ Hiện tại không còn mục nghiệp vụ mở trong tài liệu này. Phần
 - Bước 2 đã hoàn tất ở mobile state model: `TemplateDayState` dùng `dayNumber + uiKey`, editor renumber liên tục khi xóa day, create flow bắt đầu từ `1` day rỗng và đã có Jest coverage cho helper state.
 - Bước 3 đã hoàn tất ở data layer: mobile đã có `template.api.ts` với authenticated fetch/mutation, schema parsing từ shared, adapter cho list/detail/editor state và builder cho payload create/edit/day/item/apply, kèm Jest coverage.
 - Bước 4 đã hoàn tất ở list/detail screens: `TemplateListScreen` và `TemplateDetailScreen` đã fetch dữ liệu thật theo session/templateId, có loading/error/empty/not-found state phù hợp và `nutritionSummary`/macro ở list-detail không còn phụ thuộc sample data.
+- Bước 5 đã hoàn tất ở create/edit submit flow: `TemplateEditor` đã nhận callback submit thật với pending/error state, `CreateTemplateScreen` gọi `POST template` rồi upsert day và rollback nếu create bị lỗi giữa chừng, còn `EditTemplateScreen` load dữ liệu thật, `PATCH` metadata, `PUT` toàn bộ day hiện tại và `DELETE` các day biến mất khỏi snapshot ban đầu trước khi quay về detail.
 - Scope hiện tại đã được khóa theo hướng rộng hơn tài liệu `feature_template_v1.md`: giữ macro UI và hoàn thiện `Apply Template`.
 - Để tận dụng lại `calculateTemplateNutrition(...)`, contract template mới nên ưu tiên trả nutrition data ngay trong response thay vì buộc mobile fetch chi tiết từng meal sau đó mới tính tổng.
 - Sau mọi thay đổi ở `packages/shared`, cần build lại shared package trước khi kiểm tra runtime backend/mobile vì backend hiện dùng runtime export từ package workspace.

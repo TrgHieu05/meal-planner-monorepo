@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 import {
+  buildTemplateEditDayPlan,
   buildApplyTemplatePayload,
   fetchTemplateEditorData,
   fetchTemplateListScreenData,
@@ -288,6 +289,86 @@ describe('template.api', () => {
             BREAKFAST: [{ mealId: 11, portionSize: 1 }],
             LUNCH: [],
             DINNER: [],
+          },
+        },
+      },
+    ]);
+  });
+
+  it('builds an edit-day plan by upserting current days and deleting removed original day numbers', () => {
+    const plan = buildTemplateEditDayPlan({
+      initialDays: [
+        { dayNumber: 1 },
+        { dayNumber: 2 },
+        { dayNumber: 3 },
+      ],
+      currentDays: [
+        createTemplateDay({
+          dayNumber: 1,
+          mealsByTime: {
+            BREAKFAST: [
+              {
+                menuItemId: 1,
+                mealId: 11,
+                mealName: 'Avocado Toast',
+                date: 'Day 1',
+                mealTime: 'BREAKFAST',
+                portionSize: 1,
+                eated: false,
+                nutritionPerServing: {
+                  calories: 320,
+                  protein: 12,
+                  fiber: 6,
+                  fat: 14,
+                },
+              },
+            ],
+          },
+        }),
+        createTemplateDay({
+          dayNumber: 2,
+          mealsByTime: {
+            DINNER: [
+              {
+                menuItemId: 2,
+                mealId: 33,
+                mealName: 'Tofu Stir Fry',
+                date: 'Day 2',
+                mealTime: 'DINNER',
+                portionSize: 1.5,
+                eated: false,
+                nutritionPerServing: {
+                  calories: 560,
+                  protein: 27,
+                  fiber: 11,
+                  fat: 20,
+                },
+              },
+            ],
+          },
+        }),
+      ],
+    });
+
+    expect(plan.dayNumbersToDelete).toEqual([3]);
+    expect(plan.daysToUpsert).toEqual([
+      {
+        dayNumber: 1,
+        payload: {
+          meals: {
+            BREAKFAST: [{ mealId: 11, portionSize: 1 }],
+            LUNCH: [],
+            DINNER: [],
+          },
+        },
+      },
+      {
+        dayNumber: 2,
+        payload: {
+          meals: {
+            BREAKFAST: [],
+            LUNCH: [],
+            DINNER: [{ mealId: 33, portionSize: 1.5 }],
           },
         },
       },

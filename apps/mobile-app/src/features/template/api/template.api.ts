@@ -88,6 +88,16 @@ export type TemplateApplySelectionInput = {
 
 export type TemplateDayMutationInput = Pick<TemplateDayState, 'dayNumber' | 'mealTimeGroups'>;
 
+export type TemplateDayUpsertRequest = {
+  dayNumber: number;
+  payload: UpsertMealTemplateDayRequest;
+};
+
+export type TemplateEditDayPlan = {
+  dayNumbersToDelete: number[];
+  daysToUpsert: TemplateDayUpsertRequest[];
+};
+
 type TemplateEditorMealItem = MenuMealItem & {
   templateItemId?: string;
 };
@@ -474,11 +484,26 @@ export function mapTemplateDayStateToUpsertPayload(
 
 export function mapTemplateDaysToUpsertRequests(
   days: readonly TemplateDayMutationInput[],
-) {
+): TemplateDayUpsertRequest[] {
   return days.map((day) => ({
     dayNumber: day.dayNumber,
     payload: mapTemplateDayStateToUpsertPayload(day),
   }));
+}
+
+export function buildTemplateEditDayPlan(config: {
+  currentDays: readonly TemplateDayMutationInput[];
+  initialDays: readonly Pick<TemplateDayState, 'dayNumber'>[];
+}): TemplateEditDayPlan {
+  const dayNumbersToKeep = new Set(config.currentDays.map((day) => day.dayNumber));
+
+  return {
+    dayNumbersToDelete: config.initialDays
+      .map((day) => day.dayNumber)
+      .filter((dayNumber) => !dayNumbersToKeep.has(dayNumber))
+      .sort((left, right) => right - left),
+    daysToUpsert: mapTemplateDaysToUpsertRequests(config.currentDays),
+  };
 }
 
 export function buildCreateTemplatePayload(

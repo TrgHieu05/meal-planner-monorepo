@@ -1,40 +1,169 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { ActivityIndicator } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft } from '@tamagui/lucide-icons-2';
-import { ScrollView, SizableText, XStack, YStack } from 'tamagui';
+import { ScrollView, SizableText, XStack, YStack, useTheme } from 'tamagui';
 
+import { Button } from '@components';
 import { MacroStatDetailCard } from '@features/menu/components/MacroStatDetailCard';
 import { MenuItemDetailModal } from '@features/menu/components/MenuItemDetailModal';
 import { MenuMealTimeCard } from '@features/menu/components/MenuMealTimeCard';
 import { TemplateActionsMenu } from '@features/template/components/TemplateActionsMenu';
 import { DayTab } from '@features/template/components/DayTab';
-import type { MenuMealItem } from '@features/menu/utils/menu-meal-times';
-import { calculateTemplateNutrition, createTemplateDraftSeed } from '@features/template/utils/template-screen-data';
+import { useSession } from '@/providers/AuthProvider';
+import { isApiErrorWithStatus } from '@/services/api/http-client';
+import {
+    fetchTemplateDetailScreenData,
+    type TemplateDetailScreenData,
+} from '@features/template/api/template.api';
+import type { MenuMealItem, MenuNutrition } from '@features/menu/utils/menu-meal-times';
+import { calculateTemplateNutrition } from '@features/template/utils/template-screen-data';
+
+type TemplateDetailScreenState = 'loading' | 'ready' | 'notFound' | 'error';
+
+const EMPTY_TEMPLATE_NUTRITION: MenuNutrition = {
+    calories: 0,
+    protein: 0,
+    fiber: 0,
+    fat: 0,
+};
 
 function resolveRouteParam(value: string | string[] | undefined) {
     return Array.isArray(value) ? value[0] : value;
 }
 
+function isValidTemplateId(value?: string): value is string {
+    if (!value) {
+        return false;
+    }
+
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+function resolveTemplateDetailErrorMessage(error: unknown, fallbackMessage: string) {
+    if (error instanceof Error && error.message.trim()) {
+        return error.message.trim();
+    }
+
+    return fallbackMessage;
+}
+
 export default function TemplateDetailScreen() {
+    const theme = useTheme();
     const router = useRouter();
+    const { session } = useSession();
     const params = useLocalSearchParams<{ id?: string | string[] }>();
-    const templateId = resolveRouteParam(params.id) ?? 'sample-template';
-    const templateDetailDraft = useMemo(() => createTemplateDraftSeed(), []);
+    const templateId = resolveRouteParam(params.id);
+    const [templateDetailData, setTemplateDetailData] = useState<TemplateDetailScreenData | null>(null);
+    const [screenState, setScreenState] = useState<TemplateDetailScreenState>('loading');
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [selectedItem, setSelectedItem] = useState<MenuMealItem | null>(null);
-    const [selectedDayUiKey, setSelectedDayUiKey] = useState(() => templateDetailDraft.days[0]?.uiKey ?? '');
+    const [selectedDayUiKey, setSelectedDayUiKey] = useState('');
 
     const selectedDay = useMemo(
-        () => templateDetailDraft.days.find((day) => day.uiKey === selectedDayUiKey) ?? templateDetailDraft.days[0],
-        [selectedDayUiKey, templateDetailDraft],
+        () => templateDetailData?.days.find((day) => day.uiKey === selectedDayUiKey) ?? templateDetailData?.days[0],
+        [selectedDayUiKey, templateDetailData],
     );
     const totalNutrition = useMemo(
-        () => calculateTemplateNutrition(templateDetailDraft.days.flatMap((day) => day.mealTimeGroups)),
-        [templateDetailDraft],
+        () => templateDetailData?.nutritionTotal ?? EMPTY_TEMPLATE_NUTRITION,
+        [templateDetailData],
     );
     const selectedDayNutrition = useMemo(
         () => calculateTemplateNutrition(selectedDay?.mealTimeGroups ?? []),
         [selectedDay],
     );
+
+    const loadTemplateDetail = useCallback(async (config: { isActive: () => boolean }) => {
+        if (!isValidTemplateId(templateId)) {
+            if (!config.isActive()) {
+                return;
+            }
+
+            setTemplateDetailData(null);
+            setErrorMessage(null);
+            setScreenState('notFound');
+            return;
+        }
+
+        if (!session?.accessToken) {
+            if (!config.isActive()) {
+                return;
+            }
+
+            setTemplateDetailData(null);
+            setErrorMessage('Missing access token. Please sign in again.');
+            setScreenState('error');
+            return;
+        }
+
+        if (!config.isActive()) {
+            return;
+        }
+
+        setScreenState('loading');
+        setErrorMessage(null);
+
+        try {
+            const nextTemplateDetail = await fetchTemplateDetailScreenData({
+                accessToken: session.accessToken,
+                templateId,
+            });
+
+            if (!config.isActive()) {
+                return;
+            }
+
+            setTemplateDetailData(nextTemplateDetail);
+            setSelectedDayUiKey((currentValue) => {
+                if (nextTemplateDetail.days.some((day) => day.uiKey === currentValue)) {
+                    return currentValue;
+                }
+
+                return nextTemplateDetail.days[0]?.uiKey ?? '';
+            });
+            setScreenState('ready');
+        } catch (error) {
+            if (!config.isActive()) {
+                return;
+            }
+
+            setTemplateDetailData(null);
+
+            if (isApiErrorWithStatus(error, 404)) {
+                setErrorMessage(null);
+                setScreenState('notFound');
+                return;
+            }
+
+            setErrorMessage(
+                resolveTemplateDetailErrorMessage(error, 'Unable to load template details right now.'),
+            );
+            setScreenState('error');
+        }
+    }, [session?.accessToken, templateId]);
+
+    useFocusEffect(
+        useCallback(() => {
+            let isActive = true;
+
+            void loadTemplateDetail({
+                isActive: () => isActive,
+            });
+
+            return () => {
+                isActive = false;
+            };
+        }, [loadTemplateDetail]),
+    );
+
+    const handleRetry = useCallback(() => {
+        let isActive = true;
+
+        void loadTemplateDetail({
+            isActive: () => isActive,
+        });
+    }, [loadTemplateDetail]);
 
     const handleItemDetailOpenChange = (open: boolean) => {
         if (!open) {
@@ -42,9 +171,8 @@ export default function TemplateDetailScreen() {
         }
     };
 
-    return (
-        <YStack f={1} bg="$background" px="$space.md" pt="$space.md" gap="$space.lg">
-
+    const renderHeader = () => {
+        return (
             <XStack h={40} ai="center" jc="center" pos="relative" w="100%">
                 <XStack
                     pos="absolute"
@@ -58,20 +186,83 @@ export default function TemplateDetailScreen() {
                 <SizableText ff="$heading" fos="$h4" fow="$bold" col="$text">
                     Template Details
                 </SizableText>
-                <XStack pos="absolute" r={0}>
-                    <TemplateActionsMenu templateId={templateId} triggerColor="$text" />
-                </XStack>
+                {screenState === 'ready' && templateDetailData ? (
+                    <XStack pos="absolute" r={0}>
+                        <TemplateActionsMenu templateId={templateDetailData.templateId} triggerColor="$text" />
+                    </XStack>
+                ) : null}
             </XStack>
+        );
+    };
 
+    if (screenState === 'loading') {
+        return (
+            <YStack f={1} bg="$background" px="$space.md" pt="$space.md" gap="$space.lg">
+                {renderHeader()}
+                <YStack f={1} ai="center" jc="center" px="$space.md" gap="$space.sm">
+                    <ActivityIndicator color={theme.primary.val} />
+                    <SizableText ff="$heading" fos="$h4" fow="$bold" col="$text">
+                        Loading template details
+                    </SizableText>
+                    <SizableText ff="$body" fos="$md" col="$textSubtle" ta="center">
+                        Fetching the latest template information from the server.
+                    </SizableText>
+                </YStack>
+            </YStack>
+        );
+    }
+
+    if (screenState === 'notFound') {
+        return (
+            <YStack f={1} bg="$background" px="$space.md" pt="$space.md" gap="$space.lg">
+                {renderHeader()}
+                <YStack f={1} ai="center" jc="center" px="$space.md" gap="$space.sm">
+                    <SizableText ff="$heading" fos="$h4" fow="$bold" col="$text">
+                        Template not found
+                    </SizableText>
+                    <SizableText ff="$body" fos="$md" col="$textSubtle" ta="center">
+                        The selected template does not exist or is no longer available.
+                    </SizableText>
+                </YStack>
+            </YStack>
+        );
+    }
+
+    if (screenState === 'error') {
+        return (
+            <YStack f={1} bg="$background" px="$space.md" pt="$space.md" gap="$space.lg">
+                {renderHeader()}
+                <YStack f={1} ai="center" jc="center" px="$space.md" gap="$space.md">
+                    <SizableText ff="$heading" fos="$h4" fow="$bold" col="$text">
+                        Unable to load template details
+                    </SizableText>
+                    <SizableText ff="$body" fos="$md" col="$danger" ta="center">
+                        {errorMessage ?? 'Unable to load template details right now.'}
+                    </SizableText>
+                    <Button color="secondary" onPress={handleRetry}>
+                        <Button.Text>Retry</Button.Text>
+                    </Button>
+                </YStack>
+            </YStack>
+        );
+    }
+
+    if (!templateDetailData) {
+        return null;
+    }
+
+    return (
+        <YStack f={1} bg="$background" px="$space.md" pt="$space.md" gap="$space.lg">
+            {renderHeader()}
 
             <ScrollView f={1} showsVerticalScrollIndicator={false}>
                 <YStack w="100%" pb="$space.xl" gap="$space.lg">
                     <YStack w="100%" gap="$space.xs">
                         <SizableText ff="$heading" fos="$h2" fow="$bold" col="$text">
-                            {templateDetailDraft.name}
+                            {templateDetailData.title}
                         </SizableText>
                         <SizableText ff="$body" fos="$md" fow="$medium" col="$textSubtle">
-                            {templateDetailDraft.description}
+                            {templateDetailData.description || 'No description yet.'}
                         </SizableText>
                     </YStack>
 
@@ -82,36 +273,49 @@ export default function TemplateDetailScreen() {
                         fat={totalNutrition.fat}
                     />
 
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ overflow: 'visible' }}>
-                        <XStack ai="center" gap="$space.sm" pr="$space.sm">
-                            {templateDetailDraft.days.map((day) => (
-                                <DayTab
-                                    key={day.uiKey}
-                                    label={`Day ${day.dayNumber}`}
-                                    isSelected={day.uiKey === selectedDay?.uiKey}
-                                    onPress={() => setSelectedDayUiKey(day.uiKey)}
-                                />
-                            ))}
-                        </XStack>
-                    </ScrollView>
+                    {templateDetailData.days.length > 0 ? (
+                        <>
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ overflow: 'visible' }}>
+                                <XStack ai="center" gap="$space.sm" pr="$space.sm">
+                                    {templateDetailData.days.map((day) => (
+                                        <DayTab
+                                            key={day.uiKey}
+                                            label={`Day ${day.dayNumber}`}
+                                            isSelected={day.uiKey === selectedDay?.uiKey}
+                                            onPress={() => setSelectedDayUiKey(day.uiKey)}
+                                        />
+                                    ))}
+                                </XStack>
+                            </ScrollView>
 
-                    <MacroStatDetailCard
-                        calories={selectedDayNutrition.calories}
-                        protein={selectedDayNutrition.protein}
-                        fiber={selectedDayNutrition.fiber}
-                        fat={selectedDayNutrition.fat}
-                    />
-
-                    <YStack w="100%" gap="$space.lg">
-                        {selectedDay?.mealTimeGroups.map((mealTimeGroup) => (
-                            <MenuMealTimeCard
-                                key={mealTimeGroup.mealTime}
-                                mealTimeGroup={mealTimeGroup}
-                                allowAddMeal={false}
-                                onItemPress={setSelectedItem}
+                            <MacroStatDetailCard
+                                calories={selectedDayNutrition.calories}
+                                protein={selectedDayNutrition.protein}
+                                fiber={selectedDayNutrition.fiber}
+                                fat={selectedDayNutrition.fat}
                             />
-                        ))}
-                    </YStack>
+
+                            <YStack w="100%" gap="$space.lg">
+                                {selectedDay?.mealTimeGroups.map((mealTimeGroup) => (
+                                    <MenuMealTimeCard
+                                        key={mealTimeGroup.mealTime}
+                                        mealTimeGroup={mealTimeGroup}
+                                        allowAddMeal={false}
+                                        onItemPress={setSelectedItem}
+                                    />
+                                ))}
+                            </YStack>
+                        </>
+                    ) : (
+                        <YStack w="100%" ai="center" jc="center" py="$space.xl" px="$space.md" gap="$space.sm">
+                            <SizableText ff="$heading" fos="$h4" fow="$bold" col="$text">
+                                No days in this template yet
+                            </SizableText>
+                            <SizableText ff="$body" fos="$md" col="$textSubtle" ta="center">
+                                This template has not been populated with any meal days yet.
+                            </SizableText>
+                        </YStack>
+                    )}
                 </YStack>
             </ScrollView>
 

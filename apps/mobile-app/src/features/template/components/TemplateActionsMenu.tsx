@@ -8,8 +8,8 @@ import { ApplyTemplateModal, type ApplyTemplateSelection } from './ApplyTemplate
 import { DeleteTemplateModal } from './DeleteTemplateModal';
 
 export interface TemplateActionsMenuProps {
-    onApplyToDate?: (selection: ApplyTemplateSelection) => void;
-    onDelete?: () => void;
+    onApplyToDate?: (selection: ApplyTemplateSelection) => Promise<void> | void;
+    onDelete?: () => Promise<void> | void;
     templateId: string;
     triggerColor?: string;
 }
@@ -62,7 +62,11 @@ export function TemplateActionsMenu({
     const menuTriggerRef = useRef<any>(null);
     const { width: screenWidth, height: screenHeight } = useWindowDimensions();
     const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
+    const [isApplying, setIsApplying] = useState(false);
+    const [applyError, setApplyError] = useState<string | null>(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [deleteError, setDeleteError] = useState<string | null>(null);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [anchorLayout, setAnchorLayout] = useState<AnchorLayout | null>(null);
 
@@ -99,26 +103,82 @@ export function TemplateActionsMenu({
 
     const handleApplyToDate = useCallback(() => {
         closeMenu();
+        setApplyError(null);
         setIsApplyModalOpen(true);
     }, [closeMenu]);
 
     const handleApplyTemplate = useCallback(
-        (selection: ApplyTemplateSelection) => {
-            onApplyToDate?.(selection);
-            setIsApplyModalOpen(false);
+        async (selection: ApplyTemplateSelection) => {
+            if (isApplying) {
+                return;
+            }
+
+            if (!onApplyToDate) {
+                setIsApplyModalOpen(false);
+                return;
+            }
+
+            setIsApplying(true);
+            setApplyError(null);
+
+            try {
+                await onApplyToDate(selection);
+                setIsApplyModalOpen(false);
+            } catch (error) {
+                setApplyError(resolveTemplateActionErrorMessage(error, 'Unable to apply this template right now.'));
+            } finally {
+                setIsApplying(false);
+            }
         },
-        [onApplyToDate],
+        [isApplying, onApplyToDate],
     );
 
     const handleDeleteTemplate = useCallback(() => {
         closeMenu();
+        setDeleteError(null);
         setIsDeleteModalOpen(true);
     }, [closeMenu]);
 
     const handleConfirmDelete = useCallback(() => {
-        setIsDeleteModalOpen(false);
-        onDelete?.();
-    }, [onDelete]);
+        if (isDeleting) {
+            return;
+        }
+
+        if (!onDelete) {
+            setIsDeleteModalOpen(false);
+            return;
+        }
+
+        setIsDeleting(true);
+        setDeleteError(null);
+
+        void (async () => {
+            try {
+                await onDelete();
+                setIsDeleteModalOpen(false);
+            } catch (error) {
+                setDeleteError(resolveTemplateActionErrorMessage(error, 'Unable to delete this template right now.'));
+            } finally {
+                setIsDeleting(false);
+            }
+        })();
+    }, [isDeleting, onDelete]);
+
+    const handleApplyModalOpenChange = useCallback((open: boolean) => {
+        if (!open) {
+            setApplyError(null);
+        }
+
+        setIsApplyModalOpen(open);
+    }, []);
+
+    const handleDeleteModalOpenChange = useCallback((open: boolean) => {
+        if (!open) {
+            setDeleteError(null);
+        }
+
+        setIsDeleteModalOpen(open);
+    }, []);
 
     const menuLeft = anchorLayout
         ? Math.max(16, Math.min(anchorLayout.x + anchorLayout.width - MENU_WIDTH, screenWidth - MENU_WIDTH - 16))
@@ -191,15 +251,31 @@ export function TemplateActionsMenu({
 
             <ApplyTemplateModal
                 open={isApplyModalOpen}
-                onOpenChange={setIsApplyModalOpen}
+                isSubmitting={isApplying}
+                onOpenChange={handleApplyModalOpenChange}
                 onApply={handleApplyTemplate}
+                submitError={applyError}
             />
 
             <DeleteTemplateModal
                 open={isDeleteModalOpen}
-                onOpenChange={setIsDeleteModalOpen}
+                isSubmitting={isDeleting}
+                onOpenChange={handleDeleteModalOpenChange}
                 onConfirm={handleConfirmDelete}
+                submitError={deleteError}
             />
         </>
     );
+}
+
+function resolveTemplateActionErrorMessage(error: unknown, fallbackMessage: string) {
+    if (error instanceof Error) {
+        const message = error.message.trim();
+
+        if (message.length > 0) {
+            return message;
+        }
+    }
+
+    return fallbackMessage;
 }

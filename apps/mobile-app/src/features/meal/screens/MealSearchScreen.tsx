@@ -32,6 +32,12 @@ import { useSession } from '@/providers/AuthProvider';
 import {
     mergeMealSearchScreenData,
 } from './meal-search-pagination';
+import {
+    buildTemplateMealPickerLabel,
+    buildTemplateMealPickerParams,
+    parseTemplateMealPickerContext,
+    peekPendingTemplateMealSelection,
+} from '@features/template/utils/template-meal-picker';
 
 import type { MealSearchQuery } from '@meal/shared/types/meal-search';
 import type { MealSearchScreenData } from '../types';
@@ -96,7 +102,14 @@ export default function MealSearchScreen() {
     const { themeName } = useAppTheme();
     const { session } = useSession();
     const router = useRouter();
-    const params = useLocalSearchParams<{ mealTime?: string | string[]; date?: string | string[] }>();
+    const params = useLocalSearchParams<{
+        date?: string | string[];
+        mealTime?: string | string[];
+        source?: string | string[];
+        templateDayNumber?: string | string[];
+        templateDayUiKey?: string | string[];
+        templateExistingMealIds?: string | string[];
+    }>();
     const [searchValue, setSearchValue] = useState('');
     const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
     const [appliedFilters, setAppliedFilters] = useState<MealFilters>(createEmptyMealFilters);
@@ -110,7 +123,26 @@ export default function MealSearchScreen() {
     const [reloadNonce, setReloadNonce] = useState(0);
     const mealTimeParam = getSingleSearchParam(params.mealTime);
     const dateParam = getSingleSearchParam(params.date);
-    const headerTitle = buildAddToMenuLabel(mealTimeParam, dateParam) ?? 'Search';
+    const templatePickerContext = useMemo(
+        () =>
+            parseTemplateMealPickerContext({
+                mealTime: params.mealTime,
+                source: params.source,
+                templateDayNumber: params.templateDayNumber,
+                templateDayUiKey: params.templateDayUiKey,
+                templateExistingMealIds: params.templateExistingMealIds,
+            }),
+        [
+            params.mealTime,
+            params.source,
+            params.templateDayNumber,
+            params.templateDayUiKey,
+            params.templateExistingMealIds,
+        ],
+    );
+    const headerTitle = templatePickerContext
+        ? buildTemplateMealPickerLabel(templatePickerContext)
+        : buildAddToMenuLabel(mealTimeParam, dateParam) ?? 'Search';
 
     const mealSearchBaseQuery = useMemo(() => {
         return buildMealSearchBaseQuery({
@@ -160,6 +192,16 @@ export default function MealSearchScreen() {
     useFocusEffect(useCallback(() => {
         void loadProfileAllergyContext();
     }, [loadProfileAllergyContext]));
+
+    useFocusEffect(
+        useCallback(() => {
+            if (!templatePickerContext || !peekPendingTemplateMealSelection()) {
+                return;
+            }
+
+            router.back();
+        }, [router, templatePickerContext]),
+    );
 
     useEffect(() => {
         if (!session?.accessToken) {
@@ -322,13 +364,17 @@ export default function MealSearchScreen() {
                     pathname: '/meal-search/[mealId]' as const,
                     params: {
                         mealId: `${meal.mealId}`,
-                        ...(mealTimeParam ? { mealTime: mealTimeParam } : {}),
-                        ...(dateParam ? { date: dateParam } : {}),
+                        ...(templatePickerContext
+                            ? buildTemplateMealPickerParams(templatePickerContext)
+                            : {
+                                  ...(mealTimeParam ? { mealTime: mealTimeParam } : {}),
+                                  ...(dateParam ? { date: dateParam } : {}),
+                              }),
                     },
                 },
             ]),
         );
-    }, [dateParam, mealCards, mealTimeParam]);
+    }, [dateParam, mealCards, mealTimeParam, templatePickerContext]);
 
     const mealListHeader = isLoadingMeals ? (
         <XStack ai="center" gap="$space.sm" pb="$space.md">

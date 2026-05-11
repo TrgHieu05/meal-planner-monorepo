@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { IntSchema } from './common';
+import { ImageVariantUrlsSchema } from './image';
 
 export const DifficultyFilterSchema = z.enum(['easy', 'medium', 'hard']);
 export type DifficultyFilter = z.infer<typeof DifficultyFilterSchema>;
@@ -29,6 +30,7 @@ export const MealSearchResultItemSchema = z.object({
   id: IntSchema,
   name: z.string(),
   meal_image_key: z.string().nullable(),
+  meal_image_urls: ImageVariantUrlsSchema.nullable(),
   difficulty: z.enum(['easy', 'medium', 'hard']),
   cook_time_min: IntSchema,
   total_calories: z.number().nonnegative(),

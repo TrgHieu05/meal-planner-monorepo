@@ -6,6 +6,7 @@ export * from './types/diet-type';
 export * from './types/favorite-ingredient';
 export * from './types/goal';
 export * from './types/ingredient';
+export * from './types/image';
 export * from './types/meal';
 export * from './types/meal-search';
 export * from './types/menu';

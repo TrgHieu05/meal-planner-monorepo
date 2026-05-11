@@ -134,13 +134,18 @@ Biến thể khuyến nghị cho v1:
 
 Lưu ý:
 
-- Nếu muốn ổn định URL và dễ quản lý hơn, có thể tạo named transformations trên Cloudinary thay vì nhúng toàn bộ param ở code.
+- V1 không dùng named transformations; backend sẽ build transformation params ở một chỗ duy nhất.
 - Card/detail dùng `g_center` để crop vào trung tâm khi ảnh nguồn sai tỷ lệ mục tiêu.
 - Flow mặc định không gọi raw original ở màn detail.
 
 ## Contract backend khuyến nghị
 
 Để mobile không phải tự dựng URL Cloudinary, nên trả về cả `*_image_key` lẫn `*_image_urls`.
+
+Quy ước naming ở bước 2:
+
+- `meal` tiếp tục giữ response field theo `snake_case` để bám contract hiện có.
+- `meal-template` tiếp tục giữ response field theo `camelCase` để nhất quán với contract template hiện tại.
 
 Ví dụ với `meal`:
 
@@ -163,8 +168,8 @@ Ví dụ với `template`:
 {
   "id": "uuid-template",
   "name": "Eat Clean 7 Days",
-  "template_image_key": "templates/uuid-template/cover",
-  "template_image_urls": {
+  "templateImageKey": "templates/uuid-template/cover",
+  "templateImageUrls": {
     "card": "https://res.cloudinary.com/...",
     "detail": "https://res.cloudinary.com/...",
     "original": "https://res.cloudinary.com/..."
@@ -203,19 +208,19 @@ Lợi ích của flow này:
 
 ### A. Cloudinary
 
-- [ ] Tạo Product Environment trên Cloudinary cho dự án.
-- [ ] Lấy và lưu `cloud_name`, `api_key`, `api_secret` cho backend.
+- [x] Tạo Product Environment trên Cloudinary cho dự án.
+- [x] Lấy và lưu `cloud_name`, `api_key`, `api_secret` cho backend.
 - [x] Chốt folder convention:
 - [x] `meals/<mealId>/cover`
 - [x] `templates/<templateId>/cover`
-- [ ] Chốt allowed formats cho v1: `jpg`, `jpeg`, `png`, `webp`.
-- [ ] Chốt max file size cho upload từ mobile.
+- [x] Chốt allowed formats cho v1: `jpg`, `jpeg`, `png`, `webp`. **Chốt: jpg, jpeg, png**
+- [x] Chốt max file size cho upload từ mobile. **Chốt: Max 5MB**
 - [x] Chốt có dùng overwrite cùng `public_id` khi thay ảnh.
 - [x] Chốt aspect ratio và crop strategy:
 - [x] `meal card` và `meal detail`: `1:1`
 - [x] `template card` và `template detail`: `16:9`
 - [x] card/detail crop vào trung tâm, `original` giữ nguyên tỷ lệ
-- [ ] Chốt có tạo named transformations cho `meal_card`, `meal_detail`, `template_card`, `template_detail` hay không.
+- [x] Chốt có tạo named transformations cho `meal_card`, `meal_detail`, `template_card`, `template_detail` hay không. **Không, sẽ build URL bằng params trong code, nhưng chỉ ở một chỗ duy nhất trong backend**
 - [x] Chốt policy xóa asset:
 - [x] thay ảnh thì xóa asset cũ tương ứng
 - [x] xóa template thì xóa asset template tương ứng
@@ -231,14 +236,14 @@ Lợi ích của flow này:
 
 ### C. `packages/shared`
 
-- [ ] Mở rộng contract `meal search` để trả thêm `meal_image_urls`.
-- [ ] Mở rộng contract `meal detail` để trả thêm `meal_image_urls`.
-- [ ] Mở rộng contract `meal-template` list response để trả `template_image_key`.
-- [ ] Mở rộng contract `meal-template` detail response để trả `template_image_key`.
-- [ ] Mở rộng contract `meal-template` list/detail để trả thêm `template_image_urls`.
-- [ ] Nếu upload lưu qua endpoint riêng, thêm schema request/response cho flow ký upload ảnh.
-- [ ] Nếu dùng endpoint persist ảnh riêng, thêm schema cho `PATCH template image` và `PATCH meal image`.
-- [ ] Build lại `@meal/shared` sau khi đổi schema.
+- [x] Mở rộng contract `meal search` để trả thêm `meal_image_urls`.
+- [x] Mở rộng contract `meal detail` để trả thêm `meal_image_urls`.
+- [x] Mở rộng contract `meal-template` list response để trả `templateImageKey`.
+- [x] Mở rộng contract `meal-template` detail response để trả `templateImageKey`.
+- [x] Mở rộng contract `meal-template` list/detail để trả thêm `templateImageUrls`.
+- [x] Nếu upload lưu qua endpoint riêng, thêm schema request/response cho flow ký upload ảnh.
+- [x] Nếu dùng endpoint persist ảnh riêng, thêm schema cho `PATCH template image` và `PATCH meal image`.
+- [x] Build lại `@meal/shared` sau khi đổi schema.
 
 ### D. Backend `services/main-backend`
 

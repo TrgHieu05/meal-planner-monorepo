@@ -40,13 +40,13 @@ export function TemplateImageUploadField({
                     </YStack>
 
                     <XStack gap="$space.sm" flexWrap="wrap">
-                        <Button color="secondary" disabled={isDisabled} onPress={onPickImage}>
+                        <Button color="secondary" size="medium" disabled={isDisabled} onPress={onPickImage}>
                             <Button.Icon icon={Upload} />
                             <Button.Text>Change image</Button.Text>
                         </Button>
 
                         {showRemoveAction ? (
-                            <Button color="danger" disabled={isDisabled} onPress={onRemoveImage}>
+                            <Button color="danger" size="medium" disabled={isDisabled} onPress={onRemoveImage}>
                                 <Button.Icon icon={Trash2} />
                                 <Button.Text>Remove image</Button.Text>
                             </Button>
@@ -61,18 +61,17 @@ export function TemplateImageUploadField({
                     py="$space.xl"
                     px="$space.lg"
                     bw={2}
-                    bc="$primary"
-                    br="$radius.xl"
-                    bg="$surface"
+                    borderStyle="dashed"
+                    borderColor="$primary"
+                    bg="$softPrimary"
                     opacity={isDisabled ? 0.65 : 1}
                     onPress={onPickImage}
-                    style={{ borderStyle: 'dashed' }}
                 >
-                    <Upload color="$primary" size={36} />
-                    <SizableText ff="$body" fos="$md" fow="$semiBold" col="$text">
+                    <Upload color="$primary" size={24} />
+                    <SizableText ff="$body" fos="$md" fow="$medium" col="$textSubtle">
                         Upload your cover image
                     </SizableText>
-                    <SizableText ff="$body" fos="$sm" col="$primary" textAlign="center">
+                    <SizableText ff="$body" fos="$md" fow="$medium" col="$primary" textAlign="center">
                         Browse your photo library
                     </SizableText>
                 </YStack>

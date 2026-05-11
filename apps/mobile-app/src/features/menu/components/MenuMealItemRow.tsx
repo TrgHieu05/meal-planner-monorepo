@@ -1,5 +1,6 @@
 import { SizableText, XStack, YStack } from 'tamagui';
 
+import { ImageWithFallback } from '@components';
 import {
   formatMenuNutritionValue,
   scaleMenuNutrition,
@@ -24,7 +25,13 @@ export function MenuMealItemRow({ item, onPress }: MenuMealItemRowProps) {
       onPress={() => onPress?.(item)}
       pressStyle={{ bg: '$surfacePress', opacity: 0.92 }}
     >
-      <YStack w={48} h={48} bg="$surfacePress" br="$radius.sm" />
+      <YStack w={48} h={48} bg="$surfacePress" br="$radius.sm" overflow="hidden">
+        <ImageWithFallback
+          accessibilityLabel={`${item.mealName} image`}
+          fallbackSource={require('@assets/images/default-meal.jpg')}
+          style={{ width: '100%', height: '100%' }}
+        />
+      </YStack>
 
       <YStack f={1} gap={4}>
         <SizableText ff="$body" fos="$md" fow="$semiBold" col="$text">

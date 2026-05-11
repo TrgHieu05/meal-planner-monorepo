@@ -1,6 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
 import {
+  buildTemplateMealDuplicateWarning,
   buildTemplateMealPickerLabel,
   buildTemplateMealPickerParams,
   clearPendingTemplateMealSelection,
@@ -16,6 +17,7 @@ describe('template-meal-picker helpers', () => {
       source: 'template',
       dayNumber: 2,
       dayUiKey: 'template-day-7',
+      existingMealIds: [21, 33, 21],
       mealTime: 'DINNER',
     });
 
@@ -24,19 +26,29 @@ describe('template-meal-picker helpers', () => {
       mealTime: 'dinner',
       templateDayNumber: '2',
       templateDayUiKey: 'template-day-7',
+      templateExistingMealIds: '21,33',
     });
     expect(parseTemplateMealPickerContext(params)).toEqual({
       source: 'template',
       dayNumber: 2,
       dayUiKey: 'template-day-7',
+      existingMealIds: [21, 33],
       mealTime: 'DINNER',
     });
     expect(buildTemplateMealPickerLabel({
       source: 'template',
       dayNumber: 2,
       dayUiKey: 'template-day-7',
+      existingMealIds: [21, 33],
       mealTime: 'DINNER',
     })).toBe('Add to Day 2 Dinner');
+    expect(buildTemplateMealDuplicateWarning({
+      source: 'template',
+      dayNumber: 2,
+      dayUiKey: 'template-day-7',
+      existingMealIds: [21, 33],
+      mealTime: 'DINNER',
+    })).toBe('This meal is already in Day 2 Dinner. Choose another meal or edit the existing item.');
   });
 
   it('stages and consumes a pending template meal selection exactly once', () => {
@@ -46,6 +58,7 @@ describe('template-meal-picker helpers', () => {
       source: 'template',
       dayNumber: 1,
       dayUiKey: 'template-day-1',
+      existingMealIds: [101],
       mealTime: 'BREAKFAST',
       mealId: 101,
       mealName: 'Berry Yogurt Bowl',
@@ -63,6 +76,7 @@ describe('template-meal-picker helpers', () => {
       mealId: 101,
       mealTime: 'BREAKFAST',
       dayUiKey: 'template-day-1',
+      existingMealIds: [101],
     });
     expect(consumePendingTemplateMealSelection()).toMatchObject({
       mealName: 'Berry Yogurt Bowl',

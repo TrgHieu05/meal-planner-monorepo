@@ -13,6 +13,7 @@ import { SizableText, ScrollView, XStack, YStack, useTheme } from 'tamagui';
 
 import { fetchMealDetailViewModel } from '../api/meal.api';
 import {
+	buildTemplateMealDuplicateWarning,
 	buildTemplateMealPickerLabel,
 	parseTemplateMealPickerContext,
 	stagePendingTemplateMealSelection,
@@ -73,6 +74,7 @@ export default function MealDetailScreen() {
 	const [meal, setMeal] = useState<MealDetailViewModel | null>(null);
 	const [screenState, setScreenState] = useState<MealDetailScreenState>('loading');
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
+	const [templateWarningMessage, setTemplateWarningMessage] = useState<string | null>(null);
 	const [reloadNonce, setReloadNonce] = useState(0);
 	const params = useLocalSearchParams<{
 		date?: string | string[];
@@ -81,6 +83,7 @@ export default function MealDetailScreen() {
 		source?: string | string[];
 		templateDayNumber?: string | string[];
 		templateDayUiKey?: string | string[];
+		templateExistingMealIds?: string | string[];
 	}>();
 	const mealIdParam = getSingleSearchParam(params.mealId);
 	const mealId = useMemo(() => parseMealIdParam(mealIdParam), [mealIdParam]);
@@ -93,14 +96,25 @@ export default function MealDetailScreen() {
 				source: params.source,
 				templateDayNumber: params.templateDayNumber,
 				templateDayUiKey: params.templateDayUiKey,
+				templateExistingMealIds: params.templateExistingMealIds,
 			}),
-		[params.mealTime, params.source, params.templateDayNumber, params.templateDayUiKey],
+		[
+			params.mealTime,
+			params.source,
+			params.templateDayNumber,
+			params.templateDayUiKey,
+			params.templateExistingMealIds,
+		],
 	);
 	const addToMenuLabel = buildAddToMenuLabel(mealTimeParam, dateParam) ?? 'Add to Menu';
 	const actionButtonLabel = templatePickerContext
 		? buildTemplateMealPickerLabel(templatePickerContext)
 		: addToMenuLabel;
 	const hasLockedAddMealContext = Boolean(mealTimeParam && dateParam);
+
+	useEffect(() => {
+		setTemplateWarningMessage(null);
+	}, [mealId, templatePickerContext]);
 
 	useEffect(() => {
 		if (mealId === null) {
@@ -180,6 +194,13 @@ export default function MealDetailScreen() {
 		if (!meal || !templatePickerContext) {
 			return;
 		}
+
+		if (templatePickerContext.existingMealIds.includes(meal.mealId)) {
+			setTemplateWarningMessage(buildTemplateMealDuplicateWarning(templatePickerContext));
+			return;
+		}
+
+		setTemplateWarningMessage(null);
 
 		stagePendingTemplateMealSelection({
 			...templatePickerContext,
@@ -375,6 +396,11 @@ export default function MealDetailScreen() {
 						>
 					    <Button.Text>{actionButtonLabel}</Button.Text>
                 </Button>
+					{templatePickerContext && templateWarningMessage ? (
+						<SizableText ff="$body" fos="$sm" col="$danger" textAlign="center" mt="$space.sm">
+							{templateWarningMessage}
+						</SizableText>
+					) : null}
             </YStack>
 
 					{!templatePickerContext ? (

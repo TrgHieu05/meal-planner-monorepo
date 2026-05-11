@@ -216,7 +216,7 @@ export default function TemplateDetailScreen() {
         });
 
         showTemplateSuccessAlert(TEMPLATE_ACTION_SUCCESS_MESSAGES.delete);
-        router.replace('/template');
+        router.back();
     }, [router, session?.accessToken, templateDetailData]);
 
     const renderHeader = () => {

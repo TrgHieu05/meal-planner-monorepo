@@ -160,10 +160,6 @@ export default function TemplateListScreen() {
             </XStack>
 
             <XStack w="100%" ai="center" jc="flex-end" gap="$space.sm">
-                <Button color="secondary" size="medium" br="$radius.pill">
-                    <Button.Icon icon={SlidersHorizontal} />
-                    <Button.Text>Filter</Button.Text>
-                </Button>
                 <Button color="primary" size="medium" br="$radius.pill" onPress={() => router.push('/template/create-template')}>
                     <Button.Icon icon={Plus} />
                     <Button.Text>Create</Button.Text>

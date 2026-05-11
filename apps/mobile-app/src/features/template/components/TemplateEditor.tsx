@@ -247,6 +247,13 @@ export function TemplateEditor({
                     source: 'template',
                     dayNumber: selectedDay.dayNumber,
                     dayUiKey: selectedDay.uiKey,
+                    existingMealIds: Array.from(
+                        new Set(
+                            selectedDay.mealTimeGroups
+                                .find((group) => group.mealTime === mealTime)
+                                ?.items.map((item) => item.mealId) ?? [],
+                        ),
+                    ),
                     mealTime,
                 }),
             });
@@ -321,7 +328,7 @@ export function TemplateEditor({
                 </SizableText>
             </XStack>
 
-            <ScrollView f={1} showsVerticalScrollIndicator={false} overflowX='visible'>
+            <ScrollView f={1} showsVerticalScrollIndicator={false}>
                 <YStack w="100%" gap="$space.lg" py="$space.md">
                     <MacroStatDetailCard
                         calories={totalNutrition.calories}

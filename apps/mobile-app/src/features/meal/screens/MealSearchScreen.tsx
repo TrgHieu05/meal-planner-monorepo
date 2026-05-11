@@ -108,6 +108,7 @@ export default function MealSearchScreen() {
         source?: string | string[];
         templateDayNumber?: string | string[];
         templateDayUiKey?: string | string[];
+        templateExistingMealIds?: string | string[];
     }>();
     const [searchValue, setSearchValue] = useState('');
     const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
@@ -129,8 +130,15 @@ export default function MealSearchScreen() {
                 source: params.source,
                 templateDayNumber: params.templateDayNumber,
                 templateDayUiKey: params.templateDayUiKey,
+                templateExistingMealIds: params.templateExistingMealIds,
             }),
-        [params.mealTime, params.source, params.templateDayNumber, params.templateDayUiKey],
+        [
+            params.mealTime,
+            params.source,
+            params.templateDayNumber,
+            params.templateDayUiKey,
+            params.templateExistingMealIds,
+        ],
     );
     const headerTitle = templatePickerContext
         ? buildTemplateMealPickerLabel(templatePickerContext)

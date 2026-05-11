@@ -57,6 +57,7 @@ describe('meal.api', () => {
                   id: 7,
                   name: 'Turkey Quinoa Salad',
                   meal_image_key: null,
+                  meal_image_urls: null,
                   difficulty: 'easy',
                   cook_time_min: 18,
                   total_calories: 340,
@@ -79,7 +80,12 @@ describe('meal.api', () => {
             data: {
               id: 7,
               name: 'Turkey Quinoa Salad',
-              meal_image_key: null,
+              meal_image_key: 'meals/7/cover',
+              meal_image_urls: {
+                card: 'https://example.com/meals/7/cover/card',
+                detail: 'https://example.com/meals/7/cover/detail',
+                original: 'https://example.com/meals/7/cover/original',
+              },
               description: 'Bright lemon dressing over quinoa and turkey.',
               cuisine_type: {
                 id: 3,
@@ -180,6 +186,7 @@ describe('meal.api', () => {
           mealId: 7,
           mealName: 'Turkey Quinoa Salad',
           mealImageKey: null,
+          mealCardImageUrl: null,
           cookTime: '18 mins',
           difficulty: 'Easy',
           totalCalories: '340',
@@ -205,7 +212,8 @@ describe('meal.api', () => {
     expect(result).toEqual({
       mealId: 7,
       mealName: 'Turkey Quinoa Salad',
-      mealImageKey: null,
+      mealImageKey: 'meals/7/cover',
+      mealDetailImageUrl: 'https://example.com/meals/7/cover/detail',
       description: 'Bright lemon dressing over quinoa and turkey.',
       cuisineTypeName: 'Mediterranean',
       difficulty: 'Hard',

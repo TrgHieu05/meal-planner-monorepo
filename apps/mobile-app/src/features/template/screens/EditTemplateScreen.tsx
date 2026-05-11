@@ -6,6 +6,7 @@ import { SizableText, YStack } from 'tamagui';
 import { Button } from '@components';
 
 import { TemplateEditor, type TemplateEditorDraft } from '../components/TemplateEditor';
+import { applyTemplateImageMutation } from '../api/template-image.api';
 import {
     buildTemplateEditDayPlan,
     buildUpdateTemplatePayload,
@@ -131,6 +132,12 @@ export default function EditTemplateScreen() {
                     });
                 }
 
+                await applyTemplateImageMutation({
+                    accessToken: session.accessToken,
+                    mutation: draft.templateImageMutation,
+                    templateId,
+                });
+
                 router.replace(`/template/${templateId}`);
             } catch (error) {
                 setSubmitError(resolveTemplateSubmitErrorMessage(error, 'Unable to save this template right now.'));
@@ -181,6 +188,8 @@ export default function EditTemplateScreen() {
             quitModalVariant="edit"
             initialTemplateName={editorData.initialTemplateName}
             initialDescription={editorData.initialDescription}
+            initialTemplateImageKey={editorData.initialTemplateImageKey}
+            initialTemplateImageUrl={editorData.initialTemplateImageUrl}
             initialDays={editorData.initialDays}
         />
     );

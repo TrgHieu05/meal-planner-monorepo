@@ -19,9 +19,11 @@ import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiBody } from '@nes
 import { RequireAuth } from '../auth/jwt-auth.guard';
 import { MealTemplateService } from './meal-template.service';
 import {
+  CreateImageUploadSignatureRequestSchema,
   ApplyMealTemplateRequestSchema,
   CreateMealTemplateRequestSchema,
   UpdateMealTemplateRequestSchema,
+  UpdateMealTemplateImageRequestSchema,
   AddMealTemplateItemRequestSchema,
   UpdateMealTemplateItemRequestSchema,
   UpsertMealTemplateDayRequestSchema,
@@ -100,6 +102,29 @@ export class MealTemplateController {
     return this.service.getTemplateDetail(userId, id);
   }
 
+  @Post(':id/image/upload-signature')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Lấy signed upload params cho ảnh cover của template' })
+  @ApiResponse({ status: 200, description: 'Trả về signed upload params cho Cloudinary' })
+  @ApiResponse({ status: 400, description: 'Invalid id or payload' })
+  @ApiResponse({ status: 401, description: 'Token không hợp lệ hoặc đã hết hạn' })
+  @ApiResponse({ status: 403, description: 'You do not have access to this template.' })
+  @ApiResponse({ status: 404, description: 'Meal template not found.' })
+  @ApiResponse({ status: 500, description: 'Internal server error.' })
+  async createTemplateImageUploadSignature(
+    @Req() request: AuthenticatedRequest,
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Body() body: any,
+  ) {
+    const userId = this.getUserId(request);
+    const parsed = CreateImageUploadSignatureRequestSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new BadRequestException('Invalid payload');
+    }
+
+    return this.service.createTemplateImageUploadSignature(userId, id, parsed.data);
+  }
+
   @Post(':id/apply')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Áp dụng Meal Template vào menu thực tế' })
@@ -161,6 +186,29 @@ export class MealTemplateController {
       throw new BadRequestException('Invalid payload');
     }
     return this.service.updateTemplate(userId, id, parsed.data);
+  }
+
+  @Patch(':id/image')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Cập nhật hoặc xóa ảnh cover của Meal Template' })
+  @ApiResponse({ status: 204, description: 'Cập nhật ảnh template thành công' })
+  @ApiResponse({ status: 400, description: 'Invalid id or payload' })
+  @ApiResponse({ status: 401, description: 'Token không hợp lệ hoặc đã hết hạn' })
+  @ApiResponse({ status: 403, description: 'You do not have access to this template.' })
+  @ApiResponse({ status: 404, description: 'Meal template not found.' })
+  @ApiResponse({ status: 500, description: 'Internal server error.' })
+  async updateTemplateImage(
+    @Req() request: AuthenticatedRequest,
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Body() body: any,
+  ) {
+    const userId = this.getUserId(request);
+    const parsed = UpdateMealTemplateImageRequestSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new BadRequestException('Invalid payload');
+    }
+
+    await this.service.updateTemplateImage(userId, id, parsed.data);
   }
 
   @Delete(':id')

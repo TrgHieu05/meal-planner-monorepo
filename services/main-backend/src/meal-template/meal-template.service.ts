@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
   ForbiddenException,
@@ -10,7 +11,10 @@ import {
   ApplyMealTemplateRequest,
   ApplyMealTemplateResponse,
   CreateMealTemplateRequest,
+  CreateImageUploadSignatureRequest,
+  CreateImageUploadSignatureResponse,
   UpdateMealTemplateRequest,
+  UpdateMealTemplateImageRequest,
   MealTemplateListResponse,
   MealTemplateDetailResponse,
   AddMealTemplateItemRequest,
@@ -40,7 +44,7 @@ export class MealTemplateService {
   private async checkOwnership(templateId: string, userId: string) {
     const template = await this.prisma.mealTemplate.findUnique({
       where: { id: templateId },
-      select: { userId: true },
+      select: { userId: true, templateImageKey: true },
     });
 
     if (!template) {
@@ -50,6 +54,8 @@ export class MealTemplateService {
     if (template.userId !== userId) {
       throw new ForbiddenException('You do not have access to this template.');
     }
+
+    return template;
   }
 
   private roundTo2(value: number) {
@@ -292,9 +298,47 @@ export class MealTemplateService {
     return updated;
   }
 
+  async createTemplateImageUploadSignature(
+    userId: string,
+    templateId: string,
+    input: CreateImageUploadSignatureRequest,
+  ): Promise<CreateImageUploadSignatureResponse> {
+    await this.checkOwnership(templateId, userId);
+
+    if (input.entityType !== 'template' || input.entityId !== templateId) {
+      throw new BadRequestException('Invalid image upload target.');
+    }
+
+    return this.mediaService.createUploadSignature(input);
+  }
+
+  async updateTemplateImage(userId: string, id: string, data: UpdateMealTemplateImageRequest) {
+    const template = await this.checkOwnership(id, userId);
+    const currentTemplateImageKey = template.templateImageKey;
+    const nextTemplateImageKey = data.templateImageKey;
+
+    await this.prisma.mealTemplate.update({
+      where: { id },
+      data: {
+        templateImageKey: nextTemplateImageKey,
+      },
+    });
+
+    if (
+      currentTemplateImageKey &&
+      (!nextTemplateImageKey || currentTemplateImageKey !== nextTemplateImageKey)
+    ) {
+      await this.mediaService.deleteImage(currentTemplateImageKey);
+    }
+  }
+
   async deleteTemplate(userId: string, id: string) {
-    await this.checkOwnership(id, userId);
+    const template = await this.checkOwnership(id, userId);
     await this.prisma.mealTemplate.delete({ where: { id } });
+
+    if (template.templateImageKey) {
+      await this.mediaService.deleteImage(template.templateImageKey);
+    }
   }
 
   async applyTemplate(

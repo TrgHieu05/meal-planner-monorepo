@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
 
 import { TemplateEditor, type TemplateEditorDraft } from '../components/TemplateEditor';
+import { applyTemplateImageMutation } from '../api/template-image.api';
 import {
     buildCreateTemplatePayload,
     createTemplate,
@@ -51,6 +52,12 @@ export default function CreateTemplateScreen() {
 
                 createdTemplateId = createdTemplate.id;
 
+                await applyTemplateImageMutation({
+                    accessToken: session.accessToken,
+                    mutation: draft.templateImageMutation,
+                    templateId: createdTemplate.id,
+                });
+
                 for (const request of mapTemplateDaysToUpsertRequests(draft.days)) {
                     await upsertTemplateDay({
                         accessToken: session.accessToken,
@@ -93,6 +100,8 @@ export default function CreateTemplateScreen() {
             quitModalVariant="create"
             initialTemplateName=""
             initialDescription=""
+            initialTemplateImageKey={null}
+            initialTemplateImageUrl={null}
             initialDays={initialDays}
         />
     );

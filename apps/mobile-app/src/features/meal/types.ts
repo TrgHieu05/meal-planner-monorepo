@@ -4,6 +4,7 @@ export type MealSearchCardViewModel = {
   mealId: number;
   mealName: string;
   mealImageKey: string | null;
+  mealCardImageUrl: string | null;
   cookTime: string;
   difficulty: MealDifficultyLabel;
   totalCalories: string;
@@ -32,6 +33,7 @@ export type MealDetailViewModel = {
   mealId: number;
   mealName: string;
   mealImageKey: string | null;
+  mealDetailImageUrl: string | null;
   description: string;
   cuisineTypeName: string;
   difficulty: MealDifficultyLabel;

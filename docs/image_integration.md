@@ -40,15 +40,15 @@ Ngoài phạm vi mặc định của tài liệu này:
 
 - [x] Prisma schema đã có sẵn cột `meal_image_key` trong bảng `meals`.
 - [x] Prisma schema đã có sẵn cột `template_image_key` trong bảng `meal_templates`.
-- [x] Backend `meal-search` hiện đã trả `meal_image_key` ở cả search result và meal detail.
-- [x] Mobile meal data layer hiện đã map `meal_image_key` sang `mealImageKey` trong view model.
-- [x] UI `MealCard` và `MealDetailScreen` hiện vẫn đang dùng placeholder block thay vì ảnh thật.
-- [x] UI `TemplateCard` hiện vẫn đang dùng placeholder block cho ảnh cover template.
-- [x] Template editor hiện chưa có image picker, upload flow hoặc preview ảnh thật.
-- [x] Shared schema cho `meal-template` hiện chưa expose `template_image_key` hoặc image URL nào.
-- [x] Backend `meal-template` hiện chưa trả ảnh template ở list/detail response.
-- [x] `apps/mobile-app/package.json` hiện chưa có dependency picker/manipulator cho upload ảnh từ thiết bị.
-- [x] `services/main-backend/package.json` hiện chưa có Cloudinary SDK hoặc media module chuyên trách.
+- [x] Backend `meal-search` hiện đã trả `meal_image_key` và `meal_image_urls` ở cả search result và meal detail.
+- [x] Mobile meal data layer hiện đã map `meal_image_key` và `meal_image_urls` sang meal view model.
+- [x] UI `MealCard` và `MealDetailScreen` hiện đã render ảnh thật với fallback cục bộ.
+- [x] UI `TemplateCard` và `TemplateDetailScreen` hiện đã render ảnh thật với fallback cục bộ.
+- [x] Template editor hiện đã có image picker, preview ảnh cục bộ, action thay/xóa ảnh và upload flow khi submit.
+- [x] Shared schema cho `meal-template` hiện đã expose `templateImageKey` và `templateImageUrls`.
+- [x] Backend `meal-template` hiện đã trả ảnh template ở list/detail response.
+- [x] `apps/mobile-app/package.json` hiện đã có `expo-image-picker` cho flow chọn ảnh từ thiết bị.
+- [x] `services/main-backend/package.json` hiện đã có Cloudinary SDK và media module chuyên trách.
 - [x] Mobile app hiện đã có sẵn fallback asset cục bộ `default-meal.jpg` và `default-template.jpg` trong `apps/mobile-app/assets/images`.
 
 ## Kiến trúc đã chốt cho v1
@@ -281,10 +281,10 @@ Lợi ích của flow này:
 - [x] Mở rộng `meal-template` list response để trả `templateImageKey` và `templateImageUrls`.
 - [x] Mở rộng `meal-template` detail response để trả `templateImageKey` và `templateImageUrls`.
 - [x] Bổ sung e2e test cho `GET /api/v1/meal-templates` và `GET /api/v1/meal-templates/:id` với `templateImageUrls`.
-- [ ] Mở rộng create/update template flow để có thể persist `template_image_key`.
-- [ ] Cân nhắc thêm endpoint chuyên biệt như `PATCH /api/v1/meal-templates/:id/image` để cập nhật cover sau upload.
-- [ ] Thêm endpoint cấp signed upload params cho template cover.
-- [ ] Bổ sung unit test và e2e test cho image update flow.
+- [x] Mở rộng create/update template flow để có thể persist `template_image_key`.
+- [x] Thêm endpoint chuyên biệt `PATCH /api/v1/meal-templates/:id/image` để cập nhật cover sau upload.
+- [x] Thêm endpoint cấp signed upload params cho template cover.
+- [x] Bổ sung unit test và e2e test cho image update flow.
 
 #### D5. OpenAPI
 
@@ -294,32 +294,32 @@ Lợi ích của flow này:
 
 #### E1. Dependency và utility
 
-- [ ] Cài `expo-image-picker` để chọn ảnh từ thư viện thiết bị.
-- [ ] Nếu cần resize/crop sơ bộ trước khi upload, cân nhắc thêm `expo-image-manipulator`.
-- [ ] Tạo utility/API riêng cho upload ảnh Cloudinary, không nhúng vào `meal.api.ts` hoặc `template.api.ts` quá sâu.
+- [x] Cài `expo-image-picker` để chọn ảnh từ thư viện thiết bị.
+- [ ] Nếu cần resize/crop sơ bộ trước khi upload, cân nhắc thêm `expo-image-manipulator`. **Khong dùng, sẽ để Cloudinary xử lý crop/resize theo biến thể đã chốt**
+- [x] Tạo utility/API riêng cho upload ảnh Cloudinary, không nhúng vào `meal.api.ts` hoặc `template.api.ts` quá sâu.
 - [ ] Tạo type chung cho image asset response từ backend.
 
 #### E2. Meal UI
 
-- [ ] Cập nhật `MealCard` để render ảnh thật từ `meal_image_urls.card`.
-- [ ] Cập nhật `MealDetailScreen` để render ảnh thật từ `meal_image_urls.detail`.
-- [ ] Dùng fallback `default-meal.jpg` khi `meal_image_key` hoặc URL bị thiếu/lỗi.
+- [x] Cập nhật `MealCard` để render ảnh thật từ `meal_image_urls.card`.
+- [x] Cập nhật `MealDetailScreen` để render ảnh thật từ `meal_image_urls.detail`.
+- [x] Dùng fallback `default-meal.jpg` khi `meal_image_key` hoặc URL bị thiếu/lỗi.
 - [ ] Nếu muốn đồng bộ hơn, cân nhắc hiển thị thumbnail meal ở các row như menu/template item sau khi contract meal item đủ dữ liệu ảnh.
 
 #### E3. Template UI
 
-- [ ] Cập nhật `TemplateCard` để render `templateImageUrls.card` thay cho placeholder.
-- [ ] Cập nhật `TemplateDetailScreen` để render `templateImageUrls.detail`.
-- [ ] Bổ sung preview ảnh trong `TemplateEditor`.
-- [ ] Bổ sung action chọn/thay/xóa ảnh ở màn create/edit template.
-- [ ] Dùng fallback `default-template.jpg` khi `templateImageKey` hoặc URL bị thiếu/lỗi.
-- [ ] Khi create template mới, xử lý thứ tự: tạo template trước để lấy `templateId`, sau đó upload cover và persist `templateImageKey`.
-- [ ] Khi edit template, cho phép thay ảnh mà không ảnh hưởng các day/item hiện có.
+- [x] Cập nhật `TemplateCard` để render `templateImageUrls.card` thay cho placeholder.
+- [x] Cập nhật `TemplateDetailScreen` để render `templateImageUrls.detail`.
+- [x] Bổ sung preview ảnh trong `TemplateEditor`.
+- [x] Bổ sung action chọn/thay/xóa ảnh ở màn create/edit template.
+- [x] Dùng fallback `default-template.jpg` khi `templateImageKey` hoặc URL bị thiếu/lỗi.
+- [x] Khi create template mới, xử lý thứ tự: tạo template trước để lấy `templateId`, sau đó upload cover và persist `templateImageKey`.
+- [x] Khi edit template, cho phép thay ảnh mà không ảnh hưởng các day/item hiện có.
 
 #### E4. Upload flow trên mobile
 
-- [ ] Tạo API call lấy signed upload params từ backend.
-- [ ] Upload file local lên Cloudinary bằng `FormData`.
+- [x] Tạo API call lấy signed upload params từ backend.
+- [x] Upload file local lên Cloudinary bằng `FormData`.
 - [ ] Hiển thị trạng thái `uploading`, `success`, `error`.
 - [ ] Nếu upload thành công nhưng persist backend thất bại, hiển thị lỗi rõ ràng và cho phép retry.
 - [ ] Nếu user rời màn create/edit giữa chừng, quyết định rõ có cho phép bỏ ảnh vừa upload nhưng chưa persist hay không.
@@ -387,4 +387,4 @@ Lợi ích của flow này:
 
 Với hướng Cloudinary hiện tại, phần quan trọng nhất là giữ cho database chỉ lưu `public_id`, còn toàn bộ logic biến thể ảnh nằm ở backend. Cách này giúp `meal` và `template` cùng dùng một chiến lược resize/delivery thống nhất, đồng thời giữ cho mobile đơn giản hơn khi render card và detail.
 
-Hiện tại không còn blocker nghiệp vụ mở trong tài liệu này. Phần còn lại là công việc triển khai: mở rộng contract ảnh cho `meal` và `template`, tạo media service cho Cloudinary, hoàn thiện upload flow của `template` và chuẩn hóa quy trình nạp ảnh cho `meal`.
+Hiện tại không còn blocker nghiệp vụ mở trong tài liệu này. Phần còn lại chủ yếu là hoàn thiện manual QA, regenerate OpenAPI và chuẩn hóa quy trình nạp ảnh cho `meal`.

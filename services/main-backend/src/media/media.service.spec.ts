@@ -4,6 +4,7 @@ import {
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
+import { v2 as cloudinary } from 'cloudinary';
 import { MediaService } from './media.service';
 
 const configValues: Record<string, string> = {
@@ -85,6 +86,25 @@ describe('MediaService', () => {
     expect(signature.overwrite).toBe(true);
     expect(signature.invalidate).toBe(true);
     expect(signature.signature).toMatch(/^[a-f0-9]{64}$/);
+  });
+
+  it('deletes a Cloudinary image asset and ignores missing assets', async () => {
+    const destroySpy = jest
+      .spyOn(cloudinary.uploader, 'destroy')
+      .mockResolvedValueOnce({ result: 'ok' } as never)
+      .mockResolvedValueOnce({ result: 'not found' } as never);
+
+    await expect(service.deleteImage('templates/template-1/cover')).resolves.toBeUndefined();
+    await expect(service.deleteImage('templates/template-2/cover')).resolves.toBeUndefined();
+
+    expect(destroySpy).toHaveBeenNthCalledWith(1, 'templates/template-1/cover', {
+      invalidate: true,
+      resource_type: 'image',
+    });
+    expect(destroySpy).toHaveBeenNthCalledWith(2, 'templates/template-2/cover', {
+      invalidate: true,
+      resource_type: 'image',
+    });
   });
 
   it('rejects invalid entity ids for public id generation', () => {

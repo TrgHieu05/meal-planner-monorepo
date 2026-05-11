@@ -145,6 +145,20 @@ export class MediaService {
     };
   }
 
+  async deleteImage(publicId: string) {
+    this.configureCloudinary();
+
+    const normalizedPublicId = this.normalizePublicId(publicId);
+    const result = await cloudinary.uploader.destroy(normalizedPublicId, {
+      invalidate: true,
+      resource_type: 'image',
+    });
+
+    if (result.result !== 'ok' && result.result !== 'not found') {
+      throw new InternalServerErrorException('Unable to delete image asset.');
+    }
+  }
+
   buildPublicId(entityType: ImageEntityType, entityId: string) {
     const normalizedEntityId = this.normalizeEntityId(entityId);
     return `${this.getFolder(entityType)}/${normalizedEntityId}/cover`;

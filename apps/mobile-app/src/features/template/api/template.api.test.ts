@@ -66,6 +66,12 @@ describe('template.api', () => {
                   id: '550e8400-e29b-41d4-a716-446655440001',
                   name: 'High Protein Week',
                   description: 'Protein focused plan',
+                  templateImageKey: 'templates/550e8400-e29b-41d4-a716-446655440001/cover',
+                  templateImageUrls: {
+                    card: 'https://example.com/templates/550e8400-e29b-41d4-a716-446655440001/cover/card',
+                    detail: 'https://example.com/templates/550e8400-e29b-41d4-a716-446655440001/cover/detail',
+                    original: 'https://example.com/templates/550e8400-e29b-41d4-a716-446655440001/cover/original',
+                  },
                   dayCount: 3,
                   nutritionTotal: {
                     calories: 1750,
@@ -85,6 +91,12 @@ describe('template.api', () => {
               id: '550e8400-e29b-41d4-a716-446655440001',
               name: 'High Protein Week',
               description: 'Protein focused plan',
+              templateImageKey: 'templates/550e8400-e29b-41d4-a716-446655440001/cover',
+              templateImageUrls: {
+                card: 'https://example.com/templates/550e8400-e29b-41d4-a716-446655440001/cover/card',
+                detail: 'https://example.com/templates/550e8400-e29b-41d4-a716-446655440001/cover/detail',
+                original: 'https://example.com/templates/550e8400-e29b-41d4-a716-446655440001/cover/original',
+              },
               nutritionTotal: {
                 calories: 1750,
                 protein: 85,
@@ -198,6 +210,7 @@ describe('template.api', () => {
           fat: 50,
         },
         nutritionSummary: '1750 kcal | 85g P | 22.5g Fib | 50g F',
+        templateCardImageUrl: 'https://example.com/templates/550e8400-e29b-41d4-a716-446655440001/cover/card',
       },
     ]);
   });
@@ -214,6 +227,8 @@ describe('template.api', () => {
     expect(client.get).toHaveBeenCalledWith('/v1/meal-templates/550e8400-e29b-41d4-a716-446655440001');
     expect(result.initialTemplateName).toBe('High Protein Week');
     expect(result.initialDescription).toBe('Protein focused plan');
+    expect(result.initialTemplateImageKey).toBe('templates/550e8400-e29b-41d4-a716-446655440001/cover');
+    expect(result.initialTemplateImageUrl).toBe('https://example.com/templates/550e8400-e29b-41d4-a716-446655440001/cover/detail');
     expect(result.initialDays).toMatchObject([
       {
         dayNumber: 1,
@@ -262,6 +277,7 @@ describe('template.api', () => {
       templateId: '550e8400-e29b-41d4-a716-446655440001',
       title: 'High Protein Week',
       description: 'Protein focused plan',
+      templateDetailImageUrl: 'https://example.com/templates/550e8400-e29b-41d4-a716-446655440001/cover/detail',
       nutritionTotal: {
         calories: 1750,
         protein: 85,

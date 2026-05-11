@@ -1,6 +1,6 @@
 {
   "name": "mobile-app",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "main": "expo-router/entry",
   "scripts": {
     "start": "expo start --clear",
@@ -26,6 +26,7 @@
     "expo-crypto": "~55.0.14",
     "expo-dev-client": "~55.0.28",
     "expo-haptics": "~55.0.14",
+    "expo-image-picker": "~55.0.20",
     "expo-linking": "^55.0.14",
     "expo-router": "~55.0.13",
     "expo-secure-store": "~55.0.13",

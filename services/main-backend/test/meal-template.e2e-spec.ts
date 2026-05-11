@@ -19,8 +19,10 @@ describe('MealTemplate API (e2e)', () => {
       createTemplate: jest.fn(),
       getTemplates: jest.fn(),
       getTemplateDetail: jest.fn(),
+      createTemplateImageUploadSignature: jest.fn(),
       applyTemplate: jest.fn(),
       updateTemplate: jest.fn(),
+      updateTemplateImage: jest.fn(),
       deleteTemplate: jest.fn(),
       upsertDay: jest.fn(),
       addItem: jest.fn(),
@@ -196,6 +198,54 @@ describe('MealTemplate API (e2e)', () => {
     expect(service.updateTemplate).toHaveBeenCalledWith(userId, templateId, {
       name: 'Updated Template',
       description: 'Updated description',
+    });
+  });
+
+  it('POST /api/v1/meal-templates/:id/image/upload-signature should return 200', async () => {
+    service.createTemplateImageUploadSignature.mockResolvedValue({
+      uploadUrl: 'https://api.cloudinary.com/v1_1/kitchen-mind/image/upload',
+      cloudName: 'kitchen-mind',
+      apiKey: 'api-key',
+      timestamp: 1234567890,
+      folder: 'templates',
+      publicId: 'templates/550e8400-e29b-41d4-a716-446655440001/cover',
+      signature: 'signed-payload',
+      resourceType: 'image',
+      overwrite: true,
+      invalidate: true,
+      allowedFormats: ['jpg', 'jpeg', 'png'],
+      maxFileSizeBytes: 5242880,
+    });
+
+    const res = await request(app.getHttpServer())
+      .post(`/api/v1/meal-templates/${templateId}/image/upload-signature`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        entityType: 'template',
+        entityId: templateId,
+        mimeType: 'image/png',
+      })
+      .expect(200);
+
+    expect(res.body.publicId).toBe('templates/550e8400-e29b-41d4-a716-446655440001/cover');
+    expect(service.createTemplateImageUploadSignature).toHaveBeenCalledWith(userId, templateId, {
+      entityType: 'template',
+      entityId: templateId,
+      mimeType: 'image/png',
+    });
+  });
+
+  it('PATCH /api/v1/meal-templates/:id/image should return 204', async () => {
+    service.updateTemplateImage.mockResolvedValue(undefined);
+
+    await request(app.getHttpServer())
+      .patch(`/api/v1/meal-templates/${templateId}/image`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ templateImageKey: null })
+      .expect(204);
+
+    expect(service.updateTemplateImage).toHaveBeenCalledWith(userId, templateId, {
+      templateImageKey: null,
     });
   });
 

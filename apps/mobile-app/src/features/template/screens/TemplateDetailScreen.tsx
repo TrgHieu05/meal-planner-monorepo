@@ -5,7 +5,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft } from '@tamagui/lucide-icons-2';
 import { ScrollView, SizableText, XStack, YStack, useTheme } from 'tamagui';
 
-import { Button } from '@components';
+import { Button, ImageWithFallback } from '@components';
 import { MacroStatDetailCard } from '@features/menu/components/MacroStatDetailCard';
 import { MenuItemDetailModal } from '@features/menu/components/MenuItemDetailModal';
 import { MenuMealTimeCard } from '@features/menu/components/MenuMealTimeCard';
@@ -310,6 +310,15 @@ export default function TemplateDetailScreen() {
 
             <ScrollView f={1} showsVerticalScrollIndicator={false}>
                 <YStack w="100%" pb="$space.xl" gap="$space.lg">
+                    <YStack w="100%" h={220} br="$radius.xl" overflow="hidden" bg="$surface">
+                        <ImageWithFallback
+                            accessibilityLabel={`${templateDetailData.title} template cover`}
+                            fallbackSource={require('@assets/images/default-template.jpg')}
+                            style={{ width: '100%', height: '100%' }}
+                            uri={templateDetailData.templateDetailImageUrl}
+                        />
+                    </YStack>
+
                     <YStack w="100%" gap="$space.xs">
                         <SizableText ff="$heading" fos="$h2" fow="$bold" col="$text">
                             {templateDetailData.title}

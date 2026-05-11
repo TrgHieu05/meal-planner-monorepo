@@ -20,10 +20,14 @@ import {
   MealTemplateNutrition,
   MealTime,
 } from '@meal/shared';
+import { MediaService } from '../media/media.service';
 
 @Injectable()
 export class MealTemplateService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mediaService: MediaService,
+  ) {}
 
   private readonly emptyNutrition: MealTemplateNutrition = {
     calories: 0,
@@ -227,6 +231,8 @@ export class MealTemplateService {
         id: t.id,
         name: t.name,
         description: t.description,
+        templateImageKey: t.templateImageKey,
+        templateImageUrls: this.mediaService.buildImageUrls('template', t.templateImageKey),
         dayCount: t._count.days,
         nutritionTotal: this.sumItemNutrition(t.days.flatMap((day) => day.items)),
       })),
@@ -258,6 +264,8 @@ export class MealTemplateService {
       id: template.id,
       name: template.name,
       description: template.description,
+      templateImageKey: template.templateImageKey,
+      templateImageUrls: this.mediaService.buildImageUrls('template', template.templateImageKey),
       nutritionTotal: this.sumItemNutrition(template.days.flatMap((day) => day.items)),
       days: template.days.map((day) => ({
         dayNumber: day.dayNumber,

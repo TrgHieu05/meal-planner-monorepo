@@ -249,40 +249,42 @@ Lợi ích của flow này:
 
 #### D1. Dependency và config
 
-- [ ] Cài Cloudinary SDK cho backend.
-- [ ] Thêm config env:
-- [ ] `CLOUDINARY_CLOUD_NAME`
-- [ ] `CLOUDINARY_API_KEY`
-- [ ] `CLOUDINARY_API_SECRET`
-- [ ] Tạo `MediaModule` hoặc `CloudinaryModule` riêng thay vì nhúng logic URL vào từng feature service.
+- [x] Cài Cloudinary SDK cho backend.
+- [x] Thêm config env:
+- [x] `CLOUDINARY_CLOUD_NAME`
+- [x] `CLOUDINARY_API_KEY`
+- [x] `CLOUDINARY_API_SECRET`
+- [x] Tạo `MediaModule` hoặc `CloudinaryModule` riêng thay vì nhúng logic URL vào từng feature service.
 
 #### D2. Service chung cho ảnh
 
-- [ ] Tạo service chung để:
-- [ ] build URL theo biến thể `card`, `detail`, `original`
-- [ ] sinh signed upload params cho mobile
-- [ ] chuẩn hóa folder/public_id theo entity type
-- [ ] validate entity type hợp lệ: `meal` hoặc `template`
-- [ ] Nếu dùng overwrite, xử lý invalidate cache đúng cách khi thay ảnh.
+- [x] Tạo service chung để:
+- [x] build URL theo biến thể `card`, `detail`, `original`
+- [x] sinh signed upload params cho mobile
+- [x] chuẩn hóa folder/public_id theo entity type
+- [x] validate entity type hợp lệ: `meal` hoặc `template`
+- [x] Nếu dùng overwrite, xử lý invalidate cache đúng cách khi thay ảnh.
 
 #### D3. Meal APIs
 
-- [ ] Cập nhật `meal-search.service.ts` để trả `meal_image_urls` từ `meal_image_key`.
-- [ ] Cập nhật các schema/response test liên quan tới `GET /api/v1/meals`.
-- [ ] Cập nhật `getMealById(...)` để trả `meal_image_urls`.
-- [ ] Thêm test cho case `meal_image_key = null` và case có ảnh thật.
+- [x] Cập nhật `meal-search.service.ts` để trả `meal_image_urls` từ `meal_image_key`.
+- [x] Cập nhật các schema/response test liên quan tới `GET /api/v1/meals`.
+- [x] Cập nhật `getMealById(...)` để trả `meal_image_urls`.
+- [x] Thêm test cho case `meal_image_key = null` và case có ảnh thật.
+- [x] Bổ sung e2e test cho `GET /api/v1/meals` và `GET /api/v1/meals/:id` với `meal_image_urls`.
 - [x] Chốt nguồn cập nhật ảnh `meal`: seed riêng hoặc upload trực tiếp lên Cloudinary ngoài mobile app phase hiện tại.
 - [ ] Chuẩn hóa seed/script/quy trình vận hành để gán `meal_image_key` cho meal.
 - [ ] Phase hiện tại chưa cần mở endpoint/mobile UI riêng để chỉnh ảnh `meal`.
 
 #### D4. Template APIs
 
-- [ ] Mở rộng `meal-template` list response để trả `template_image_key` và `template_image_urls`.
-- [ ] Mở rộng `meal-template` detail response để trả `template_image_key` và `template_image_urls`.
+- [x] Mở rộng `meal-template` list response để trả `templateImageKey` và `templateImageUrls`.
+- [x] Mở rộng `meal-template` detail response để trả `templateImageKey` và `templateImageUrls`.
+- [x] Bổ sung e2e test cho `GET /api/v1/meal-templates` và `GET /api/v1/meal-templates/:id` với `templateImageUrls`.
 - [ ] Mở rộng create/update template flow để có thể persist `template_image_key`.
 - [ ] Cân nhắc thêm endpoint chuyên biệt như `PATCH /api/v1/meal-templates/:id/image` để cập nhật cover sau upload.
 - [ ] Thêm endpoint cấp signed upload params cho template cover.
-- [ ] Bổ sung unit test và e2e test cho response mới và image update flow.
+- [ ] Bổ sung unit test và e2e test cho image update flow.
 
 #### D5. OpenAPI
 
@@ -306,12 +308,12 @@ Lợi ích của flow này:
 
 #### E3. Template UI
 
-- [ ] Cập nhật `TemplateCard` để render `template_image_urls.card` thay cho placeholder.
-- [ ] Cập nhật `TemplateDetailScreen` để render `template_image_urls.detail`.
+- [ ] Cập nhật `TemplateCard` để render `templateImageUrls.card` thay cho placeholder.
+- [ ] Cập nhật `TemplateDetailScreen` để render `templateImageUrls.detail`.
 - [ ] Bổ sung preview ảnh trong `TemplateEditor`.
 - [ ] Bổ sung action chọn/thay/xóa ảnh ở màn create/edit template.
-- [ ] Dùng fallback `default-template.jpg` khi `template_image_key` hoặc URL bị thiếu/lỗi.
-- [ ] Khi create template mới, xử lý thứ tự: tạo template trước để lấy `templateId`, sau đó upload cover và persist `template_image_key`.
+- [ ] Dùng fallback `default-template.jpg` khi `templateImageKey` hoặc URL bị thiếu/lỗi.
+- [ ] Khi create template mới, xử lý thứ tự: tạo template trước để lấy `templateId`, sau đó upload cover và persist `templateImageKey`.
 - [ ] Khi edit template, cho phép thay ảnh mà không ảnh hưởng các day/item hiện có.
 
 #### E4. Upload flow trên mobile

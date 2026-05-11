@@ -80,6 +80,12 @@ describe('MealTemplate API (e2e)', () => {
         {
           id: '550e8400-e29b-41d4-a716-446655440001',
           name: 'T1',
+          templateImageKey: 'templates/550e8400-e29b-41d4-a716-446655440001/cover',
+          templateImageUrls: {
+            card: 'https://example.com/templates/550e8400-e29b-41d4-a716-446655440001/cover/card',
+            detail: 'https://example.com/templates/550e8400-e29b-41d4-a716-446655440001/cover/detail',
+            original: 'https://example.com/templates/550e8400-e29b-41d4-a716-446655440001/cover/original',
+          },
           dayCount: 1,
           nutritionTotal: { calories: 100, protein: 10, fat: 5, fiber: 2 },
         },
@@ -92,6 +98,14 @@ describe('MealTemplate API (e2e)', () => {
       .expect(200);
 
     expect(res.body.list).toHaveLength(1);
+    expect(res.body.list[0]).toMatchObject({
+      templateImageKey: 'templates/550e8400-e29b-41d4-a716-446655440001/cover',
+      templateImageUrls: {
+        card: 'https://example.com/templates/550e8400-e29b-41d4-a716-446655440001/cover/card',
+        detail: 'https://example.com/templates/550e8400-e29b-41d4-a716-446655440001/cover/detail',
+        original: 'https://example.com/templates/550e8400-e29b-41d4-a716-446655440001/cover/original',
+      },
+    });
     expect(service.getTemplates).toHaveBeenCalledWith(userId);
   });
 
@@ -127,6 +141,12 @@ describe('MealTemplate API (e2e)', () => {
     service.getTemplateDetail.mockResolvedValue({
       id: templateId,
       name: 'T1',
+      templateImageKey: 'templates/550e8400-e29b-41d4-a716-446655440001/cover',
+      templateImageUrls: {
+        card: 'https://example.com/templates/550e8400-e29b-41d4-a716-446655440001/cover/card',
+        detail: 'https://example.com/templates/550e8400-e29b-41d4-a716-446655440001/cover/detail',
+        original: 'https://example.com/templates/550e8400-e29b-41d4-a716-446655440001/cover/original',
+      },
       description: 'Template detail',
       nutritionTotal: { calories: 800, protein: 45, fat: 25, fiber: 8 },
       days: [
@@ -147,7 +167,15 @@ describe('MealTemplate API (e2e)', () => {
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
 
-    expect(res.body.id).toBe(templateId);
+    expect(res.body).toMatchObject({
+      id: templateId,
+      templateImageKey: 'templates/550e8400-e29b-41d4-a716-446655440001/cover',
+      templateImageUrls: {
+        card: 'https://example.com/templates/550e8400-e29b-41d4-a716-446655440001/cover/card',
+        detail: 'https://example.com/templates/550e8400-e29b-41d4-a716-446655440001/cover/detail',
+        original: 'https://example.com/templates/550e8400-e29b-41d4-a716-446655440001/cover/original',
+      },
+    });
     expect(service.getTemplateDetail).toHaveBeenCalledWith(userId, templateId);
   });
 

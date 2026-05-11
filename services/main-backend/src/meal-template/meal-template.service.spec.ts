@@ -1,10 +1,12 @@
 import { NotFoundException, ForbiddenException, ConflictException } from '@nestjs/common';
 import { MealTemplateService } from './meal-template.service';
 import { PrismaService } from '../database/prisma.service';
+import { MediaService } from '../media/media.service';
 
 describe('MealTemplateService', () => {
   let service: MealTemplateService;
   let prisma: any;
+  let mediaService: { buildImageUrls: jest.Mock };
 
   beforeEach(() => {
     prisma = {
@@ -41,7 +43,21 @@ describe('MealTemplateService', () => {
       },
       $transaction: jest.fn((cb) => cb(prisma)),
     };
-    service = new MealTemplateService(prisma as unknown as PrismaService);
+    mediaService = {
+      buildImageUrls: jest.fn((_: string, publicId: string | null) =>
+        publicId
+          ? {
+              card: `https://example.com/${publicId}/card`,
+              detail: `https://example.com/${publicId}/detail`,
+              original: `https://example.com/${publicId}/original`,
+            }
+          : null,
+      ),
+    };
+    service = new MealTemplateService(
+      prisma as unknown as PrismaService,
+      mediaService as unknown as MediaService,
+    );
   });
 
   describe('Core Template Operations', () => {
@@ -60,6 +76,7 @@ describe('MealTemplateService', () => {
         {
           id: '1',
           name: 'T1',
+          templateImageKey: null,
           description: 'D1',
           _count: { days: 3 },
           days: [
@@ -81,6 +98,8 @@ describe('MealTemplateService', () => {
       ]);
       const res = await service.getTemplates('user1');
       expect(res.list).toHaveLength(1);
+      expect(res.list[0]?.templateImageKey).toBeNull();
+      expect(res.list[0]?.templateImageUrls).toBeNull();
       expect(res.list[0]?.dayCount).toBe(3);
       expect(res.list[0]?.nutritionTotal).toEqual({
         calories: 150,
@@ -96,6 +115,7 @@ describe('MealTemplateService', () => {
         .mockResolvedValueOnce({
           id: 'temp1',
           name: 'Template 1',
+          templateImageKey: 'templates/temp1/cover',
           description: 'Desc',
           days: [
             {
@@ -121,6 +141,12 @@ describe('MealTemplateService', () => {
 
       const result = await service.getTemplateDetail('user1', 'temp1');
 
+      expect(result.templateImageKey).toBe('templates/temp1/cover');
+      expect(result.templateImageUrls).toEqual({
+        card: 'https://example.com/templates/temp1/cover/card',
+        detail: 'https://example.com/templates/temp1/cover/detail',
+        original: 'https://example.com/templates/temp1/cover/original',
+      });
       expect(result.nutritionTotal).toEqual({
         calories: 246.9,
         protein: 20,

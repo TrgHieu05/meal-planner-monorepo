@@ -175,9 +175,11 @@ export default function ProfileScreen() {
                     <View br="$radius.pill" bg="$color.jade6" opacity={0.5} h={90} w={90} position='absolute' right={20} top={-60}></View>
                     <View br="$radius.pill" bg="$color.jade5" opacity={0.7} h={120} w={120} position='absolute' right={-40} top={-40}></View>
 
-                    <XStack h={40} w={40} br="$radius.pill" bg="$primary"  ai="center" jc="center"  position='absolute' bottom={16} right={16} >
-                        <Settings size={24} col="$textInverse"/>
-                    </XStack>
+                    <Link href="/generals/settings" asChild>
+                        <XStack h={40} w={40} br="$radius.pill" bg="$primary"  ai="center" jc="center"  position='absolute' bottom={16} right={16} pressStyle={{ opacity: 0.85 }}>
+                            <Settings size={24} col="$textInverse"/>
+                        </XStack>
+                    </Link>
                 </YStack>
 
                 <YStack gap="$space.xl" p="$space.md">

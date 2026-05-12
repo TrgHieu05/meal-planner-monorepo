@@ -33,6 +33,7 @@ function RootNavigator() {
 	const isOnboardingRoute = topLevelRoute === 'onboarding';
 	const isProtectedAppRoute =
 		topLevelRoute === '(tabs)' ||
+		topLevelRoute === 'generals' ||
 		topLevelRoute === 'profile' ||
 		topLevelRoute === 'meal-search' ||
 		topLevelRoute === 'template';
@@ -77,6 +78,7 @@ function RootNavigator() {
 			<Stack screenOptions={{ headerShown: false }}>
 				<Stack.Protected guard={isAuthenticated && isOnboardingCompleted}>
 					<Stack.Screen name="(tabs)" />
+					<Stack.Screen name="generals/settings" />
 					<Stack.Screen name="profile/edit-user-info" />
 					<Stack.Screen name="profile/edit-preference" />
 					<Stack.Screen name="profile/edit-metric" />

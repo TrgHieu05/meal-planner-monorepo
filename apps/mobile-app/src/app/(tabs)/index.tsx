@@ -1,15 +1,13 @@
 import { Link } from 'expo-router';
 import { MoonStar, Sun } from '@tamagui/lucide-icons-2';
-import { Paragraph, ScrollView, SizableText, YStack, XStack } from 'tamagui';
+import { ScrollView, SizableText, YStack, XStack } from 'tamagui';
 import { Button, InputSearch } from '@components'
 import { useAppTheme } from '@/providers/AppProviders';
-import { useSession } from '@/providers/AuthProvider';
 import MenuScreen from '@features/menu/screens/MenuScreen';
 
 export default function HomeScreen() {
   const { themeName, toggleTheme } = useAppTheme();
   const isDark = themeName === 'dark';
-  const { signOut } = useSession();
 
   return (
     <ScrollView bg="$background" f={1}>
@@ -33,12 +31,6 @@ export default function HomeScreen() {
         </Link>
 
         <MenuScreen variant="home" />
-
-        <Button w="100%" onPress={() => void signOut()} color="danger" size="large">
-          <Button.Text>
-            Logout
-          </Button.Text>
-        </Button>
       </YStack>
     </ScrollView>
   );

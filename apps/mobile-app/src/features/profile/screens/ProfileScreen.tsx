@@ -1,6 +1,7 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Link } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
+import { InteractionManager } from 'react-native';
 import { ScrollView, SizableText, XStack, YStack, View } from 'tamagui';
 import { 
     Space, Mail, Mars, Venus, Calendar,
@@ -23,24 +24,46 @@ export default function ProfileScreen() {
     const [profileData, setProfileData] = useState<ProfileScreenData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const hasLoadedProfileRef = useRef(false);
 
-    const loadProfileData = useCallback(async () => {
+    const loadProfileData = useCallback(async (config: { isActive: () => boolean; showLoadingState?: boolean }) => {
         if (!session?.accessToken) {
+            if (!config.isActive()) {
+                return;
+            }
+
+            hasLoadedProfileRef.current = true;
             setProfileData(null);
             setErrorMessage('Missing access token. Please sign in again.');
             setIsLoading(false);
             return;
         }
 
-        setIsLoading(true);
+        if (!config.isActive()) {
+            return;
+        }
+
+        if (config.showLoadingState ?? true) {
+            setIsLoading(true);
+        }
         setErrorMessage(null);
 
         try {
             const nextProfileData = await fetchProfileScreenData({
                 accessToken: session.accessToken,
             });
+            if (!config.isActive()) {
+                return;
+            }
+
+            hasLoadedProfileRef.current = true;
             setProfileData(nextProfileData);
         } catch (error) {
+            if (!config.isActive()) {
+                return;
+            }
+
+            hasLoadedProfileRef.current = true;
             setProfileData(null);
             setErrorMessage(
                 error instanceof Error && error.message.trim()
@@ -48,12 +71,26 @@ export default function ProfileScreen() {
                     : 'Unable to load your profile right now.',
             );
         } finally {
-            setIsLoading(false);
+            if (config.isActive()) {
+                setIsLoading(false);
+            }
         }
     }, [session?.accessToken]);
 
     useFocusEffect(useCallback(() => {
-        void loadProfileData();
+        let isActive = true;
+
+        const interactionTask = InteractionManager.runAfterInteractions(() => {
+            void loadProfileData({
+                isActive: () => isActive,
+                showLoadingState: !hasLoadedProfileRef.current,
+            });
+        });
+
+        return () => {
+            isActive = false;
+            interactionTask.cancel();
+        };
     }, [loadProfileData]));
 
     if (isLoading) {
@@ -78,7 +115,7 @@ export default function ProfileScreen() {
                 <SizableText ff="$body" fos="$md" col="$danger" ta="center">
                     {errorMessage}
                 </SizableText>
-                <XStack onPress={() => void loadProfileData()} px="$md" py="$sm" bg="$surface" br="$pill">
+                <XStack onPress={() => void loadProfileData({ isActive: () => true, showLoadingState: true })} px="$md" py="$sm" bg="$surface" br="$pill">
                     <SizableText ff="$body" fos="$md" fow="$semiBold" col="$text">
                         Retry
                     </SizableText>
@@ -138,9 +175,11 @@ export default function ProfileScreen() {
                     <View br="$radius.pill" bg="$color.jade6" opacity={0.5} h={90} w={90} position='absolute' right={20} top={-60}></View>
                     <View br="$radius.pill" bg="$color.jade5" opacity={0.7} h={120} w={120} position='absolute' right={-40} top={-40}></View>
 
-                    <XStack h={40} w={40} br="$radius.pill" bg="$primary"  ai="center" jc="center"  position='absolute' bottom={16} right={16} >
-                        <Settings size={24} col="$textInverse"/>
-                    </XStack>
+                    <Link href="/generals/settings" asChild>
+                        <XStack h={40} w={40} br="$radius.pill" bg="$primary"  ai="center" jc="center"  position='absolute' bottom={16} right={16} pressStyle={{ opacity: 0.85 }}>
+                            <Settings size={24} col="$textInverse"/>
+                        </XStack>
+                    </Link>
                 </YStack>
 
                 <YStack gap="$space.xl" p="$space.md">

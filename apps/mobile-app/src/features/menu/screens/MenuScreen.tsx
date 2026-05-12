@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator } from 'react-native';
+import { ActivityIndicator, InteractionManager } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { ScrollView, YStack, XStack, SizableText } from 'tamagui';
 import { Button, DatePicker, type DatePickerWeekValue } from '@components';
@@ -63,10 +63,15 @@ function resolveMenuScreenErrorMessage(error: unknown, fallbackMessage: string) 
     return fallbackMessage;
 }
 
-export default function MenuScreen() {
+export interface MenuScreenProps {
+    variant?: 'default' | 'home';
+}
+
+export default function MenuScreen({ variant = 'default' }: MenuScreenProps) {
     const router = useRouter();
     const params = useLocalSearchParams<{ date?: string | string[] }>();
     const { session } = useSession();
+    const isHomeVariant = variant === 'home';
     const today = useMemo(() => createTodayCalendarDate(), []);
     const routeDateParam = getSingleSearchParam(params.date);
     const [isWeekPickerOpen, setIsWeekPickerOpen] = useState(false);
@@ -80,36 +85,46 @@ export default function MenuScreen() {
     const [isLoadingMenu, setIsLoadingMenu] = useState(true);
     const [isAddMealNavigationPending, setIsAddMealNavigationPending] = useState(false);
     const isAddMealNavigationPendingRef = useRef(false);
+    const hasLoadedMenuRef = useRef(false);
     const routeSelectedDate = useMemo(
         () => parseMenuFlowDateParam(routeDateParam),
         [routeDateParam],
     );
+    const effectiveSelectedDate = isHomeVariant ? createTodayCalendarDate() : selectedDate;
+    const effectiveToday = isHomeVariant ? effectiveSelectedDate : today;
 
     const weekDays = useMemo(() => getWeekDays(selectedWeek.startDate), [selectedWeek]);
-    const headerDateLabel = useMemo(() => formatHeaderDate(selectedDate), [selectedDate]);
-    const allowAddMeal = useMemo(() => !isPastCalendarDate(selectedDate, today), [selectedDate, today]);
-    const showProgressCard = useMemo(() => compareCalendarDates(selectedDate, today) <= 0, [selectedDate, today]);
-    const selectedApiDate = useMemo(() => formatMenuApiDate(selectedDate), [selectedDate]);
+    const headerDateLabel = useMemo(() => formatHeaderDate(effectiveSelectedDate), [effectiveSelectedDate]);
+    const allowAddMeal = useMemo(
+        () => !isPastCalendarDate(effectiveSelectedDate, effectiveToday),
+        [effectiveSelectedDate, effectiveToday],
+    );
+    const showProgressCard = useMemo(
+        () => compareCalendarDates(effectiveSelectedDate, effectiveToday) <= 0,
+        [effectiveSelectedDate, effectiveToday],
+    );
+    const selectedApiDate = useMemo(() => formatMenuApiDate(effectiveSelectedDate), [effectiveSelectedDate]);
     const loggedNutritionTotal = useMemo(
         () => sumLoggedMenuNutrition(mealTimeGroups),
         [mealTimeGroups],
     );
 
     useEffect(() => {
-        if (!routeSelectedDate) {
+        if (isHomeVariant || !routeSelectedDate) {
             return;
         }
 
         setSelectedWeek(createWeekValue(routeSelectedDate));
         setSelectedDate(routeSelectedDate);
-    }, [routeSelectedDate]);
+    }, [isHomeVariant, routeSelectedDate]);
 
-    const loadMenuData = useCallback(async (config: { isActive: () => boolean }) => {
+    const loadMenuData = useCallback(async (config: { isActive: () => boolean; showLoadingState?: boolean }) => {
         if (!session?.accessToken) {
             if (!config.isActive()) {
                 return;
             }
 
+            hasLoadedMenuRef.current = true;
             setMealTimeGroups(createEmptyMenuMealTimeGroups());
             setNutritionTotal(EMPTY_MENU_NUTRITION);
             setScreenError('Missing access token. Please sign in again.');
@@ -121,7 +136,9 @@ export default function MenuScreen() {
             return;
         }
 
-        setIsLoadingMenu(true);
+        if (config.showLoadingState ?? true) {
+            setIsLoadingMenu(true);
+        }
         setScreenError(null);
 
         try {
@@ -134,6 +151,7 @@ export default function MenuScreen() {
                 return;
             }
 
+            hasLoadedMenuRef.current = true;
             setMealTimeGroups(nextMenuData.mealTimeGroups);
             setNutritionTotal(nextMenuData.nutritionTotal);
         } catch (error) {
@@ -141,6 +159,7 @@ export default function MenuScreen() {
                 return;
             }
 
+            hasLoadedMenuRef.current = true;
             setMealTimeGroups(createEmptyMenuMealTimeGroups());
             setNutritionTotal(EMPTY_MENU_NUTRITION);
             setScreenError(resolveMenuScreenErrorMessage(error, 'Unable to load your menu right now.'));
@@ -185,12 +204,16 @@ export default function MenuScreen() {
             isAddMealNavigationPendingRef.current = false;
             setIsAddMealNavigationPending(false);
 
-            void loadMenuData({
-                isActive: () => isActive,
+            const interactionTask = InteractionManager.runAfterInteractions(() => {
+                void loadMenuData({
+                    isActive: () => isActive,
+                    showLoadingState: !hasLoadedMenuRef.current,
+                });
             });
 
             return () => {
                 isActive = false;
+                interactionTask.cancel();
             };
         }, [loadMenuData]),
     );
@@ -199,12 +222,15 @@ export default function MenuScreen() {
         useCallback(() => {
             let isActive = true;
 
-            void loadNutritionTargets({
-                isActive: () => isActive,
+            const interactionTask = InteractionManager.runAfterInteractions(() => {
+                void loadNutritionTargets({
+                    isActive: () => isActive,
+                });
             });
 
             return () => {
                 isActive = false;
+                interactionTask.cancel();
             };
         }, [loadNutritionTargets]),
     );
@@ -233,7 +259,7 @@ export default function MenuScreen() {
             pathname: '/meal-search',
             params: {
                 mealTime: toMenuFlowMealTimeParam(mealTime),
-                date: formatMenuFlowDateParam(selectedDate),
+                date: formatMenuFlowDateParam(effectiveSelectedDate),
             },
         });
     };
@@ -325,32 +351,43 @@ export default function MenuScreen() {
         }
     }, [session?.accessToken]);
 
-    return (
-        <ScrollView bg="$background" f={1}>
-            <YStack w="100%" ai="center" jc="flex-start" p="$space.md" pb="$space.xl" gap="$space.lg">
+    const content = (
+        <YStack
+            w="100%"
+            ai="center"
+            jc="flex-start"
+            px={isHomeVariant ? 0 : '$space.md'}
+            pt={isHomeVariant ? 0 : '$space.md'}
+            pb="$space.xl"
+            gap="$space.lg"
+        >
                 <XStack w="100%" ai="center" jc="space-between">
                     <SizableText color="$text" ff="$heading" fos="$lg" fow="$bold">
                         {headerDateLabel}
                     </SizableText>
-                    <XStack ai="center" gap="$space.sm">  
-                        <Button size="medium" w={36} color="secondary" onPress={() => setIsWeekPickerOpen(true)}>
-                            <Button.Icon icon={Calendar}/>
-                        </Button>
-                        <Button size="medium" color="primary" onPress={() => router.push('/template')}>
-                            <Button.Icon icon={Grid2x2Plus}/>
-                            <Button.Text>Templates</Button.Text>
-                        </Button>
-                    </XStack>
+                    {!isHomeVariant ? (
+                        <XStack ai="center" gap="$space.sm">  
+                            <Button size="medium" w={36} color="secondary" onPress={() => setIsWeekPickerOpen(true)}>
+                                <Button.Icon icon={Calendar}/>
+                            </Button>
+                            <Button size="medium" color="primary" onPress={() => router.push('/template')}>
+                                <Button.Icon icon={Grid2x2Plus}/>
+                                <Button.Text>Templates</Button.Text>
+                            </Button>
+                        </XStack>
+                    ) : null}
                 </XStack>
 
-                <YStack w="100%">
-                    <WeekDateStrip
-                        days={weekDays}
-                        selectedDate={selectedDate}
-                        today={today}
-                        onDayPress={handleSelectedDateChange}
-                    />
-                </YStack>
+                {!isHomeVariant ? (
+                    <YStack w="100%">
+                        <WeekDateStrip
+                            days={weekDays}
+                            selectedDate={selectedDate}
+                            today={today}
+                            onDayPress={handleSelectedDateChange}
+                        />
+                    </YStack>
+                ) : null}
 
                 {!isLoadingMenu && !screenError ? (
                     showProgressCard ? (
@@ -398,13 +435,15 @@ export default function MenuScreen() {
                     ))}
                 </YStack>
 
-                <DatePicker
-                    mode="week"
-                    open={isWeekPickerOpen}
-                    onOpenChange={setIsWeekPickerOpen}
-                    value={selectedWeek}
-                    onValueChange={handleWeekChange}
-                />
+                {!isHomeVariant ? (
+                    <DatePicker
+                        mode="week"
+                        open={isWeekPickerOpen}
+                        onOpenChange={setIsWeekPickerOpen}
+                        value={selectedWeek}
+                        onValueChange={handleWeekChange}
+                    />
+                ) : null}
 
                 <MenuItemDetailModal
                     item={selectedItem}
@@ -415,8 +454,16 @@ export default function MenuScreen() {
                     onSave={handleSaveItem}
                 />
 
-            </YStack>
+        </YStack>
+    );
 
+    if (isHomeVariant) {
+        return content;
+    }
+
+    return (
+        <ScrollView bg="$background" f={1}>
+            {content}
         </ScrollView>
     );
 }

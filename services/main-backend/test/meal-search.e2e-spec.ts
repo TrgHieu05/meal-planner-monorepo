@@ -69,6 +69,7 @@ describe('Meal Search API (e2e)', () => {
           id: 1,
           name: 'Apple Salad',
           meal_image_key: null,
+          meal_image_urls: null,
           difficulty: 'easy',
           cook_time_min: 5,
           total_calories: 200,
@@ -106,7 +107,12 @@ describe('Meal Search API (e2e)', () => {
         {
           id: 1,
           name: 'Omelette',
-          meal_image_key: null,
+          meal_image_key: 'meals/1/cover',
+          meal_image_urls: {
+            card: 'https://example.com/meals/1/cover/card',
+            detail: 'https://example.com/meals/1/cover/detail',
+            original: 'https://example.com/meals/1/cover/original',
+          },
           difficulty: 'easy',
           cook_time_min: 25,
           total_calories: 300,
@@ -140,6 +146,12 @@ describe('Meal Search API (e2e)', () => {
     expect(response.body.list[0]).toMatchObject({
       id: 1,
       name: 'Omelette',
+      meal_image_key: 'meals/1/cover',
+      meal_image_urls: {
+        card: 'https://example.com/meals/1/cover/card',
+        detail: 'https://example.com/meals/1/cover/detail',
+        original: 'https://example.com/meals/1/cover/original',
+      },
       difficulty: 'easy',
       cook_time_min: 25,
     });
@@ -158,7 +170,12 @@ describe('Meal Search API (e2e)', () => {
     mealSearchService.getMealById.mockResolvedValue({
       id: 1,
       name: 'Omelette',
-      meal_image_key: null,
+      meal_image_key: 'meals/1/cover',
+      meal_image_urls: {
+        card: 'https://example.com/meals/1/cover/card',
+        detail: 'https://example.com/meals/1/cover/detail',
+        original: 'https://example.com/meals/1/cover/original',
+      },
       description: 'Tasty',
       cuisine_type: { id: 1, name: 'French', description: null },
       difficulty: 'easy',
@@ -179,6 +196,12 @@ describe('Meal Search API (e2e)', () => {
     expect(response.body).toMatchObject({
       id: 1,
       name: 'Omelette',
+      meal_image_key: 'meals/1/cover',
+      meal_image_urls: {
+        card: 'https://example.com/meals/1/cover/card',
+        detail: 'https://example.com/meals/1/cover/detail',
+        original: 'https://example.com/meals/1/cover/original',
+      },
       difficulty: 'easy',
       cook_time_min: 25,
     });

@@ -16,6 +16,7 @@ import { MealTemplateModule } from './meal-template/meal-template.module';
 import { MealSearchModule } from './meal-search/meal-search.module';
 import { MenuModule } from './menu/menu.module';
 import { IngredientModule } from './ingredient/ingredient.module';
+import { MediaModule } from './media/media.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { IngredientModule } from './ingredient/ingredient.module';
     MealTemplateModule,
     MealSearchModule,
     MenuModule,
+    MediaModule,
   ],
   controllers: [AppController],
   providers: [

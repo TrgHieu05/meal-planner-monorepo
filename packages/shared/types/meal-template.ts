@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { DateStringSchema, IntSchema } from './common';
+import { ImagePublicIdSchema, ImageVariantUrlsSchema } from './image';
 import { MenuNutritionTotalSchema } from './menu';
 
 export const MealTimeSchema = z.enum(['BREAKFAST', 'LUNCH', 'DINNER']);
@@ -19,6 +20,11 @@ export const UpdateMealTemplateRequestSchema = z.object({
   description: z.string().optional(),
 });
 export type UpdateMealTemplateRequest = z.infer<typeof UpdateMealTemplateRequestSchema>;
+
+export const UpdateMealTemplateImageRequestSchema = z.object({
+  templateImageKey: ImagePublicIdSchema.nullable(),
+});
+export type UpdateMealTemplateImageRequest = z.infer<typeof UpdateMealTemplateImageRequestSchema>;
 
 export const ApplyMealTemplateRequestSchema = z.object({
   startDate: DateStringSchema,
@@ -81,6 +87,8 @@ export const MealTemplateDetailResponseSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
   description: z.string().nullable().optional(),
+  templateImageKey: ImagePublicIdSchema.nullable(),
+  templateImageUrls: ImageVariantUrlsSchema.nullable(),
   nutritionTotal: MealTemplateNutritionSchema,
   days: z.array(MealTemplateDayResponseSchema),
 });
@@ -90,6 +98,8 @@ export const MealTemplateListItemResponseSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
   description: z.string().nullable().optional(),
+  templateImageKey: ImagePublicIdSchema.nullable(),
+  templateImageUrls: ImageVariantUrlsSchema.nullable(),
   dayCount: z.number().int().nonnegative(),
   nutritionTotal: MealTemplateNutritionSchema,
 });

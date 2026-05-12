@@ -19,8 +19,10 @@ describe('MealTemplate API (e2e)', () => {
       createTemplate: jest.fn(),
       getTemplates: jest.fn(),
       getTemplateDetail: jest.fn(),
+      createTemplateImageUploadSignature: jest.fn(),
       applyTemplate: jest.fn(),
       updateTemplate: jest.fn(),
+      updateTemplateImage: jest.fn(),
       deleteTemplate: jest.fn(),
       upsertDay: jest.fn(),
       addItem: jest.fn(),
@@ -80,6 +82,12 @@ describe('MealTemplate API (e2e)', () => {
         {
           id: '550e8400-e29b-41d4-a716-446655440001',
           name: 'T1',
+          templateImageKey: 'templates/550e8400-e29b-41d4-a716-446655440001/cover',
+          templateImageUrls: {
+            card: 'https://example.com/templates/550e8400-e29b-41d4-a716-446655440001/cover/card',
+            detail: 'https://example.com/templates/550e8400-e29b-41d4-a716-446655440001/cover/detail',
+            original: 'https://example.com/templates/550e8400-e29b-41d4-a716-446655440001/cover/original',
+          },
           dayCount: 1,
           nutritionTotal: { calories: 100, protein: 10, fat: 5, fiber: 2 },
         },
@@ -92,6 +100,14 @@ describe('MealTemplate API (e2e)', () => {
       .expect(200);
 
     expect(res.body.list).toHaveLength(1);
+    expect(res.body.list[0]).toMatchObject({
+      templateImageKey: 'templates/550e8400-e29b-41d4-a716-446655440001/cover',
+      templateImageUrls: {
+        card: 'https://example.com/templates/550e8400-e29b-41d4-a716-446655440001/cover/card',
+        detail: 'https://example.com/templates/550e8400-e29b-41d4-a716-446655440001/cover/detail',
+        original: 'https://example.com/templates/550e8400-e29b-41d4-a716-446655440001/cover/original',
+      },
+    });
     expect(service.getTemplates).toHaveBeenCalledWith(userId);
   });
 
@@ -127,6 +143,12 @@ describe('MealTemplate API (e2e)', () => {
     service.getTemplateDetail.mockResolvedValue({
       id: templateId,
       name: 'T1',
+      templateImageKey: 'templates/550e8400-e29b-41d4-a716-446655440001/cover',
+      templateImageUrls: {
+        card: 'https://example.com/templates/550e8400-e29b-41d4-a716-446655440001/cover/card',
+        detail: 'https://example.com/templates/550e8400-e29b-41d4-a716-446655440001/cover/detail',
+        original: 'https://example.com/templates/550e8400-e29b-41d4-a716-446655440001/cover/original',
+      },
       description: 'Template detail',
       nutritionTotal: { calories: 800, protein: 45, fat: 25, fiber: 8 },
       days: [
@@ -147,7 +169,15 @@ describe('MealTemplate API (e2e)', () => {
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
 
-    expect(res.body.id).toBe(templateId);
+    expect(res.body).toMatchObject({
+      id: templateId,
+      templateImageKey: 'templates/550e8400-e29b-41d4-a716-446655440001/cover',
+      templateImageUrls: {
+        card: 'https://example.com/templates/550e8400-e29b-41d4-a716-446655440001/cover/card',
+        detail: 'https://example.com/templates/550e8400-e29b-41d4-a716-446655440001/cover/detail',
+        original: 'https://example.com/templates/550e8400-e29b-41d4-a716-446655440001/cover/original',
+      },
+    });
     expect(service.getTemplateDetail).toHaveBeenCalledWith(userId, templateId);
   });
 
@@ -168,6 +198,54 @@ describe('MealTemplate API (e2e)', () => {
     expect(service.updateTemplate).toHaveBeenCalledWith(userId, templateId, {
       name: 'Updated Template',
       description: 'Updated description',
+    });
+  });
+
+  it('POST /api/v1/meal-templates/:id/image/upload-signature should return 200', async () => {
+    service.createTemplateImageUploadSignature.mockResolvedValue({
+      uploadUrl: 'https://api.cloudinary.com/v1_1/kitchen-mind/image/upload',
+      cloudName: 'kitchen-mind',
+      apiKey: 'api-key',
+      timestamp: 1234567890,
+      folder: 'templates',
+      publicId: 'templates/550e8400-e29b-41d4-a716-446655440001/cover',
+      signature: 'signed-payload',
+      resourceType: 'image',
+      overwrite: true,
+      invalidate: true,
+      allowedFormats: ['jpg', 'jpeg', 'png'],
+      maxFileSizeBytes: 5242880,
+    });
+
+    const res = await request(app.getHttpServer())
+      .post(`/api/v1/meal-templates/${templateId}/image/upload-signature`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        entityType: 'template',
+        entityId: templateId,
+        mimeType: 'image/png',
+      })
+      .expect(200);
+
+    expect(res.body.publicId).toBe('templates/550e8400-e29b-41d4-a716-446655440001/cover');
+    expect(service.createTemplateImageUploadSignature).toHaveBeenCalledWith(userId, templateId, {
+      entityType: 'template',
+      entityId: templateId,
+      mimeType: 'image/png',
+    });
+  });
+
+  it('PATCH /api/v1/meal-templates/:id/image should return 204', async () => {
+    service.updateTemplateImage.mockResolvedValue(undefined);
+
+    await request(app.getHttpServer())
+      .patch(`/api/v1/meal-templates/${templateId}/image`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ templateImageKey: null })
+      .expect(204);
+
+    expect(service.updateTemplateImage).toHaveBeenCalledWith(userId, templateId, {
+      templateImageKey: null,
     });
   });
 

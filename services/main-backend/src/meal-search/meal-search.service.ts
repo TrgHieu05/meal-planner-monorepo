@@ -6,10 +6,14 @@ import {
 import { Difficulty, Prisma } from '@meal/database';
 import { PrismaService } from '../database/prisma.service';
 import { MealDetailResponse, MealSearchResultItem } from '@meal/shared';
+import { MediaService } from '../media/media.service';
 
 @Injectable()
 export class MealSearchService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mediaService: MediaService,
+  ) {}
 
   async getMealById(id: number): Promise<MealDetailResponse> {
     const meal = await this.prisma.meal.findUnique({
@@ -37,6 +41,7 @@ export class MealSearchService {
       id: meal.id,
       name: meal.name,
       meal_image_key: meal.mealImageKey,
+      meal_image_urls: this.mediaService.buildImageUrls('meal', meal.mealImageKey),
       description: meal.description,
       cuisine_type: {
         id: meal.cuisineType.id,
@@ -146,6 +151,7 @@ export class MealSearchService {
           id: meal.id,
           name: meal.name,
           meal_image_key: meal.mealImageKey,
+          meal_image_urls: this.mediaService.buildImageUrls('meal', meal.mealImageKey),
           difficulty,
           cook_time_min: meal.cookTimeMins,
           total_calories: meal.totalCalories,
@@ -202,6 +208,7 @@ export class MealSearchService {
           id: meal.id,
           name: meal.name,
           meal_image_key: meal.mealImageKey,
+          meal_image_urls: this.mediaService.buildImageUrls('meal', meal.mealImageKey),
           difficulty,
           cook_time_min: meal.cookTimeMins,
           total_calories: meal.totalCalories,

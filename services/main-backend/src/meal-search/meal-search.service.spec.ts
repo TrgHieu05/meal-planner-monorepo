@@ -2,14 +2,30 @@ import { NotFoundException } from '@nestjs/common';
 import { Difficulty } from '@meal/database';
 import { MealSearchService } from './meal-search.service';
 import { PrismaService } from '../database/prisma.service';
+import { MediaService } from '../media/media.service';
 
 describe('MealSearchService', () => {
   let service: MealSearchService;
   let prisma: { meal: { findMany: jest.Mock; findUnique: jest.Mock; count: jest.Mock } };
+  let mediaService: { buildImageUrls: jest.Mock };
 
   beforeEach(() => {
     prisma = { meal: { findMany: jest.fn(), findUnique: jest.fn(), count: jest.fn() } };
-    service = new MealSearchService(prisma as unknown as PrismaService);
+    mediaService = {
+      buildImageUrls: jest.fn((_: string, publicId: string | null) =>
+        publicId
+          ? {
+              card: `https://example.com/${publicId}/card`,
+              detail: `https://example.com/${publicId}/detail`,
+              original: `https://example.com/${publicId}/original`,
+            }
+          : null,
+      ),
+    };
+    service = new MealSearchService(
+      prisma as unknown as PrismaService,
+      mediaService as unknown as MediaService,
+    );
   });
 
   it('computes ranking score using normalize + token search', async () => {
@@ -118,6 +134,7 @@ describe('MealSearchService', () => {
           id: 1,
           name: 'Apple Salad',
           meal_image_key: null,
+          meal_image_urls: null,
           difficulty: 'easy',
           cook_time_min: 5,
           total_calories: 200,
@@ -145,7 +162,7 @@ describe('MealSearchService', () => {
     prisma.meal.findUnique.mockResolvedValue({
       id: 1,
       name: 'Omelette',
-      mealImageKey: null,
+      mealImageKey: 'meals/1/cover',
       description: 'Tasty',
       cuisineType: { id: 1, name: 'French', description: null },
       difficulty: Difficulty.LEVEL_1,
@@ -161,7 +178,12 @@ describe('MealSearchService', () => {
     expect(result).toEqual({
       id: 1,
       name: 'Omelette',
-      meal_image_key: null,
+      meal_image_key: 'meals/1/cover',
+      meal_image_urls: {
+        card: 'https://example.com/meals/1/cover/card',
+        detail: 'https://example.com/meals/1/cover/detail',
+        original: 'https://example.com/meals/1/cover/original',
+      },
       description: 'Tasty',
       cuisine_type: { id: 1, name: 'French', description: null },
       difficulty: 'easy',

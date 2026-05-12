@@ -1,4 +1,4 @@
-import { Button, Tag } from '@components';
+import { Button, ImageWithFallback, Tag } from '@components';
 import { useAppTheme } from '@/providers/AppProviders';
 import { AddMealModal } from '@features/menu/screens/AddMealModal';
 import { buildAddToMenuLabel, getSingleSearchParam } from '@features/menu/utils/menu-flow';
@@ -295,7 +295,13 @@ export default function MealDetailScreen() {
 		<SafeAreaView style={{ flex: 1, backgroundColor: theme.background.val }}>
 			<StatusBar barStyle={themeName === 'dark' ? 'light-content' : 'dark-content'} />
 			<YStack f={1} bg="$background">
-				<YStack h={320} bg="$surface" px="$space.md" pt="$space.md" pos="relative">
+				<YStack h={320} bg="$surface" pos="relative" overflow="hidden">
+					<ImageWithFallback
+						accessibilityLabel={`${meal.mealName} meal photo`}
+						fallbackSource={require('@assets/images/default-meal.jpg')}
+						style={{ width: '100%', height: '100%' }}
+						uri={meal.mealDetailImageUrl}
+					/>
 					<XStack
 						ai="center"
 						jc="center"
@@ -305,17 +311,12 @@ export default function MealDetailScreen() {
 						bg="$background"
 						pressStyle={{ opacity: 0.8, scale: 0.98 }}
 						onPress={() => router.back()}
+						pos="absolute"
+						t="$space.md"
+						l="$space.md"
 					>
 						<ChevronLeft color={theme.text.val} size={24} />
 					</XStack>
-					<YStack f={1} ai="center" jc="center" gap="$space.sm">
-						<SizableText ff="$heading" fos="$h4" fow="$bold" col="$text">
-							Meal photo coming soon
-						</SizableText>
-						<SizableText ff="$body" fos="$md" col="$textSubtle" textAlign="center">
-							A placeholder is shown here until real meal images are integrated.
-						</SizableText>
-					</YStack>
 				</YStack>
 
                 <ScrollView f={1} showsVerticalScrollIndicator={false} mt={-24} br="$radius.xl">

@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
+import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { ChevronLeft, Clipboard, Copy, Plus, Trash2 } from '@tamagui/lucide-icons-2';
@@ -11,6 +12,7 @@ import { MenuMealTimeCard } from '@features/menu/components/MenuMealTimeCard';
 import { DayTab } from '@features/template/components/DayTab';
 import { QuitCreatingTemplateModal } from '@features/template/components/QuitCreatingTemplateModal';
 import { QuitEditingTemplateModal } from '@features/template/components/QuitEditingTemplateModal';
+import { TemplateImageUploadField } from '@features/template/components/TemplateImageUploadField';
 import { removeMenuMealItemFromGroups, replaceMenuMealItemInGroups } from '@features/menu/utils/menu-state';
 import {
     calculateTemplateNutrition,
@@ -28,10 +30,17 @@ import {
     consumePendingTemplateMealSelection,
 } from '@features/template/utils/template-meal-picker';
 import { type MenuMealItem, type MenuMealTimeGroup } from '@features/menu/utils/menu-meal-times';
+import {
+    type TemplateImageMutation,
+    type TemplateSelectedImageAsset,
+} from '@features/template/api/template-image.api';
+
+const MAX_TEMPLATE_IMAGE_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 
 export interface TemplateEditorDraft {
     description: string;
     days: TemplateDayState[];
+    templateImageMutation: TemplateImageMutation;
     templateName: string;
 }
 
@@ -39,6 +48,8 @@ export interface TemplateEditorProps {
     headerTitle: string;
     initialDescription: string;
     initialDays: TemplateDayState[];
+    initialTemplateImageKey: string | null;
+    initialTemplateImageUrl: string | null;
     initialTemplateName: string;
     isSubmitting?: boolean;
     onClearSubmitError?: () => void;
@@ -53,6 +64,8 @@ export function TemplateEditor({
     headerTitle,
     initialDescription,
     initialDays,
+    initialTemplateImageKey,
+    initialTemplateImageUrl,
     initialTemplateName,
     isSubmitting = false,
     onClearSubmitError,
@@ -72,6 +85,11 @@ export function TemplateEditor({
     const [selectedMealItem, setSelectedMealItem] = useState<MenuMealItem | null>(null);
     const [selectedDayUiKey, setSelectedDayUiKey] = useState(() => initialDays[0]?.uiKey ?? '');
     const [copiedDayMealGroups, setCopiedDayMealGroups] = useState<MenuMealTimeGroup[] | null>(null);
+    const [selectedTemplateImageAsset, setSelectedTemplateImageAsset] = useState<TemplateSelectedImageAsset | null>(null);
+    const [isInitialTemplateImageMarkedForRemoval, setIsInitialTemplateImageMarkedForRemoval] = useState(false);
+    const [templateImageErrorMessage, setTemplateImageErrorMessage] = useState<string | null>(null);
+
+    const hasInitialTemplateImage = Boolean(initialTemplateImageKey);
 
     const selectedDay = useMemo(
         () => days.find((day) => day.uiKey === selectedDayUiKey) ?? days[0],
@@ -84,6 +102,16 @@ export function TemplateEditor({
     const selectedDayNutrition = useMemo(
         () => calculateTemplateNutrition(selectedDay?.mealTimeGroups ?? []),
         [selectedDay],
+    );
+    const templateImagePreviewUri = selectedTemplateImageAsset?.uri
+        ?? (isInitialTemplateImageMarkedForRemoval ? null : initialTemplateImageUrl);
+    const templateImageHelperMessage = selectedTemplateImageAsset
+        ? 'This image will be uploaded when you save the template.'
+        : isInitialTemplateImageMarkedForRemoval
+            ? 'The current cover image will be removed when you save the template.'
+            : 'Use a JPG or PNG image up to 5 MB.';
+    const showTemplateImageRemoveAction = Boolean(
+        selectedTemplateImageAsset || (!isInitialTemplateImageMarkedForRemoval && hasInitialTemplateImage),
     );
     const canDeleteDay = days.length > 1;
     const canSubmit = templateName.trim().length > 0;
@@ -158,6 +186,61 @@ export function TemplateEditor({
         },
         [clearSubmitError],
     );
+
+    const handlePickTemplateImage = useCallback(async () => {
+        if (isSubmitting) {
+            return;
+        }
+
+        clearSubmitError();
+        setTemplateImageErrorMessage(null);
+
+        try {
+            const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+            if (!permissionResult.granted) {
+                setTemplateImageErrorMessage('Permission to access the media library is required to choose a cover image.');
+                return;
+            }
+
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ['images'],
+                quality: 1,
+            });
+
+            if (result.canceled) {
+                return;
+            }
+
+            const asset = result.assets[0];
+            if (!asset) {
+                setTemplateImageErrorMessage('Unable to read the selected image.');
+                return;
+            }
+
+            const nextTemplateImageAsset = mapPickedTemplateImageAsset(asset);
+            setSelectedTemplateImageAsset(nextTemplateImageAsset);
+            setIsInitialTemplateImageMarkedForRemoval(false);
+        } catch (error) {
+            setTemplateImageErrorMessage(
+                resolveTemplateImagePickerErrorMessage(error, 'Unable to choose an image right now.'),
+            );
+        }
+    }, [clearSubmitError, isSubmitting]);
+
+    const handleRemoveTemplateImage = useCallback(() => {
+        clearSubmitError();
+        setTemplateImageErrorMessage(null);
+
+        if (selectedTemplateImageAsset) {
+            setSelectedTemplateImageAsset(null);
+            return;
+        }
+
+        if (hasInitialTemplateImage) {
+            setIsInitialTemplateImageMarkedForRemoval(true);
+        }
+    }, [clearSubmitError, hasInitialTemplateImage, selectedTemplateImageAsset]);
 
     const handleAddDay = useCallback(() => {
         if (isSubmitting) {
@@ -305,9 +388,24 @@ export function TemplateEditor({
         await onSubmitDraft({
             description,
             days: cloneTemplateDays(days),
+            templateImageMutation: buildTemplateImageMutation({
+                currentImageKey: initialTemplateImageKey,
+                isMarkedForRemoval: isInitialTemplateImageMarkedForRemoval,
+                selectedImageAsset: selectedTemplateImageAsset,
+            }),
             templateName,
         });
-    }, [canSubmit, days, description, isSubmitting, onSubmitDraft, templateName]);
+    }, [
+        canSubmit,
+        days,
+        description,
+        initialTemplateImageKey,
+        isInitialTemplateImageMarkedForRemoval,
+        isSubmitting,
+        onSubmitDraft,
+        selectedTemplateImageAsset,
+        templateName,
+    ]);
 
     return (
         <YStack f={1} bg="$background" px="$space.md" pt="$space.md" gap="space.lg"  >
@@ -335,6 +433,16 @@ export function TemplateEditor({
                         protein={totalNutrition.protein}
                         fiber={totalNutrition.fiber}
                         fat={totalNutrition.fat}
+                    />
+
+                    <TemplateImageUploadField
+                        errorMessage={templateImageErrorMessage}
+                        helperMessage={templateImageHelperMessage}
+                        isDisabled={isSubmitting}
+                        onPickImage={() => void handlePickTemplateImage()}
+                        onRemoveImage={handleRemoveTemplateImage}
+                        previewUri={templateImagePreviewUri}
+                        showRemoveAction={showTemplateImageRemoveAction}
                     />
 
                     <YStack w="100%" gap="$space.md">
@@ -477,4 +585,86 @@ export function TemplateEditor({
             )}
         </YStack>
     );
+}
+
+function buildTemplateImageMutation(config: {
+    currentImageKey: string | null;
+    isMarkedForRemoval: boolean;
+    selectedImageAsset: TemplateSelectedImageAsset | null;
+}): TemplateImageMutation {
+    if (config.selectedImageAsset) {
+        return {
+            kind: 'replace',
+            asset: config.selectedImageAsset,
+            currentImageKey: config.currentImageKey,
+        };
+    }
+
+    if (config.isMarkedForRemoval && config.currentImageKey) {
+        return {
+            kind: 'remove',
+            currentImageKey: config.currentImageKey,
+        };
+    }
+
+    return {
+        kind: 'keep',
+        currentImageKey: config.currentImageKey,
+    };
+}
+
+function mapPickedTemplateImageAsset(
+    asset: ImagePicker.ImagePickerAsset,
+): TemplateSelectedImageAsset {
+    const mimeType = resolveTemplateImageMimeType(asset);
+
+    if (asset.fileSize != null && asset.fileSize > MAX_TEMPLATE_IMAGE_FILE_SIZE_BYTES) {
+        throw new Error('Selected image must be 5 MB or smaller.');
+    }
+
+    return {
+        fileName: asset.fileName ?? null,
+        fileSize: asset.fileSize ?? null,
+        height: asset.height,
+        mimeType,
+        uri: asset.uri,
+        width: asset.width,
+    };
+}
+
+function resolveTemplateImageMimeType(
+    asset: Pick<ImagePicker.ImagePickerAsset, 'fileName' | 'mimeType' | 'uri'>,
+): 'image/jpeg' | 'image/jpg' | 'image/png' {
+    const normalizedMimeType = asset.mimeType?.trim().toLowerCase();
+
+    if (
+        normalizedMimeType === 'image/jpeg'
+        || normalizedMimeType === 'image/jpg'
+        || normalizedMimeType === 'image/png'
+    ) {
+        return normalizedMimeType;
+    }
+
+    const normalizedFileName = asset.fileName?.trim().toLowerCase() ?? asset.uri.trim().toLowerCase();
+    if (normalizedFileName.endsWith('.png')) {
+        return 'image/png';
+    }
+
+    if (normalizedFileName.endsWith('.jpg')) {
+        return 'image/jpg';
+    }
+
+    if (normalizedFileName.endsWith('.jpeg')) {
+        return 'image/jpeg';
+    }
+
+    throw new Error('Please choose a JPG or PNG image.');
+}
+
+function resolveTemplateImagePickerErrorMessage(error: unknown, fallbackMessage: string) {
+    if (error instanceof Error && error.message.trim()) {
+        return error.message.trim();
+    }
+
+    return fallbackMessage;
 }

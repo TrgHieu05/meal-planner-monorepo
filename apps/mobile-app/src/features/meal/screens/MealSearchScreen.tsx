@@ -405,6 +405,7 @@ export default function MealSearchScreen() {
                     id={item.mealId}
                     href={mealCardHrefs.get(item.mealId)}
                     mealName={item.mealName}
+                    mealCardImageUrl={item.mealCardImageUrl}
                     cookTime={item.cookTime}
                     difficulty={item.difficulty}
                     totalCalories={item.totalCalories}

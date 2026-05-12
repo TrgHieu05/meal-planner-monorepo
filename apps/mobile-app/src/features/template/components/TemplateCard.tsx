@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { CalendarDays } from '@tamagui/lucide-icons-2';
 import { SizableText, XStack, YStack } from 'tamagui';
 
+import { ImageWithFallback } from '@components';
 import { TemplateActionsMenu } from '@features/template/components/TemplateActionsMenu';
 import type { ApplyTemplateSelection } from '@features/template/components/ApplyTemplateModal';
 
@@ -11,6 +12,7 @@ export interface TemplateCardProps {
     nutritionSummary: string;
     onApplyToDate?: (selection: ApplyTemplateSelection) => Promise<void> | void;
     onDelete?: () => Promise<void> | void;
+    templateCardImageUrl: string | null;
     templateId: string;
     title: string;
 }
@@ -20,6 +22,7 @@ export function TemplateCard({
     nutritionSummary,
     onApplyToDate,
     onDelete,
+    templateCardImageUrl,
     templateId,
     title,
 }: TemplateCardProps) {
@@ -32,7 +35,14 @@ export function TemplateCard({
     return (
         <YStack w="100%" bg="$background" br="$radius.xl" borderWidth={1} borderColor="$color.gray5" overflow="hidden">
             <YStack onPress={handleOpenTemplateDetail} pressStyle={{ opacity: 0.96, bg: '$surfacePress' }}>
-                <YStack h={180} bg="$surface" />
+                <YStack h={180} bg="$surface" overflow="hidden">
+                    <ImageWithFallback
+                        accessibilityLabel={`${title} template cover`}
+                        fallbackSource={require('@assets/images/default-template.jpg')}
+                        style={{ width: '100%', height: '100%' }}
+                        uri={templateCardImageUrl}
+                    />
+                </YStack>
 
                 <YStack w="100%" p="$space.md" gap="$space.xs">
                     <XStack w="100%" ai="center" jc="space-between" gap="$space.md">

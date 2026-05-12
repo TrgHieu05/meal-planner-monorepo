@@ -196,6 +196,7 @@ export default function TemplateListScreen() {
                                 key={template.templateId}
                                 templateId={template.templateId}
                                 title={template.title}
+                                templateCardImageUrl={template.templateCardImageUrl}
                                 dayCount={template.dayCount}
                                 nutritionSummary={template.nutritionSummary}
                                 onApplyToDate={(selection) => handleApplyTemplate(template.templateId, selection)}

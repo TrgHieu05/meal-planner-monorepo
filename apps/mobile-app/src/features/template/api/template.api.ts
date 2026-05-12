@@ -56,6 +56,7 @@ export type TemplateListItemScreenData = {
   description: string;
   nutritionSummary: string;
   nutritionTotal: MenuNutrition;
+  templateCardImageUrl: string | null;
   templateId: string;
   title: string;
 };
@@ -64,6 +65,7 @@ export type TemplateDetailScreenData = {
   days: TemplateDayState[];
   description: string;
   nutritionTotal: MenuNutrition;
+  templateDetailImageUrl: string | null;
   templateId: string;
   title: string;
 };
@@ -71,6 +73,8 @@ export type TemplateDetailScreenData = {
 export type TemplateEditorData = {
   initialDays: TemplateDayState[];
   initialDescription: string;
+  initialTemplateImageKey: string | null;
+  initialTemplateImageUrl: string | null;
   initialTemplateName: string;
   nutritionTotal: MenuNutrition;
   templateId: string;
@@ -441,6 +445,7 @@ export function mapTemplateListItemToScreenData(
     description: normalizeOptionalText(template.description),
     nutritionSummary: formatTemplateNutritionSummary(nutritionTotal),
     nutritionTotal,
+    templateCardImageUrl: template.templateImageUrls?.card ?? null,
     templateId: template.id,
     title: template.name,
   };
@@ -453,6 +458,7 @@ export function mapTemplateDetailResponseToScreenData(
     days: mapTemplateDetailDaysToState(response.days),
     description: normalizeOptionalText(response.description),
     nutritionTotal: mapTemplateNutrition(response.nutritionTotal),
+    templateDetailImageUrl: response.templateImageUrls?.detail ?? null,
     templateId: response.id,
     title: response.name,
   };
@@ -464,6 +470,8 @@ export function mapTemplateDetailResponseToEditorData(
   return {
     initialDays: mapTemplateDetailDaysToState(response.days),
     initialDescription: normalizeOptionalText(response.description),
+    initialTemplateImageKey: response.templateImageKey,
+    initialTemplateImageUrl: response.templateImageUrls?.detail ?? null,
     initialTemplateName: response.name,
     nutritionTotal: mapTemplateNutrition(response.nutritionTotal),
     templateId: response.id,

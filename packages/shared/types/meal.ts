@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { IntSchema } from './common';
 import { CuisineTypeSchema } from './cuisine-type';
+import { ImagePublicIdSchema, ImageVariantUrlsSchema } from './image';
 
 export const MealIngredientDetailSchema = z.object({
   id: IntSchema,
@@ -14,6 +15,7 @@ export const MealDetailResponseSchema = z.object({
   id: IntSchema,
   name: z.string(),
   meal_image_key: z.string().nullable(),
+  meal_image_urls: ImageVariantUrlsSchema.nullable(),
   description: z.string(),
   cuisine_type: CuisineTypeSchema,
   difficulty: z.enum(['easy', 'medium', 'hard']),
@@ -26,3 +28,9 @@ export const MealDetailResponseSchema = z.object({
 });
 
 export type MealDetailResponse = z.infer<typeof MealDetailResponseSchema>;
+
+export const UpdateMealImageRequestSchema = z.object({
+  meal_image_key: ImagePublicIdSchema.nullable(),
+});
+
+export type UpdateMealImageRequest = z.infer<typeof UpdateMealImageRequestSchema>;

@@ -108,6 +108,7 @@ describe('MealTemplateService', () => {
                     totalProtein: 10,
                     totalFat: 5,
                     totalFiber: 2,
+                    mealImageKey: null,
                   },
                 },
               ],
@@ -146,6 +147,7 @@ describe('MealTemplateService', () => {
                   mealTime: 'BREAKFAST',
                   portionSize: 2,
                   meal: {
+                    mealImageKey: 'meals/10/cover',
                     name: 'Meal 1',
                     totalCalories: 123.45,
                     totalProtein: 10,
@@ -183,6 +185,12 @@ describe('MealTemplateService', () => {
         protein: 10,
         fat: 6,
         fiber: 4,
+      });
+      expect(result.days[0]?.meals.BREAKFAST[0]?.mealImageKey).toBe('meals/10/cover');
+      expect(result.days[0]?.meals.BREAKFAST[0]?.mealImageUrls).toEqual({
+        card: 'https://example.com/meals/10/cover/card',
+        detail: 'https://example.com/meals/10/cover/detail',
+        original: 'https://example.com/meals/10/cover/original',
       });
     });
 
@@ -254,6 +262,52 @@ describe('MealTemplateService', () => {
   });
 
   describe('Item Operations', () => {
+    it('should return item image fields when adding an item', async () => {
+      prisma.mealTemplate.findUnique.mockResolvedValue({ userId: 'user1' });
+      prisma.meal.findUnique.mockResolvedValue({
+        id: 10,
+        name: 'Meal 1',
+        mealImageKey: 'meals/10/cover',
+        totalCalories: 123.45,
+        totalProtein: 10,
+        totalFat: 6,
+        totalFiber: 4,
+      });
+      prisma.mealTemplateDay.findUnique.mockResolvedValue({ id: 'day1' });
+      prisma.mealTemplateDayItem.findFirst.mockResolvedValue(null);
+      prisma.mealTemplateDayItem.create.mockResolvedValue({
+        id: 'item1',
+        mealId: 10,
+        portionSize: 1,
+      });
+
+      const result = await service.addItem('user1', 'temp1', {
+        dayNumber: 1,
+        mealId: 10,
+        mealTime: 'BREAKFAST',
+        portionSize: 1,
+      });
+
+      expect(result).toEqual({
+        itemId: 'item1',
+        mealId: 10,
+        mealName: 'Meal 1',
+        mealImageKey: 'meals/10/cover',
+        mealImageUrls: {
+          card: 'https://example.com/meals/10/cover/card',
+          detail: 'https://example.com/meals/10/cover/detail',
+          original: 'https://example.com/meals/10/cover/original',
+        },
+        portionSize: 1,
+        nutritionPerServing: {
+          calories: 123.45,
+          protein: 10,
+          fat: 6,
+          fiber: 4,
+        },
+      });
+    });
+
     it('should throw ConflictException if mealId already exists in same mealTime and day', async () => {
       // Mock checkOwnership
       prisma.mealTemplate.findUnique.mockResolvedValue({ userId: 'user1' });
@@ -272,6 +326,60 @@ describe('MealTemplateService', () => {
           portionSize: 1,
         }),
       ).rejects.toThrow(ConflictException);
+    });
+
+    it('should return item image fields when updating an item', async () => {
+      prisma.mealTemplate.findUnique.mockResolvedValue({ userId: 'user1' });
+      prisma.mealTemplateDayItem.findUnique.mockResolvedValue({
+        id: 'item1',
+        day: { templateId: 'temp1' },
+        meal: {
+          id: 10,
+          name: 'Meal 1',
+          mealImageKey: 'meals/10/cover',
+          totalCalories: 123.45,
+          totalProtein: 10,
+          totalFat: 6,
+          totalFiber: 4,
+        },
+      });
+      prisma.mealTemplateDayItem.update.mockResolvedValue({
+        id: 'item1',
+        mealId: 10,
+        portionSize: 2,
+        meal: {
+          id: 10,
+          name: 'Meal 1',
+          mealImageKey: 'meals/10/cover',
+          totalCalories: 123.45,
+          totalProtein: 10,
+          totalFat: 6,
+          totalFiber: 4,
+        },
+      });
+
+      const result = await service.updateItem('user1', 'temp1', 'item1', {
+        portionSize: 2,
+      });
+
+      expect(result).toEqual({
+        itemId: 'item1',
+        mealId: 10,
+        mealName: 'Meal 1',
+        mealImageKey: 'meals/10/cover',
+        mealImageUrls: {
+          card: 'https://example.com/meals/10/cover/card',
+          detail: 'https://example.com/meals/10/cover/detail',
+          original: 'https://example.com/meals/10/cover/original',
+        },
+        portionSize: 2,
+        nutritionPerServing: {
+          calories: 123.45,
+          protein: 10,
+          fat: 6,
+          fiber: 4,
+        },
+      });
     });
 
     it('upsertDay should throw Conflict if payload has duplicates', async () => {

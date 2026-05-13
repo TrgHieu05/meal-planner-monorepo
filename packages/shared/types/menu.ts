@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { DateStringSchema, IntSchema, UuidSchema } from './common';
+import { ImagePublicIdSchema, ImageVariantUrlsSchema } from './image';
 
 export const MenuSchema = z.object({
   id: IntSchema,
@@ -23,6 +24,8 @@ export const MenuDayMealItemSchema = z.object({
   menuItemId: IntSchema,
   mealId: IntSchema,
   mealName: z.string().min(1),
+  mealImageKey: ImagePublicIdSchema.nullable(),
+  mealImageUrls: ImageVariantUrlsSchema.nullable(),
   portionSize: z.number().positive(),
   eated: z.boolean(),
   nutritionPerServing: MenuNutritionTotalSchema,

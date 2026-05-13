@@ -118,6 +118,12 @@ describe('template.api', () => {
                         itemId: '550e8400-e29b-41d4-a716-446655440010',
                         mealId: 11,
                         mealName: 'Avocado Toast',
+                        mealImageKey: 'meals/11/cover',
+                        mealImageUrls: {
+                          card: 'https://example.com/meals/11/cover/card',
+                          detail: 'https://example.com/meals/11/cover/detail',
+                          original: 'https://example.com/meals/11/cover/original',
+                        },
                         portionSize: 1,
                         nutritionPerServing: {
                           calories: 320,
@@ -146,6 +152,12 @@ describe('template.api', () => {
                         itemId: '550e8400-e29b-41d4-a716-446655440011',
                         mealId: 21,
                         mealName: 'Chicken Rice Bowl',
+                        mealImageKey: 'meals/21/cover',
+                        mealImageUrls: {
+                          card: 'https://example.com/meals/21/cover/card',
+                          detail: 'https://example.com/meals/21/cover/detail',
+                          original: 'https://example.com/meals/21/cover/original',
+                        },
                         portionSize: 1.5,
                         nutritionPerServing: {
                           calories: 400,

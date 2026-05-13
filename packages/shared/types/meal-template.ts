@@ -67,6 +67,8 @@ export const MealTemplateItemResponseSchema = z.object({
   itemId: z.string().uuid(),
   mealId: IntSchema,
   mealName: z.string(),
+  mealImageKey: ImagePublicIdSchema.nullable(),
+  mealImageUrls: ImageVariantUrlsSchema.nullable(),
   portionSize: z.number().positive(),
   nutritionPerServing: MealTemplateNutritionSchema,
 });

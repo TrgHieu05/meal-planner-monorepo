@@ -99,6 +99,12 @@ describe('Menu API (e2e)', () => {
             menuItemId: 101,
             mealId: 12,
             mealName: 'Overnight Oats',
+            mealImageKey: 'meals/12/cover',
+            mealImageUrls: {
+              card: 'https://example.com/meals/12/cover/card',
+              detail: 'https://example.com/meals/12/cover/detail',
+              original: 'https://example.com/meals/12/cover/original',
+            },
             portionSize: 1,
             eated: false,
             nutritionPerServing: {
@@ -123,6 +129,12 @@ describe('Menu API (e2e)', () => {
       menuItemId: 101,
       mealId: 12,
       mealName: 'Overnight Oats',
+      mealImageKey: 'meals/12/cover',
+      mealImageUrls: {
+        card: 'https://example.com/meals/12/cover/card',
+        detail: 'https://example.com/meals/12/cover/detail',
+        original: 'https://example.com/meals/12/cover/original',
+      },
       portionSize: 1,
       eated: false,
       nutritionPerServing: {

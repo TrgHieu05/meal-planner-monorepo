@@ -30,6 +30,7 @@ export function MenuMealItemRow({ item, onPress }: MenuMealItemRowProps) {
           accessibilityLabel={`${item.mealName} image`}
           fallbackSource={require('@assets/images/default-meal.jpg')}
           style={{ width: '100%', height: '100%' }}
+          uri={item.mealCardImageUrl ?? null}
         />
       </YStack>
 

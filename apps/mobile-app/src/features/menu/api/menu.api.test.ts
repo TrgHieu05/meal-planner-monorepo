@@ -68,6 +68,12 @@ describe('menu.api', () => {
                     menuItemId: 17,
                     mealId: 7,
                     mealName: 'Turkey Quinoa Salad',
+                    mealImageKey: 'meals/7/cover',
+                    mealImageUrls: {
+                      card: 'https://example.com/meals/7/cover/card',
+                      detail: 'https://example.com/meals/7/cover/detail',
+                      original: 'https://example.com/meals/7/cover/original',
+                    },
                     portionSize: 1.25,
                     eated: false,
                     nutritionPerServing: {
@@ -151,6 +157,8 @@ describe('menu.api', () => {
             menuItemId: 17,
             mealId: 7,
             mealName: 'Turkey Quinoa Salad',
+            mealImageKey: 'meals/7/cover',
+            mealCardImageUrl: 'https://example.com/meals/7/cover/card',
             date: '06.05.2026',
             mealTime: 'LUNCH',
             portionSize: 1.25,

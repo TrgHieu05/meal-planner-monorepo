@@ -16,10 +16,14 @@ import {
 } from '@meal/shared';
 import { Uuid } from '@meal/shared/types/common';
 import { PrismaService } from '../database/prisma.service';
+import { MediaService } from '../media/media.service';
 
 @Injectable()
 export class MenuService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mediaService: MediaService,
+  ) {}
 
   async getMenuByDay(userId: Uuid, date: string): Promise<MenuResponse> {
     const menuDate = this.toBusinessDayStartUtc(date);
@@ -32,6 +36,7 @@ export class MenuService {
           include: {
             meal: {
               select: {
+                mealImageKey: true,
                 name: true,
                 totalCalories: true,
                 totalProtein: true,
@@ -75,6 +80,8 @@ export class MenuService {
         menuItemId: item.id,
         mealId: item.mealId,
         mealName: item.meal?.name,
+        mealImageKey: item.meal?.mealImageKey ?? null,
+        mealImageUrls: this.mediaService.buildImageUrls('meal', item.meal?.mealImageKey ?? null),
         portionSize: item.portionSize,
         eated: item.eated,
         nutritionPerServing: item.meal

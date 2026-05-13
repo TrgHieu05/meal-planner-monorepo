@@ -6,6 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { MediaService } from '../media/media.service';
 import { MenuService } from './menu.service';
 
 describe('MenuService', () => {
@@ -30,6 +31,9 @@ describe('MenuService', () => {
       count: jest.Mock;
     };
     $transaction: jest.Mock;
+  };
+  let mediaService: {
+    buildImageUrls: jest.Mock;
   };
 
   const userId = '550e8400-e29b-41d4-a716-446655440000';
@@ -58,7 +62,21 @@ describe('MenuService', () => {
       },
       $transaction: jest.fn(),
     };
-    service = new MenuService(prisma as unknown as PrismaService);
+    mediaService = {
+      buildImageUrls: jest.fn((_: string, publicId: string | null) =>
+        publicId
+          ? {
+              card: `https://example.com/${publicId}/card`,
+              detail: `https://example.com/${publicId}/detail`,
+              original: `https://example.com/${publicId}/original`,
+            }
+          : null,
+      ),
+    };
+    service = new MenuService(
+      prisma as unknown as PrismaService,
+      mediaService as unknown as MediaService,
+    );
   });
 
   describe('getMenuByDay', () => {
@@ -103,6 +121,7 @@ describe('MenuService', () => {
             portionSize: 1,
             meal: {
               name: 'Overnight Oats',
+              mealImageKey: 'meals/12/cover',
               totalCalories: 320,
               totalProtein: 15,
               totalFat: 8,
@@ -129,6 +148,12 @@ describe('MenuService', () => {
               menuItemId: 101,
               mealId: 12,
               mealName: 'Overnight Oats',
+              mealImageKey: 'meals/12/cover',
+              mealImageUrls: {
+                card: 'https://example.com/meals/12/cover/card',
+                detail: 'https://example.com/meals/12/cover/detail',
+                original: 'https://example.com/meals/12/cover/original',
+              },
               portionSize: 1,
               eated: false,
               nutritionPerServing: {
@@ -164,6 +189,7 @@ describe('MenuService', () => {
             portionSize: 1,
             meal: {
               name: 'Invalid Meal',
+              mealImageKey: null,
               totalCalories: 100,
               totalProtein: 10,
               totalFat: 5,

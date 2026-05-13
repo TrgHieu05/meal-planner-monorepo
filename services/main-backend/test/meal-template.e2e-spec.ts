@@ -290,6 +290,12 @@ describe('MealTemplate API (e2e)', () => {
       itemId,
       mealId: 33,
       mealName: 'Tofu Stir Fry',
+      mealImageKey: 'meals/33/cover',
+      mealImageUrls: {
+        card: 'https://example.com/meals/33/cover/card',
+        detail: 'https://example.com/meals/33/cover/detail',
+        original: 'https://example.com/meals/33/cover/original',
+      },
       portionSize: 1.5,
       nutritionPerServing: { calories: 560, protein: 27, fat: 20, fiber: 11 },
     });
@@ -319,6 +325,12 @@ describe('MealTemplate API (e2e)', () => {
       itemId,
       mealId: 33,
       mealName: 'Tofu Stir Fry',
+      mealImageKey: 'meals/33/cover',
+      mealImageUrls: {
+        card: 'https://example.com/meals/33/cover/card',
+        detail: 'https://example.com/meals/33/cover/detail',
+        original: 'https://example.com/meals/33/cover/original',
+      },
       portionSize: 2,
       nutritionPerServing: { calories: 560, protein: 27, fat: 20, fiber: 11 },
     });

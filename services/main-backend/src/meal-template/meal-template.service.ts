@@ -111,6 +111,7 @@ export class MealTemplateService {
       mealTime: MealTime;
       portionSize: number;
       meal: {
+        mealImageKey: string | null;
         name: string;
         totalCalories: number;
         totalProtein: number;
@@ -126,6 +127,8 @@ export class MealTemplateService {
         itemId: item.id,
         mealId: item.mealId,
         mealName: item.meal.name,
+        mealImageKey: item.meal.mealImageKey,
+        mealImageUrls: this.mediaService.buildImageUrls('meal', item.meal.mealImageKey),
         portionSize: item.portionSize,
         nutritionPerServing: this.buildNutritionFromMeal(item.meal),
       }));
@@ -583,7 +586,11 @@ export class MealTemplateService {
     });
   }
 
-  async addItem(userId: string, templateId: string, data: AddMealTemplateItemRequest) {
+  async addItem(
+    userId: string,
+    templateId: string,
+    data: AddMealTemplateItemRequest,
+  ): Promise<MealTemplateItemResponse> {
     await this.checkOwnership(templateId, userId);
 
     // Verify meal exists
@@ -625,11 +632,24 @@ export class MealTemplateService {
         },
       });
 
-      return created;
+      return {
+        itemId: created.id,
+        mealId: created.mealId,
+        mealName: meal.name,
+        mealImageKey: meal.mealImageKey ?? null,
+        mealImageUrls: this.mediaService.buildImageUrls('meal', meal.mealImageKey ?? null),
+        portionSize: created.portionSize,
+        nutritionPerServing: this.buildNutritionFromMeal(meal),
+      };
     });
   }
 
-  async updateItem(userId: string, templateId: string, itemId: string, data: UpdateMealTemplateItemRequest) {
+  async updateItem(
+    userId: string,
+    templateId: string,
+    itemId: string,
+    data: UpdateMealTemplateItemRequest,
+  ): Promise<MealTemplateItemResponse> {
     await this.checkOwnership(templateId, userId);
 
     const item = await this.prisma.mealTemplateDayItem.findUnique({
@@ -651,6 +671,8 @@ export class MealTemplateService {
       itemId: updated.id,
       mealId: updated.mealId,
       mealName: updated.meal.name,
+      mealImageKey: updated.meal.mealImageKey ?? null,
+      mealImageUrls: this.mediaService.buildImageUrls('meal', updated.meal.mealImageKey ?? null),
       portionSize: updated.portionSize,
       nutritionPerServing: this.buildNutritionFromMeal(updated.meal),
     };

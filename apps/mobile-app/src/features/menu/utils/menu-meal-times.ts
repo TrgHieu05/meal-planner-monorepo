@@ -15,6 +15,8 @@ export interface MenuMealItem {
   menuItemId: number;
   mealId: number;
   mealName: string;
+  mealImageKey?: string | null;
+  mealCardImageUrl?: string | null;
   date: string;
   mealTime: MealTime;
   portionSize: number;

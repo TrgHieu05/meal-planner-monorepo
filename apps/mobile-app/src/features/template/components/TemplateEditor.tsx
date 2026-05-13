@@ -157,6 +157,8 @@ export function TemplateEditor({
                                                     dayNumber: day.dayNumber,
                                                     difficulty: selection.difficulty,
                                                     mealId: selection.mealId,
+                                                    mealImageKey: selection.mealImageKey,
+                                                    mealCardImageUrl: selection.mealCardImageUrl,
                                                     mealName: selection.mealName,
                                                     mealTime: selection.mealTime,
                                                     menuItemId: nextMenuItemId,

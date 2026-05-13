@@ -61,6 +61,8 @@ describe('template-meal-picker helpers', () => {
       existingMealIds: [101],
       mealTime: 'BREAKFAST',
       mealId: 101,
+      mealImageKey: 'meals/101/cover',
+      mealCardImageUrl: 'https://example.com/meals/101/cover/card',
       mealName: 'Berry Yogurt Bowl',
       cookTime: '15 mins',
       difficulty: 'Easy',
@@ -74,12 +76,16 @@ describe('template-meal-picker helpers', () => {
 
     expect(peekPendingTemplateMealSelection()).toMatchObject({
       mealId: 101,
+      mealImageKey: 'meals/101/cover',
+      mealCardImageUrl: 'https://example.com/meals/101/cover/card',
       mealTime: 'BREAKFAST',
       dayUiKey: 'template-day-1',
       existingMealIds: [101],
     });
     expect(consumePendingTemplateMealSelection()).toMatchObject({
       mealName: 'Berry Yogurt Bowl',
+      mealImageKey: 'meals/101/cover',
+      mealCardImageUrl: 'https://example.com/meals/101/cover/card',
       nutritionPerServing: {
         calories: 380,
         protein: 18,

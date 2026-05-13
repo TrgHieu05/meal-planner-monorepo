@@ -255,6 +255,8 @@ describe('template.api', () => {
       menuItemId: 1,
       mealId: 11,
       mealName: 'Avocado Toast',
+      mealImageKey: 'meals/11/cover',
+      mealCardImageUrl: 'https://example.com/meals/11/cover/card',
       date: 'Day 1',
       mealTime: 'BREAKFAST',
       portionSize: 1,
@@ -270,6 +272,8 @@ describe('template.api', () => {
       menuItemId: 2,
       mealId: 21,
       mealName: 'Chicken Rice Bowl',
+      mealImageKey: 'meals/21/cover',
+      mealCardImageUrl: 'https://example.com/meals/21/cover/card',
       date: 'Day 2',
       mealTime: 'LUNCH',
       portionSize: 1.5,
@@ -303,6 +307,8 @@ describe('template.api', () => {
     });
     expect(result.days[0]?.mealTimeGroups[0]?.items[0]).toMatchObject({
       mealName: 'Avocado Toast',
+      mealImageKey: 'meals/11/cover',
+      mealCardImageUrl: 'https://example.com/meals/11/cover/card',
       mealTime: 'BREAKFAST',
       nutritionPerServing: {
         calories: 320,

@@ -65,6 +65,8 @@ describe('template-screen-data helpers', () => {
       menuItemId: 7,
       mealId: 33,
       mealName: 'Tofu Stir Fry',
+      mealImageKey: null,
+      mealCardImageUrl: null,
       date: 'Day 2',
       mealTime: 'DINNER',
       portionSize: 1,

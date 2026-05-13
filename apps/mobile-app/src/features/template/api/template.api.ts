@@ -638,6 +638,8 @@ function mapTemplateItemResponseToEditorItem(
     menuItemId: context.localMenuItemId,
     mealId: item.mealId,
     mealName: item.mealName,
+    mealImageKey: item.mealImageKey,
+    mealCardImageUrl: item.mealImageUrls?.card ?? null,
     date: `Day ${context.dayNumber}`,
     mealTime: context.mealTime,
     portionSize: item.portionSize,

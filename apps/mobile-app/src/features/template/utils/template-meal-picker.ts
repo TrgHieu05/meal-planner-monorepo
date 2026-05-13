@@ -20,6 +20,8 @@ export type PendingTemplateMealSelection = TemplateMealPickerContext & {
   cookTime?: string;
   difficulty?: MenuDifficulty;
   mealId: number;
+  mealImageKey?: string | null;
+  mealCardImageUrl?: string | null;
   mealName: string;
   nutritionPerServing: MenuNutrition;
 };

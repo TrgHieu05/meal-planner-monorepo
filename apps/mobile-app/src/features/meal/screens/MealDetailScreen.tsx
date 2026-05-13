@@ -205,6 +205,8 @@ export default function MealDetailScreen() {
 		stagePendingTemplateMealSelection({
 			...templatePickerContext,
 			mealId: meal.mealId,
+			mealImageKey: meal.mealImageKey,
+			mealCardImageUrl: meal.mealDetailImageUrl,
 			mealName: meal.mealName,
 			cookTime: meal.cookTime,
 			difficulty: meal.difficulty,

@@ -171,6 +171,8 @@ function mapMenuDayMealItemToViewModel(
     menuItemId: item.menuItemId,
     mealId: item.mealId,
     mealName: item.mealName,
+    mealImageKey: item.mealImageKey,
+    mealCardImageUrl: item.mealImageUrls?.card ?? null,
     date: context.date,
     mealTime: context.mealTime,
     portionSize: item.portionSize,

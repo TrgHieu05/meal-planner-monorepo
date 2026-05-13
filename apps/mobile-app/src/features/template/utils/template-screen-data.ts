@@ -28,6 +28,8 @@ interface CreateTemplateEditorMealItemOptions {
     dayNumber: number;
     difficulty?: MenuDifficulty;
     mealId: number;
+    mealImageKey?: string | null;
+    mealCardImageUrl?: string | null;
     mealName: string;
     mealTime: MenuMealTimeGroup['mealTime'];
     menuItemId: number;
@@ -83,6 +85,8 @@ export function createTemplateEditorMealItem({
     dayNumber,
     difficulty,
     mealId,
+    mealImageKey = null,
+    mealCardImageUrl = null,
     mealName,
     mealTime,
     menuItemId,
@@ -93,6 +97,8 @@ export function createTemplateEditorMealItem({
         menuItemId,
         mealId,
         mealName,
+        mealImageKey,
+        mealCardImageUrl,
         date: `Day ${dayNumber}`,
         mealTime,
         portionSize,

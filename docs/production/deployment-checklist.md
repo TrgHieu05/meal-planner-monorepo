@@ -31,7 +31,7 @@ Vẫn có thể tạo trước một phần hạ tầng production nếu team mu
 Với repo hiện tại, staging tối thiểu nên gồm:
 
 - 1 backend staging riêng
-- 1 database staging riêng
+- 1 Neon preview branch được tạo tạm cho Pull Request đang review
 - 1 bộ env vars và secrets staging riêng
 - 1 domain staging riêng, ví dụ `api-staging.example.com`
 - 1 mobile preview build trỏ đúng vào API staging
@@ -42,6 +42,7 @@ Nếu thiếu một trong các thành phần trên, hệ thống đó thường 
 ## 1. Quyết định ban đầu và quyền truy cập
 
 - [X] Chọn stack triển khai chính thức theo `service-comparison.md`. **Chốt: Fly.io, Neon, Github Actions, GHCR, Expo EAS, Cloudflare, Sentry, Cloudinary**
+- [x] Chốt mô hình Neon: `1 project` với `production` branch làm gốc và các preview branch tạm cho từng Pull Request.
 - [x] Chốt domain chính thức cho API production.
 - [x] Chốt subdomain cho staging.
 - [X] Tạo tài khoản hoặc project cho Fly.io, Neon, Cloudflare, Expo EAS và Sentry.
@@ -79,10 +80,10 @@ Nếu thiếu một trong các thành phần trên, hệ thống đó thường 
 
 ### Governance
 
-- [ ] Bật branch protection cho `main`.
-- [ ] Yêu cầu Pull Request review trước merge.
-- [ ] Tạo GitHub Environments `staging` và `production`.
-- [ ] Bật required reviewers cho environment `production`.
+- [x] Bật branch protection cho `main`.
+- [x] Yêu cầu Pull Request review trước merge.
+- [x] Tạo GitHub Environments `staging` và `production`.
+- [x] Bật required reviewers cho environment `production`.
 
 ### CI/CD secrets và variables
 
@@ -98,7 +99,8 @@ Nếu thiếu một trong các thành phần trên, hệ thống đó thường 
 ### Workflows
 
 - [ ] Tạo workflow CI cho Pull Request.
-- [ ] Tạo workflow deploy staging backend.
+- [ ] Tạo workflow tạo Neon preview branch cho Pull Request.
+- [ ] Tạo workflow cleanup để xóa Neon preview branch khi Pull Request đóng hoặc merge.
 - [ ] Tạo workflow deploy production backend.
 - [ ] Tạo workflow preview build cho mobile.
 - [ ] Tạo workflow production release cho mobile.
@@ -114,7 +116,10 @@ Nếu thiếu một trong các thành phần trên, hệ thống đó thường 
 
 ### Database staging
 
-- [ ] Tạo PostgreSQL staging.
+- [ ] Tạo hoặc xác nhận Neon project chính cho app.
+- [ ] Xác nhận `production` branch là branch gốc trên Neon.
+- [ ] Tạo preview branch trên Neon từ `production` branch khi Pull Request mở hoặc cập nhật.
+- [ ] Lấy connection string của preview branch từ output của GitHub Action.
 - [ ] Bật backup và kiểm tra retention policy.
 - [ ] Kiểm tra giới hạn connection có phù hợp với runtime backend.
 
@@ -126,7 +131,7 @@ Nếu thiếu một trong các thành phần trên, hệ thống đó thường 
 
 ### Secrets và env vars staging
 
-- [ ] Điền `DATABASE_URL` cho staging.
+- [ ] Inject `DATABASE_URL` cho workflow review từ preview branch output, không dùng một giá trị staging cố định trong repo.
 - [ ] Điền `JWT_SECRET` riêng cho staging.
 - [ ] Điền `JWT_EXPIRES_IN` cho staging.
 - [ ] Điền `GOOGLE_WEB_CLIENT_ID` đúng cho staging.
@@ -175,7 +180,8 @@ Nếu thiếu một trong các thành phần trên, hệ thống đó thường 
 
 ### Database production
 
-- [ ] Tạo PostgreSQL production.
+- [ ] Tạo hoặc xác nhận Neon `production` branch.
+- [ ] Lấy connection string của `production` branch.
 - [ ] Bật backup và kiểm tra retention policy.
 - [ ] Kiểm tra giới hạn connection có phù hợp với runtime backend.
 
@@ -187,7 +193,7 @@ Nếu thiếu một trong các thành phần trên, hệ thống đó thường 
 
 ### Secrets và env vars production
 
-- [ ] Điền `DATABASE_URL` cho production.
+- [ ] Điền `DATABASE_URL` cho production, trỏ vào Neon `production` branch.
 - [ ] Điền `JWT_SECRET` riêng cho production.
 - [ ] Điền `JWT_EXPIRES_IN` cho production.
 - [ ] Điền `GOOGLE_WEB_CLIENT_ID` đúng cho production.

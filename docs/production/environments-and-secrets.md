@@ -7,7 +7,8 @@ Tài liệu này mô tả cách tách môi trường và quản lý biến môi 
 Nguyên tắc chung:
 
 - `local`, `staging`, `production` là ba môi trường độc lập
-- không dùng chung database giữa các môi trường
+- `production` chỉ dùng Neon `production` branch
+- review database cho Pull Request dùng preview branch tạo tạm từ `production`
 - secrets không commit vào repo
 - mobile public config và backend secret config phải tách rõ
 
@@ -16,8 +17,8 @@ Nguyên tắc chung:
 | Môi trường | Mục đích | Domain gợi ý | Database | Deploy trigger |
 | --- | --- | --- | --- | --- |
 | `local` | dev cá nhân | `localhost` | local Docker Postgres | chạy tay |
-| `staging` | QA và kiểm thử tích hợp | `api-staging.example.com` | managed Postgres staging | merge vào `main` |
-| `production` | người dùng thật | `api.example.com` | managed Postgres production | manual approval hoặc tag release |
+| `staging` | QA và kiểm thử tích hợp | `api-staging.example.com` | Neon preview branch của Pull Request đang được review hoặc database QA tạm thời | pull_request hoặc manual review |
+| `production` | người dùng thật | `api.example.com` | Neon `production` branch | manual approval hoặc tag release |
 
 ## Branch và environment là hai khái niệm khác nhau
 
@@ -36,9 +37,24 @@ Nguyên tắc chung:
 Flow gợi ý cho repo này:
 
 1. dev làm việc trên branch tính năng và kiểm thử ở `local`
-2. merge vào `main`
-3. CI/CD deploy `main` lên `staging`
-4. sau khi QA pass mới promote cùng commit đó lên `production`
+2. mở Pull Request vào `main`
+3. GitHub Action tạo preview branch mới từ Neon `production` branch
+4. workflow PR chạy migration, test và manual review trên preview branch đó
+5. khi Pull Request được duyệt và merge, workflow cleanup xóa preview branch
+6. sau approval mới deploy commit đã merge lên `production`
+
+## Mô hình Neon khuyến nghị
+
+Đối với repo này, cách tách database nên được chốt như sau:
+
+- dùng `1 Neon project` cho app chính
+- giữ `production` là branch chuẩn cho production
+- tạo preview branch mới cho từng Pull Request từ `production`
+- workflow review lấy `DATABASE_URL` trực tiếp từ output của action tạo preview branch
+- production giữ `DATABASE_URL` trỏ vào `production` branch
+- không tách review và production bằng cách tạo hai database logic trong cùng một branch
+
+Chỉ nên cân nhắc tách thành `2 Neon project` riêng biệt khi cần blast-radius isolation mạnh hơn, tách quyền truy cập vận hành rõ ràng hơn hoặc có yêu cầu compliance cao hơn.
 
 ## Phân loại biến môi trường
 
@@ -138,6 +154,7 @@ Có thể tách theo environment:
 ### Staging
 
 - Dùng domain staging rõ ràng.
+- nếu staging dùng database review theo Pull Request, `DATABASE_URL` nên được inject động từ preview branch thay vì cố định một secret staging duy nhất.
 - Google OAuth dùng bộ client ID staging riêng nếu cấu hình Google project tách môi trường.
 - JWT secret khác production.
 - Cloudinary có thể dùng chung tài khoản trong giai đoạn đầu, nhưng nên tách folder/preset hoặc tách cloud nếu dữ liệu nhạy cảm.
@@ -145,8 +162,8 @@ Có thể tách theo environment:
 ### Production
 
 - Chỉ dùng domain chính thức.
+- `DATABASE_URL` phải trỏ vào Neon `production` branch.
 - Không tái sử dụng `JWT_SECRET` của staging.
-- Database URL trỏ vào database production riêng.
 - Google client ID và redirect configuration phải được xác nhận lại trước khi phát hành mobile build store.
 
 ## Quy tắc vận hành secrets

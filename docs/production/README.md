@@ -20,7 +20,7 @@ Phạm vi tài liệu bao gồm:
 
 - `GitHub Actions`: chạy CI/CD
 - `Fly.io`: chạy backend `services/main-backend` bằng `flyctl` và `fly.toml`
-- `Neon Postgres`: managed PostgreSQL cho Prisma
+- `Neon Postgres`: managed PostgreSQL cho Prisma, dùng `1 project` với `production branch` làm gốc và các `preview/pr-*` branch tạm cho Pull Request
 - `Cloudflare`: DNS, SSL, CDN và lớp bảo vệ cơ bản
 - `Expo EAS`: build, submit và update mobile app
 - `Cloudinary`: media storage cho ảnh
@@ -47,7 +47,7 @@ Stack này phù hợp vì repo hiện tại đã có:
 ## Kết quả mong muốn sau khi hoàn tất bộ tài liệu này
 
 - Backend API có thể deploy lặp lại được từ GitHub Actions qua `flyctl deploy`.
-- Database migration được áp dụng theo flow production an toàn.
+- Database migration được áp dụng theo flow production an toàn, với `production` branch là nguồn dữ liệu thật và `preview/pr-*` branch được tạo tạm để review trước merge.
 - Mobile app có flow phát hành riêng với `EAS Build` và `EAS Submit`.
 - Secrets được tách rõ giữa `staging` và `production`.
 - Nhóm phát triển có checklist rõ ràng cho lần deploy đầu tiên và các lần release sau.

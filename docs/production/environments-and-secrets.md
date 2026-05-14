@@ -19,6 +19,27 @@ Nguyên tắc chung:
 | `staging` | QA và kiểm thử tích hợp | `api-staging.example.com` | managed Postgres staging | merge vào `main` |
 | `production` | người dùng thật | `api.example.com` | managed Postgres production | manual approval hoặc tag release |
 
+## Branch và environment là hai khái niệm khác nhau
+
+| Loại | Ví dụ | Vai trò |
+| --- | --- | --- |
+| Branch | `feature/*`, `develop`, `main` | quản lý source code, Pull Request và merge |
+| Environment | `local`, `staging`, `production` | quản lý runtime, domain, secrets, database và traffic |
+
+Điểm cần nhớ:
+
+- `develop` nếu có chỉ là branch tích hợp code, không phải staging
+- `main` chỉ là branch nguồn để deploy, không tự động đồng nghĩa với production
+- `staging` là environment deploy riêng, thường nhận commit từ `main`
+- `local` là môi trường chạy trên máy cá nhân, không phải branch
+
+Flow gợi ý cho repo này:
+
+1. dev làm việc trên branch tính năng và kiểm thử ở `local`
+2. merge vào `main`
+3. CI/CD deploy `main` lên `staging`
+4. sau khi QA pass mới promote cùng commit đó lên `production`
+
 ## Phân loại biến môi trường
 
 ### 1. Backend secrets

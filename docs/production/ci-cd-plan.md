@@ -17,6 +17,18 @@ Do repo là monorepo, pipeline vẫn nên dùng chung một nền tảng điều
 - database migration chạy trong pipeline deploy, không chạy tay trên máy cá nhân
 - mobile app và backend có thể release lệch nhịp, miễn tương thích API contract
 
+## Branch to environment mapping
+
+Trong repo này, không nên đồng nhất branch với environment.
+
+- `local` là runtime trên máy từng developer
+- `develop` nếu team dùng chỉ là branch tích hợp code
+- `main` là source branch của release candidate
+- `staging` là environment nhận bản deploy tự động từ `main`
+- `production` là environment nhận cùng commit đó sau approval hoặc release tag
+
+Vì vậy, `main` không phải production; `main` chỉ là nguồn code để pipeline tạo ra staging trước, rồi mới promote sang production.
+
 ## Fly.io deployment model
 
 Luồng deploy backend mặc định nên bám theo cách Fly.io vận hành:

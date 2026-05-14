@@ -158,16 +158,33 @@ flowchart LR
 - `Luồng runtime` mô tả đường đi của request thật từ thiết bị người dùng tới DNS/SSL edge, backend API, database, media service và error tracking.
 - `Luồng tách môi trường` nhấn mạnh nguyên tắc không dùng chung app runtime và database giữa `local`, `staging` và `production`.
 
+## Branch và environment
+
+Trong tài liệu này, cần tách rõ hai lớp khái niệm:
+
+- `feature/*`, `develop`, `main` là branch source code
+- `local`, `staging`, `production` là environment runtime
+
+Hệ quả của việc tách này:
+
+- `staging` là môi trường deploy riêng, không phải branch
+- có thể deploy `staging` từ `main` dù không có branch tên `staging`
+- `main` chỉ là source branch của release, chưa phải production cho đến khi CI/CD deploy thành công
+- `local` là môi trường chạy trên máy dev, không đồng nghĩa với branch `develop`
+
 ## Phân tách môi trường
 
 ### Local
 
+- là runtime trên máy cá nhân của từng developer
 - dùng `.env` ở root repo
 - dùng `docker-compose` cho Postgres và Nginx local
 - dùng emulator hoặc Expo dev build
 
 ### Staging
 
+- là môi trường deploy riêng để QA và smoke test release candidate
+- không phải branch code; thường nhận commit từ `main`
 - dùng database riêng
 - domain riêng, ví dụ `api-staging.example.com`
 - build mobile nội bộ hoặc preview build qua EAS
@@ -175,6 +192,8 @@ flowchart LR
 
 ### Production
 
+- chỉ nhận bản đã qua kiểm thử ở staging và được approve
+- không đồng nghĩa với branch `main`
 - domain chính thức, ví dụ `api.example.com`
 - secrets riêng hoàn toàn với staging
 - chỉ deploy qua pipeline có approval

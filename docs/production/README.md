@@ -8,6 +8,7 @@ Phạm vi tài liệu bao gồm:
 
 - kiến trúc production mục tiêu cho mobile app, backend và database
 - phân tách môi trường `local`, `staging`, `production`
+- giải thích rõ mối quan hệ giữa branch như `develop`, `main` và environment như `local`, `staging`, `production`
 - quản lý secrets và biến môi trường
 - pipeline CI/CD cho backend và mobile app
 - so sánh các dịch vụ có thể dùng trong từng vai trò hạ tầng
@@ -37,10 +38,11 @@ Stack này phù hợp vì repo hiện tại đã có:
 ## Thứ tự đọc tài liệu
 
 1. `architecture.md`: kiến trúc production đích và phân vai các thành phần.
-2. `environments-and-secrets.md`: định nghĩa môi trường, domain, secrets và cách quản lý.
-3. `ci-cd-plan.md`: pipeline CI/CD cho PR, staging và production.
-4. `service-comparison.md`: so sánh các dịch vụ và giải thích vai trò của từng nhóm dịch vụ.
-5. `deployment-checklist.md`: checklist triển khai, smoke test và rollback.
+2. `staging.md`: giải thích `staging` là gì, khác `local` và `production` ở đâu, và cách tạo cho repo này.
+3. `environments-and-secrets.md`: định nghĩa môi trường, domain, secrets và cách quản lý.
+4. `ci-cd-plan.md`: pipeline CI/CD cho PR, staging và production.
+5. `service-comparison.md`: so sánh các dịch vụ và giải thích vai trò của từng nhóm dịch vụ.
+6. `deployment-checklist.md`: checklist triển khai, smoke test và rollback.
 
 ## Kết quả mong muốn sau khi hoàn tất bộ tài liệu này
 

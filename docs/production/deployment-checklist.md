@@ -10,73 +10,51 @@ Tài liệu tập trung vào 3 phần:
 - hoàn thiện các điểm kỹ thuật còn local-first trong codebase
 - kiểm tra sau deploy để giảm rủi ro go-live
 
-## 1. Checklist chuẩn bị trước khi tạo hạ tầng
+## Cách đọc checklist này
 
-- [ ] Chốt domain chính thức cho API production.
-- [ ] Chốt subdomain cho staging.
-- [ ] Chọn stack triển khai chính thức theo `service-comparison.md`.
-- [ ] Tạo tài khoản hoặc project cho Fly.io, Neon, Cloudflare, Expo EAS và Sentry.
-- [ ] Xác nhận quyền truy cập GitHub repo cho các thành viên phụ trách deploy.
+Checklist dưới đây được sắp theo đúng flow triển khai thực tế:
 
-## 2. Checklist hạ tầng và external services
+1. chốt quyết định ban đầu
+2. làm sạch codebase để có thể deploy
+3. thiết lập GitHub governance và CI/CD
+4. dựng `staging`
+5. deploy và kiểm thử `staging`
+6. dựng `production`
+7. go-live `production`
 
-### Backend hosting
+Vẫn có thể tạo trước một phần hạ tầng production nếu team muốn, nhưng không nên bỏ qua bước `staging -> smoke test -> approval` trước khi deploy cho người dùng thật.
 
-- [ ] Tạo Fly app `main-backend-staging`.
-- [ ] Tạo Fly app `main-backend-production`.
-- [ ] Chốt `primary_region` cho staging và production.
-- [ ] Chuẩn bị `fly.toml` hoặc biến thể config riêng cho staging và production.
-- [ ] Cấu hình `[http_service.checks]` trỏ tới health endpoint của backend.
-- [ ] Cấu hình `min_machines_running` phù hợp, đặc biệt cho production.
+## Staging cho repo này gồm những gì?
 
-### Database
+`Staging` trong tài liệu này là một environment deploy riêng, không phải branch `develop` hay `main`.
 
-- [ ] Tạo PostgreSQL staging.
-- [ ] Tạo PostgreSQL production.
-- [ ] Lưu riêng `DATABASE_URL` cho từng môi trường.
-- [ ] Bật backup và kiểm tra retention policy.
-- [ ] Kiểm tra giới hạn connection có phù hợp với runtime backend.
+Với repo hiện tại, staging tối thiểu nên gồm:
 
-### DNS và SSL
+- 1 backend staging riêng
+- 1 database staging riêng
+- 1 bộ env vars và secrets staging riêng
+- 1 domain staging riêng, ví dụ `api-staging.example.com`
+- 1 mobile preview build trỏ đúng vào API staging
+- 1 checklist smoke test sau deploy
 
-- [ ] Trỏ `api-staging` về backend staging.
-- [ ] Trỏ `api` production về backend production.
-- [ ] Xác nhận SSL hoạt động bình thường.
-- [ ] Cấu hình proxy hoặc DNS mode phù hợp trên Cloudflare.
+Nếu thiếu một trong các thành phần trên, hệ thống đó thường mới chỉ là local mở rộng hoặc shared dev setup, chưa nên xem là staging hoàn chỉnh.
 
-### Mobile release
+## 1. Quyết định ban đầu và quyền truy cập
 
-- [ ] Tạo EAS project nếu chưa có.
-- [ ] Tạo EAS environment `preview`.
-- [ ] Tạo EAS environment `production`.
-- [ ] Kiểm tra quyền Play Console hoặc App Store Connect.
+- [X] Chọn stack triển khai chính thức theo `service-comparison.md`. **Chốt: Fly.io, Neon, Github Actions, GHCR, Expo EAS, Cloudflare, Sentry, Cloudinary**
+- [x] Chốt domain chính thức cho API production.
+- [x] Chốt subdomain cho staging.
+- [X] Tạo tài khoản hoặc project cho Fly.io, Neon, Cloudflare, Expo EAS và Sentry.
+- [x] Xác nhận quyền truy cập GitHub repo và các nền tảng deploy cho các thành viên phụ trách.
 
-## 3. Checklist secrets và env vars
-
-- [ ] Điền `DATABASE_URL` cho staging.
-- [ ] Điền `DATABASE_URL` cho production.
-- [ ] Điền `JWT_SECRET` riêng cho staging.
-- [ ] Điền `JWT_SECRET` riêng cho production.
-- [ ] Điền `JWT_EXPIRES_IN`.
-- [ ] Điền `GOOGLE_WEB_CLIENT_ID` đúng theo từng môi trường.
-- [ ] Điền `CLOUDINARY_CLOUD_NAME`.
-- [ ] Điền `CLOUDINARY_API_KEY`.
-- [ ] Điền `CLOUDINARY_API_SECRET`.
-- [ ] Điền `EXPO_PUBLIC_API_BASE_URL` cho preview.
-- [ ] Điền `EXPO_PUBLIC_API_BASE_URL` cho production.
-- [ ] Điền `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` cho preview.
-- [ ] Điền `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` cho production.
-- [ ] Điền `EXPO_TOKEN` cho GitHub Actions.
-- [ ] Điền `FLY_API_TOKEN` cho GitHub Actions.
-
-## 4. Checklist codebase cần hoàn thiện trước deploy thật
+## 2. Codebase readiness trước khi dựng môi trường thật
 
 ### Backend
 
-- [ ] Thêm health endpoint riêng ngoài route gốc.
-- [ ] Chuyển CORS từ wildcard sang allowlist theo domain thật.
-- [ ] Chuyển Swagger server URL sang biến môi trường.
-- [ ] Bảo đảm backend không phụ thuộc `.env` root trong production runtime.
+- [x] Thêm health endpoint riêng ngoài route gốc.
+- [x] Chuyển CORS từ wildcard sang allowlist theo domain thật.
+- [x] Chuyển Swagger server URL sang biến môi trường.
+- [x] Bảo đảm backend không phụ thuộc `.env` root trong production runtime.
 - [ ] Thêm logging tối thiểu cho startup, DB connection và lỗi auth/media.
 - [ ] Map health endpoint vào cấu hình health check của `fly.toml`.
 
@@ -94,22 +72,76 @@ Tài liệu tập trung vào 3 phần:
 
 ### Security cơ bản
 
-- [ ] Bật branch protection cho `main`.
-- [ ] Yêu cầu Pull Request review trước merge.
 - [ ] Không để secret xuất hiện trong logs hoặc file commit.
 - [ ] Cân nhắc rate limiting cho các route auth và upload.
 
-## 5. Checklist CI/CD
+## 3. GitHub governance và CI/CD
+
+### Governance
+
+- [ ] Bật branch protection cho `main`.
+- [ ] Yêu cầu Pull Request review trước merge.
+- [ ] Tạo GitHub Environments `staging` và `production`.
+- [ ] Bật required reviewers cho environment `production`.
+
+### CI/CD secrets và variables
+
+- [ ] Điền `FLY_API_TOKEN` cho GitHub Actions.
+- [ ] Điền `FLY_APP_NAME_STAGING`.
+- [ ] Điền `FLY_APP_NAME_PRODUCTION`.
+- [ ] Điền `FLY_CONFIG_PATH_STAGING` nếu dùng file config riêng.
+- [ ] Điền `FLY_CONFIG_PATH_PRODUCTION` nếu dùng file config riêng.
+- [ ] Điền `FLY_REGION_STAGING` nếu dùng GitHub variable để cố định region.
+- [ ] Điền `FLY_REGION_PRODUCTION` nếu dùng GitHub variable để cố định region.
+- [ ] Điền `EXPO_TOKEN` cho GitHub Actions.
+
+### Workflows
 
 - [ ] Tạo workflow CI cho Pull Request.
 - [ ] Tạo workflow deploy staging backend.
 - [ ] Tạo workflow deploy production backend.
 - [ ] Tạo workflow preview build cho mobile.
 - [ ] Tạo workflow production release cho mobile.
-- [ ] Tạo GitHub Environments `staging` và `production`.
-- [ ] Bật required reviewers cho environment `production`.
 
-## 6. Checklist trước khi deploy staging lần đầu
+## 4. Dựng môi trường staging
+
+### Backend hosting staging
+
+- [ ] Tạo Fly app `main-backend-staging`.
+- [ ] Chốt `primary_region` cho staging.
+- [ ] Chuẩn bị `fly.toml` hoặc biến thể config riêng cho staging.
+- [ ] Cấu hình `[http_service.checks]` trỏ tới health endpoint của backend.
+
+### Database staging
+
+- [ ] Tạo PostgreSQL staging.
+- [ ] Bật backup và kiểm tra retention policy.
+- [ ] Kiểm tra giới hạn connection có phù hợp với runtime backend.
+
+### DNS và SSL staging
+
+- [ ] Trỏ `api-staging` về backend staging.
+- [ ] Xác nhận SSL hoạt động bình thường.
+- [ ] Cấu hình proxy hoặc DNS mode phù hợp trên Cloudflare.
+
+### Secrets và env vars staging
+
+- [ ] Điền `DATABASE_URL` cho staging.
+- [ ] Điền `JWT_SECRET` riêng cho staging.
+- [ ] Điền `JWT_EXPIRES_IN` cho staging.
+- [ ] Điền `GOOGLE_WEB_CLIENT_ID` đúng cho staging.
+- [ ] Điền `CLOUDINARY_CLOUD_NAME`.
+- [ ] Điền `CLOUDINARY_API_KEY`.
+- [ ] Điền `CLOUDINARY_API_SECRET`.
+
+### Mobile preview build
+
+- [ ] Tạo EAS project nếu chưa có.
+- [ ] Tạo EAS environment `preview`.
+- [ ] Điền `EXPO_PUBLIC_API_BASE_URL` cho preview.
+- [ ] Điền `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` cho preview.
+
+## 5. Checklist trước khi deploy staging lần đầu
 
 - [ ] Backend build pass trên CI.
 - [ ] Unit test backend pass.
@@ -121,7 +153,7 @@ Tài liệu tập trung vào 3 phần:
 - [ ] Secrets staging đã điền đủ.
 - [ ] Smoke test script hoặc checklist đã sẵn sàng.
 
-## 7. Smoke test sau khi deploy staging
+## 6. Smoke test sau khi deploy staging
 
 - [ ] API có thể truy cập qua domain staging.
 - [ ] Health endpoint trả về `200`.
@@ -130,6 +162,43 @@ Tài liệu tập trung vào 3 phần:
 - [ ] Đăng nhập Google trên mobile preview build hoạt động.
 - [ ] Các flow chính hoạt động: auth, profile, menu, template, meal search.
 - [ ] Upload media hoặc đường dẫn Cloudinary hoạt động nếu feature đó đã mở.
+
+## 7. Dựng môi trường production
+
+### Backend hosting production
+
+- [ ] Tạo Fly app `main-backend-production`.
+- [ ] Chốt `primary_region` cho production.
+- [ ] Chuẩn bị `fly.toml` hoặc biến thể config riêng cho production.
+- [ ] Cấu hình `[http_service.checks]` trỏ tới health endpoint của backend.
+- [ ] Cấu hình `min_machines_running` phù hợp cho production.
+
+### Database production
+
+- [ ] Tạo PostgreSQL production.
+- [ ] Bật backup và kiểm tra retention policy.
+- [ ] Kiểm tra giới hạn connection có phù hợp với runtime backend.
+
+### DNS và SSL production
+
+- [ ] Trỏ `api` production về backend production.
+- [ ] Xác nhận SSL hoạt động bình thường.
+- [ ] Cấu hình proxy hoặc DNS mode phù hợp trên Cloudflare.
+
+### Secrets và env vars production
+
+- [ ] Điền `DATABASE_URL` cho production.
+- [ ] Điền `JWT_SECRET` riêng cho production.
+- [ ] Điền `JWT_EXPIRES_IN` cho production.
+- [ ] Điền `GOOGLE_WEB_CLIENT_ID` đúng cho production.
+- [ ] Rà lại các giá trị `CLOUDINARY_*` dùng cho production.
+
+### Mobile production release
+
+- [ ] Tạo EAS environment `production`.
+- [ ] Điền `EXPO_PUBLIC_API_BASE_URL` cho production.
+- [ ] Điền `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` cho production.
+- [ ] Kiểm tra quyền Play Console hoặc App Store Connect.
 
 ## 8. Checklist trước khi go-live production
 

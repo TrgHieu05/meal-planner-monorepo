@@ -1,0 +1,57 @@
+name: Cleanup Preview DB After PR Closure
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cleanup-pr-preview-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  cleanup-preview-db:
+    name: Cleanup Preview DB
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: staging
+    env:
+      NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+      NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
+      PREVIEW_BRANCH_NAME: preview/pr-${{ github.event.pull_request.number }}
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Validate cleanup prerequisites
+        run: |
+          required_values=(
+            NEON_PROJECT_ID
+            PREVIEW_BRANCH_NAME
+          )
+
+          for name in "${required_values[@]}"; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error::Missing required GitHub variable or secret: ${name}"
+              exit 1
+            fi
+          done
+
+      - name: Delete Neon preview branch
+        uses: neondatabase/delete-branch-action@v3
+        with:
+          project_id: ${{ env.NEON_PROJECT_ID }}
+          branch: ${{ env.PREVIEW_BRANCH_NAME }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+
+      - name: Confirm cleanup summary
+        run: |
+          echo "Deleted Neon preview branch: ${PREVIEW_BRANCH_NAME}"

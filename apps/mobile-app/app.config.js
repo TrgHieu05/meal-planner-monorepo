@@ -1,7 +1,52 @@
 const fs = require('fs');
 const path = require('path');
 
-const { expo } = require('./app.json');
+const baseExpoConfig = {
+  name: 'Kitchen Mind',
+  slug: 'KitchenMind',
+  scheme: 'mobile-app-scheme',
+  version: '0.1.0',
+  orientation: 'portrait',
+  icon: './assets/images/android-icon-foreground.png',
+  userInterfaceStyle: 'light',
+  splash: {
+    image: './assets/images/android-icon-foreground.png',
+    resizeMode: 'contain',
+    backgroundColor: '#ffffff',
+  },
+  ios: {
+    supportsTablet: true,
+  },
+  android: {
+    adaptiveIcon: {
+      backgroundColor: '#ffffff',
+      foregroundImage: './assets/images/android-icon-foreground.png',
+      backgroundImage: './assets/images/android-icon-background.png',
+      monochromeImage: './assets/images/android-icon-monochrome.png',
+    },
+    predictiveBackGestureEnabled: false,
+    package: 'com.trghieu05.KitchenMind',
+  },
+  web: {
+    favicon: './assets/images/favicon.png',
+  },
+  experiments: {
+    tsconfigPaths: true,
+  },
+  plugins: [
+    'expo-router',
+    'expo-secure-store',
+    'expo-web-browser',
+    'expo-image-picker',
+  ],
+  extra: {
+    router: {},
+    eas: {
+      projectId: '8f3c2e1e-5e9c-4baa-aff9-017f6b4dc83c',
+    },
+  },
+  owner: 'trghieu05',
+};
 
 const GOOGLE_SIGNIN_PLUGIN = '@react-native-google-signin/google-signin';
 const appVariant = normalizeAppVariant(process.env.APP_VARIANT);
@@ -20,10 +65,10 @@ assertRequiredPublicEnv({
 });
 
 module.exports = {
-  ...expo,
-  plugins: appendUniquePlugin(expo.plugins, GOOGLE_SIGNIN_PLUGIN),
+  ...baseExpoConfig,
+  plugins: appendUniquePlugin(baseExpoConfig.plugins, GOOGLE_SIGNIN_PLUGIN),
   extra: {
-    ...(expo.extra ?? {}),
+    ...(baseExpoConfig.extra ?? {}),
     ...(apiBaseUrl ? { apiBaseUrl } : {}),
     ...(googleWebClientId ? { googleWebClientId } : {}),
   },

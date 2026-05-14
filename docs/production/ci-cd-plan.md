@@ -106,7 +106,7 @@ Các bước chính:
 9. chạy `eas build --platform android --profile preview --non-interactive --json`
 10. comment preview metadata vào Pull Request để QA dùng đúng build và đúng backend preview
 
-### 3. `cleanup-pr-preview-db.yml`
+### 3. `cleanup-preview-db-after-pr.yml`
 
 Chạy khi Pull Request bị `closed`, bao gồm cả trường hợp merge.
 
@@ -140,23 +140,9 @@ Các bước chính:
 5. chạy smoke test production
 6. thông báo kết quả deploy
 
-### 5. `mobile-preview.yml`
+Preview mobile build đã được gộp vào `pr-preview.yml`, nên không cần tách thêm workflow `mobile-preview.yml` riêng.
 
-Chạy cùng nhịp với workflow preview của Pull Request hoặc được gọi từ workflow đó.
-
-Mục tiêu:
-
-- tạo preview/internal build cho QA trước khi merge
-- trỏ mobile vào `api-staging` đang được repoint tới preview branch hiện tại
-
-Các bước chính:
-
-1. setup Node và pnpm
-2. cài Expo/EAS CLI
-3. dùng `EXPO_TOKEN` để authenticate với EAS
-4. chạy `eas build --platform android --profile preview --non-interactive --json`
-
-### 6. `mobile-production.yml`
+### 5. `mobile-production.yml`
 
 Chạy khi Pull Request đã được approve và merge vào `main`.
 

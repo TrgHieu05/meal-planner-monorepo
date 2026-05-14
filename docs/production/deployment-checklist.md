@@ -106,7 +106,7 @@ Với mô hình một staging app cố định, preview mới nhất sẽ ghi đ
 - [X] Tạo workflow CI cho Pull Request.
 - [x] Tạo workflow preview cho Pull Request: tạo Neon preview branch `schema-only`, apply migration, chạy seed bootstrap; deploy staging backend; build mobile preview. (3 workflows riêng biệt)
 - [x] Tạo workflow cleanup để xóa Neon preview branch khi Pull Request đóng hoặc merge.
-- [ ] Tạo workflow deploy production backend khi PR đã merge vào `main`.
+- [x] Tạo workflow deploy production backend khi PR đã merge vào `main`.
 - [ ] Tạo workflow build và release mobile production khi PR đã merge vào `main`.
 
 ## 4. Dựng môi trường staging

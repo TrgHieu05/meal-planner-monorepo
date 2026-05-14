@@ -16,7 +16,7 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: pr-review-${{ github.event.pull_request.number || github.ref }}
+  group: pr-preview-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -28,6 +28,7 @@ jobs:
     environment:
       name: staging
     env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
       FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
       FLY_APP_NAME_STAGING: ${{ vars.FLY_APP_NAME_STAGING }}
       FLY_CONFIG_PATH_STAGING: ${{ vars.FLY_CONFIG_PATH_STAGING }}
@@ -57,22 +58,16 @@ jobs:
           node-version: 20
           cache: pnpm
 
-      - name: Setup Flyctl
-        uses: superfly/flyctl-actions/setup-flyctl@master
-
-      - name: Setup Expo and EAS CLI
-        uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
-
       - name: Validate preview prerequisites
         run: |
           required_values=(
-            NEON_PROJECT_ID
-            NEON_PRODUCTION_BRANCH_ID
+            EXPO_TOKEN
+            FLY_API_TOKEN
             FLY_APP_NAME_STAGING
             FLY_CONFIG_PATH_STAGING
+            NEON_API_KEY
+            NEON_PROJECT_ID
+            NEON_PRODUCTION_BRANCH_ID
           )
 
           for name in "${required_values[@]}"; do
@@ -93,6 +88,15 @@ jobs:
           fi
 
           echo "STAGING_HEALTHCHECK_URL=https://${FLY_APP_NAME_STAGING}.fly.dev/health" >> "$GITHUB_ENV"
+
+      - name: Setup Flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@1.5
+
+      - name: Setup Expo and EAS CLI
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Compute preview branch expiration
         id: preview_expiration
@@ -212,7 +216,7 @@ jobs:
       - name: Upload preview metadata artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: pr-review-${{ github.event.pull_request.number }}-metadata
+          name: pr-preview-${{ github.event.pull_request.number }}-metadata
           path: |
             staging-health.json
             eas-preview-build.json

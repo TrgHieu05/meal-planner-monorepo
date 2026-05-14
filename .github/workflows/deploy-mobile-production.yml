@@ -45,12 +45,6 @@ jobs:
           node-version: 20
           cache: pnpm
 
-      - name: Setup Expo and EAS CLI
-        uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
-
       - name: Validate production mobile prerequisites
         run: |
           if [[ -z "$EXPO_TOKEN" ]]; then
@@ -87,6 +81,12 @@ jobs:
           fs.appendFileSync(process.env.GITHUB_ENV, `ANDROID_BUILD_TYPE=${buildType}\n`);
           fs.appendFileSync(process.env.GITHUB_ENV, `EAS_ENVIRONMENT=${easEnvironment}\n`);
           NODE
+
+      - name: Setup Expo and EAS CLI
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

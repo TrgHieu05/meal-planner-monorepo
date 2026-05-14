@@ -62,12 +62,14 @@ Repo hiện tại không bắt buộc phải có đầy đủ mọi branch trung
 Flow gợi ý đơn giản:
 
 1. Dev làm việc trên `feature/*` và test ở `local`.
-2. Mở Pull Request vào `main`.
-3. GitHub Action tạo một Neon preview branch mới từ database gốc `production`.
-4. CI/CD chạy migration, test và manual review trên preview branch đó.
-5. Nếu Pull Request được duyệt thì merge vào `main`.
-6. Workflow cleanup tự động xóa preview branch khi Pull Request đóng hoặc merge.
-7. Sau approval, commit đã merge mới được deploy lên `production`.
+2. Mở hoặc cập nhật Pull Request vào `main`.
+3. GitHub Action tạo một Neon preview branch `schema-only` mới từ database gốc `production`.
+4. CI/CD chạy `pnpm prisma:migrate:deploy` và `pnpm prisma:seed:bootstrap` trên preview branch đó.
+5. CI/CD cập nhật `DATABASE_URL` trên Fly staging app cố định, redeploy backend staging và build mobile preview.
+6. QA review trên preview environment trước khi merge.
+7. Nếu Pull Request được approve thì merge vào `main`.
+8. Workflow cleanup tự động xóa preview branch khi Pull Request đóng hoặc merge.
+9. Merge vào `main` tự động deploy backend production và release mobile production.
 
 Nếu team dùng thêm branch `develop`, nên hiểu nó là branch tích hợp code, không phải thay thế cho staging.
 
@@ -75,8 +77,8 @@ Nếu team dùng thêm branch `develop`, nên hiểu nó là branch tích hợp 
 
 Với `meal-planner-monorepo`, một môi trường staging tối thiểu nên có:
 
-- 1 backend staging riêng, ví dụ `main-backend-staging`
-- 1 Neon preview branch được tạo tạm cho Pull Request đang được review
+- 1 backend staging app cố định theo `FLY_APP_NAME_STAGING`
+- 1 Neon preview branch `schema-only` được tạo tạm cho Pull Request đang được review
 - 1 bộ secrets staging riêng
 - 1 domain staging riêng, ví dụ `api-staging.example.com`
 - 1 mobile preview build từ `Expo EAS` trỏ đúng vào API staging
@@ -84,14 +86,17 @@ Với `meal-planner-monorepo`, một môi trường staging tối thiểu nên c
 
 Nếu thiếu một trong các thành phần trên, thì hệ thống đó thường mới chỉ là shared dev environment hoặc local extension, chưa nên gọi là staging đúng nghĩa.
 
-## Mô hình Neon khuyến nghị cho review database
+Lưu ý vận hành: vì repo này dùng một Fly staging app cố định, tại một thời điểm staging chỉ phản ánh preview của PR mới nhất được deploy. Nếu cần QA song song nhiều PR, phải tách thành nhiều app preview hoặc nhiều domain preview.
+
+## Mô hình Neon khuyến nghị cho preview database
 
 Với stack đã chốt của repo này, database review nên được dựng trên Neon theo mô hình:
 
 - `1 Neon project` cho toàn bộ app
 - `production` branch là branch chuẩn cho production
-- mỗi Pull Request vào `main` tạo một preview branch mới từ `production`
-- workflow review dùng `DATABASE_URL` của preview branch cho migrate, test và manual review
+- mỗi Pull Request vào `main` tạo một preview branch `schema-only` mới từ `production`
+- workflow preview chạy `prisma migrate deploy` rồi `pnpm prisma:seed:bootstrap` trên preview branch
+- Fly staging app cố định luôn trỏ `DATABASE_URL` vào preview branch của PR hiện tại
 - production chỉ dùng `DATABASE_URL` trỏ vào `production` branch
 
 Không nên tách review và production bằng cách tạo hai database logic trong cùng một Neon branch, vì branch mới là ranh giới môi trường tự nhiên của Neon. Chỉ nên tách thành hai Neon project nếu cần cô lập vận hành hoặc compliance cao hơn.
@@ -100,15 +105,16 @@ Không nên tách review và production bằng cách tạo hai database logic tr
 
 ### 1. Tạo backend runtime riêng
 
-- tạo một app staging riêng trên nền tảng deploy backend
+- tạo một app staging cố định trên nền tảng deploy backend
 - cấu hình health check riêng
 - bảo đảm app staging nhận đúng env vars staging
 
 ### 2. Tạo Neon preview branch cho Pull Request
 
-- tạo preview branch trên Neon từ `production`
-- lấy connection string của preview branch đưa vào `DATABASE_URL` cho workflow review
+- tạo preview branch `schema-only` trên Neon từ `production`
+- lấy connection string của preview branch đưa vào `DATABASE_URL` cho workflow preview
 - chạy `prisma migrate deploy`
+- chạy `pnpm prisma:seed:bootstrap`
 - nếu cần, seed dữ liệu phục vụ QA
 
 ### 3. Tạo secrets staging riêng
@@ -130,6 +136,7 @@ Không nên tách review và production bằng cách tạo hai database logic tr
 - dùng `EAS profile preview`
 - đặt `EXPO_PUBLIC_API_BASE_URL` trỏ về staging domain
 - dùng đúng Google client ID cho staging nếu auth được tách môi trường
+- trigger build khi Pull Request được mở hoặc cập nhật
 
 ### 6. Thêm smoke test sau deploy
 
@@ -137,6 +144,7 @@ Không nên tách review và production bằng cách tạo hai database logic tr
 - backend kết nối được database
 - login hoạt động
 - các flow chính như profile, menu, template hoạt động bình thường
+- QA chỉ approve Pull Request khi preview environment đã pass
 
 ## Những gì staging phải giống production
 
@@ -159,7 +167,7 @@ Không nên tách review và production bằng cách tạo hai database logic tr
 Trong repo này, cách hiểu đúng là:
 
 - `local` là môi trường trên máy cá nhân
-- `staging` là môi trường deploy riêng để kiểm thử release candidate
+- `staging` là môi trường preview cố định để kiểm thử PR hiện tại
 - `production` là môi trường thật cho người dùng
 - `develop` và `main` là branch, không phải environment
 - preview branch của Neon là database branch tạm cho Pull Request, không phải environment cố định

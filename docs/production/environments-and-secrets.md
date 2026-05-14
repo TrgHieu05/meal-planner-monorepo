@@ -8,7 +8,8 @@ Nguyên tắc chung:
 
 - `local`, `staging`, `production` là ba môi trường độc lập
 - `production` chỉ dùng Neon `production` branch
-- review database cho Pull Request dùng preview branch tạo tạm từ `production`
+- review database cho Pull Request dùng preview branch `schema-only` tạo tạm từ `production`
+- Fly staging app là runtime preview cố định và được repoint `DATABASE_URL` theo từng Pull Request
 - secrets không commit vào repo
 - mobile public config và backend secret config phải tách rõ
 
@@ -17,8 +18,8 @@ Nguyên tắc chung:
 | Môi trường | Mục đích | Domain gợi ý | Database | Deploy trigger |
 | --- | --- | --- | --- | --- |
 | `local` | dev cá nhân | `localhost` | local Docker Postgres | chạy tay |
-| `staging` | QA và kiểm thử tích hợp | `api-staging.example.com` | Neon preview branch của Pull Request đang được review hoặc database QA tạm thời | pull_request hoặc manual review |
-| `production` | người dùng thật | `api.example.com` | Neon `production` branch | manual approval hoặc tag release |
+| `staging` | preview và QA trước merge | `api-staging.example.com` | Neon preview branch `schema-only` của Pull Request hiện tại | `pull_request` mở hoặc cập nhật |
+| `production` | người dùng thật | `api.example.com` | Neon `production` branch | merge vào `main` sau khi PR đã được approve |
 
 ## Branch và environment là hai khái niệm khác nhau
 
@@ -30,18 +31,20 @@ Nguyên tắc chung:
 Điểm cần nhớ:
 
 - `develop` nếu có chỉ là branch tích hợp code, không phải staging
-- `main` chỉ là branch nguồn để deploy, không tự động đồng nghĩa với production
-- `staging` là environment deploy riêng, thường nhận commit từ `main`
+- `main` là branch nguồn để trigger production release sau khi PR được merge
+- `staging` là environment preview cố định, nhận bản deploy của PR hiện tại trước merge
 - `local` là môi trường chạy trên máy cá nhân, không phải branch
 
 Flow gợi ý cho repo này:
 
 1. dev làm việc trên branch tính năng và kiểm thử ở `local`
 2. mở Pull Request vào `main`
-3. GitHub Action tạo preview branch mới từ Neon `production` branch
-4. workflow PR chạy migration, test và manual review trên preview branch đó
-5. khi Pull Request được duyệt và merge, workflow cleanup xóa preview branch
-6. sau approval mới deploy commit đã merge lên `production`
+3. GitHub Action tạo preview branch `schema-only` mới từ Neon `production` branch
+4. workflow preview chạy `pnpm prisma:migrate:deploy` và `pnpm prisma:seed:bootstrap` trên preview branch đó
+5. workflow preview cập nhật `DATABASE_URL` trên Fly staging app, redeploy backend staging và build mobile preview
+6. QA review trên preview environment trước khi merge
+7. khi Pull Request được duyệt và merge, workflow cleanup xóa preview branch
+8. merge vào `main` tự động deploy backend production và release mobile production
 
 ## Mô hình Neon khuyến nghị
 
@@ -49,8 +52,9 @@ Flow gợi ý cho repo này:
 
 - dùng `1 Neon project` cho app chính
 - giữ `production` là branch chuẩn cho production
-- tạo preview branch mới cho từng Pull Request từ `production`
-- workflow review lấy `DATABASE_URL` trực tiếp từ output của action tạo preview branch
+- tạo preview branch `schema-only` mới cho từng Pull Request từ `production`
+- workflow review lấy `DATABASE_URL` trực tiếp từ output/API response của bước tạo preview branch
+- workflow review chạy `pnpm prisma:migrate:deploy` rồi `pnpm prisma:seed:bootstrap`
 - production giữ `DATABASE_URL` trỏ vào `production` branch
 - không tách review và production bằng cách tạo hai database logic trong cùng một branch
 
@@ -102,11 +106,14 @@ GitHub nên dùng để giữ secrets và variables phục vụ pipeline CI/CD:
 Secrets:
 
 - `FLY_API_TOKEN`
+- `NEON_API_KEY`
 - `EXPO_TOKEN`
 - `SENTRY_AUTH_TOKEN` nếu dùng release integration
 
 Variables:
 
+- `NEON_PROJECT_ID`
+- `NEON_PRODUCTION_BRANCH_ID`
 - `FLY_APP_NAME_STAGING`
 - `FLY_APP_NAME_PRODUCTION`
 - `FLY_REGION_STAGING` nếu muốn cố định `primary_region`
@@ -133,6 +140,7 @@ Fly.io giữ secrets runtime cho backend:
 Các quy tắc nên áp dụng với Fly.io:
 
 - giá trị nhạy cảm nên được set bằng `fly secrets set` hoặc qua dashboard Fly.io
+- với staging app cố định, `DATABASE_URL` nên được CI cập nhật lại trên mỗi Pull Request để trỏ vào preview branch hiện tại
 - secret của Fly.io xuất hiện dưới dạng environment variables ở runtime, không dùng được ở build time
 - giá trị không nhạy cảm như `app`, `primary_region`, `[http_service]`, `[http_service.checks]` và `[env]` nên nằm trong `fly.toml`
 - nếu cần giá trị ở build time, chỉ đưa các giá trị không nhạy cảm vào `[build.args]`
@@ -149,21 +157,28 @@ Có thể tách theo environment:
 - `preview`
 - `production`
 
+Trong flow này:
+
+- `preview` được build khi Pull Request mở hoặc cập nhật
+- `production` được build và release khi Pull Request đã được approve và merge vào `main`
+
 ## Quy tắc đặt giá trị theo môi trường
 
 ### Staging
 
 - Dùng domain staging rõ ràng.
-- nếu staging dùng database review theo Pull Request, `DATABASE_URL` nên được inject động từ preview branch thay vì cố định một secret staging duy nhất.
+- `DATABASE_URL` trên Fly staging app nên được CI cập nhật động từ preview branch hiện tại thay vì cố định một secret staging duy nhất.
 - Google OAuth dùng bộ client ID staging riêng nếu cấu hình Google project tách môi trường.
 - JWT secret khác production.
 - Cloudinary có thể dùng chung tài khoản trong giai đoạn đầu, nhưng nên tách folder/preset hoặc tách cloud nếu dữ liệu nhạy cảm.
+- Vì staging app là cố định, preview mới nhất sẽ ghi đè preview cũ nếu nhiều Pull Request chạy song song.
 
 ### Production
 
 - Chỉ dùng domain chính thức.
 - `DATABASE_URL` phải trỏ vào Neon `production` branch.
 - Không tái sử dụng `JWT_SECRET` của staging.
+- Merge vào `main` là tín hiệu release production, nên mọi gate QA cần hoàn tất trước khi merge.
 - Google client ID và redirect configuration phải được xác nhận lại trước khi phát hành mobile build store.
 
 ## Quy tắc vận hành secrets
@@ -178,6 +193,8 @@ Có thể tách theo environment:
 
 - backend staging env
 - backend production env
+- `NEON_API_KEY` cho workflow preview/cleanup
+- `NEON_PROJECT_ID` và `NEON_PRODUCTION_BRANCH_ID` cho workflow preview
 - mobile EAS env cho `preview`
 - mobile EAS env cho `production`
 - token deploy cho Fly.io

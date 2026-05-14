@@ -10,7 +10,7 @@
     "install:android:latest": "eas build:run -p android -e preview --latest",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "test": "jest --config ./jest.config.js"
+    "test": "node ./scripts/run-jest.cjs --config ./jest.config.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

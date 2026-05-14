@@ -1,0 +1,62 @@
+name: Pull Request CI
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-pr-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build And Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NODE_ENV: test
+      EXPO_PUBLIC_API_BASE_URL: https://api-staging.example.com
+      EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: web-client-id
+      GOOGLE_WEB_CLIENT_ID: web-client-id
+      JWT_SECRET: test-secret
+      JWT_EXPIRES_IN: 7d
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js & pnpm
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm run prisma:generate
+
+      - name: Build shared package
+        run: pnpm run build:shared
+
+      - name: Build backend
+        run: pnpm --filter main-backend run build
+
+      - name: Run backend unit tests
+        run: pnpm --filter main-backend run test -- --runInBand
+
+      - name: Run backend e2e tests
+        run: pnpm --filter main-backend run test:e2e -- --runInBand
+
+      - name: Run mobile tests
+        run: pnpm --filter mobile-app run test -- --runInBand

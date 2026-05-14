@@ -1,15 +1,21 @@
-import * as dotenv from 'dotenv';
+import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { parseArgs } from 'node:util';
 import { Client } from 'pg';
+import * as dotenv from 'dotenv';
 
-dotenv.config({
-  path: path.resolve(process.cwd(), '../../.env'),
-});
+type SeedMode = 'bootstrap';
 
-const databaseUrl = process.env.DATABASE_URL;
-if (!databaseUrl) {
-  throw new Error('DATABASE_URL is not set');
+hydratePrismaEnvFromLocalFiles();
+
+const cliOptions = parseSeedCliOptions();
+
+if (cliOptions.help) {
+  printSeedUsage();
+  process.exit(0);
 }
+
+const databaseUrl = getRequiredDatabaseUrl();
 
 type IngredientSeedRow = {
   name: string;
@@ -880,7 +886,7 @@ async function main() {
   await client.connect();
 
   try {
-    console.log('Start seeding data...');
+    console.log(`Start ${cliOptions.mode} seed...`);
     await client.query('BEGIN');
 
     console.log('Seeding Diet Types...');
@@ -1114,3 +1120,111 @@ main().catch((e) => {
   console.error(e);
   process.exit(1);
 });
+
+function parseSeedCliOptions() {
+  const { values } = parseArgs({
+    options: {
+      help: {
+        type: 'boolean',
+        short: 'h',
+      },
+      mode: {
+        type: 'string',
+      },
+    },
+    allowPositionals: false,
+  });
+
+  const mode = values.mode ?? 'bootstrap';
+  if (mode !== 'bootstrap') {
+    throw new Error(
+      `Unsupported seed mode "${mode}". Only "bootstrap" is supported right now.`,
+    );
+  }
+
+  return {
+    help: values.help ?? false,
+    mode: mode as SeedMode,
+  };
+}
+
+function printSeedUsage() {
+  console.log('Usage: ts-node-script prisma/seed.ts [--mode=bootstrap]');
+  console.log('');
+  console.log('Modes:');
+  console.log('  bootstrap   Seeds the production-grade catalog bootstrap data.');
+}
+
+function hydratePrismaEnvFromLocalFiles() {
+  if (!shouldLoadLocalEnvFiles()) {
+    return;
+  }
+
+  for (const envFilePath of getLocalEnvFilePaths()) {
+    if (!fs.existsSync(envFilePath)) {
+      continue;
+    }
+
+    dotenv.config({ path: envFilePath });
+  }
+}
+
+function getRequiredDatabaseUrl() {
+  const resolvedDatabaseUrl = normalizeOptionalString(process.env.DATABASE_URL);
+  if (!resolvedDatabaseUrl) {
+    throw new Error(
+      'DATABASE_URL is not set. Inject it from the environment in CI/staging/production, or define it in the local repo .env files for local development.',
+    );
+  }
+
+  return resolvedDatabaseUrl;
+}
+
+function shouldLoadLocalEnvFiles() {
+  return !normalizeOptionalString(process.env.DATABASE_URL) && !isCiEnvironment() && !isProductionRuntime();
+}
+
+function getLocalEnvFilePaths() {
+  const monorepoRoot = findMonorepoRoot(process.cwd());
+  return [
+    path.join(monorepoRoot, '.env.local'),
+    path.join(monorepoRoot, '.env'),
+  ];
+}
+
+function findMonorepoRoot(startPath: string) {
+  let currentPath = path.resolve(startPath);
+
+  while (true) {
+    if (fs.existsSync(path.join(currentPath, 'pnpm-workspace.yaml'))) {
+      return currentPath;
+    }
+
+    const parentPath = path.dirname(currentPath);
+    if (parentPath === currentPath) {
+      throw new Error(
+        'Could not resolve the monorepo root from the current working directory.',
+      );
+    }
+
+    currentPath = parentPath;
+  }
+}
+
+function isCiEnvironment() {
+  const ciValue = normalizeOptionalString(process.env.CI)?.toLowerCase();
+  return ciValue === 'true' || ciValue === '1';
+}
+
+function isProductionRuntime() {
+  return normalizeOptionalString(process.env.NODE_ENV)?.toLowerCase() === 'production';
+}
+
+function normalizeOptionalString(value: string | undefined | null) {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const trimmedValue = value.trim();
+  return trimmedValue.length > 0 ? trimmedValue : null;
+}

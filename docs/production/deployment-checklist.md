@@ -60,19 +60,19 @@ Nếu thiếu một trong các thành phần trên, hệ thống đó thường 
 
 ### Database và Prisma
 
-- [ ] Rà lại migration hiện tại có đầy đủ cho production.
-- [ ] Tạo script hoặc step rõ ràng cho `prisma migrate deploy`.
-- [ ] Xác nhận seed data nào là bắt buộc cho staging và production.
+- [x] Rà lại migration hiện tại có đầy đủ cho production.
+- [x] Tạo script hoặc step rõ ràng cho `prisma migrate deploy`.
+- [x] Xác nhận seed data nào là bắt buộc cho staging và production. Catalog bootstrap bắt buộc gồm `diet_types`, `goals`, `cuisine_types`, `ingredients`, `meals` và `meal_ingredients`.
 
 ### Mobile app
 
-- [ ] Xác nhận `EXPO_PUBLIC_API_BASE_URL` không còn trỏ local.
-- [ ] Xác nhận Google sign-in hoạt động với build preview.
-- [ ] Xác nhận mobile không phụ thuộc `.env` local khi chạy build CI.
+- [x] Xác nhận `EXPO_PUBLIC_API_BASE_URL` không còn trỏ local.
+- [x] Chuẩn bị profile, command và runbook để kiểm thử Google sign-in trên build preview.
+- [x] Xác nhận mobile không phụ thuộc `.env` local khi chạy build CI.
 
 ### Security cơ bản
 
-- [ ] Không để secret xuất hiện trong logs hoặc file commit.
+- [x] Không để secret xuất hiện trong logs hoặc file commit. `.env` thật và các artifact bí mật phổ biến (`service-account*.json`, `*.jks`, `*.keystore`, `*.p8`, `*.pem`, `.secrets/`) đã bị ignore; code hiện tại không log trực tiếp giá trị secret.
 - [ ] Cân nhắc rate limiting cho các route auth và upload.
 
 ## 3. GitHub governance và CI/CD

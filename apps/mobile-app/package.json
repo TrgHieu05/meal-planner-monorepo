@@ -6,6 +6,8 @@
     "start": "expo start --clear",
     "android": "expo run:android",
     "build:android": "eas build --profile development --platform android",
+    "build:android:preview": "eas build --profile preview --platform android",
+    "install:android:latest": "eas build:run -p android -e preview --latest",
     "ios": "expo run:ios",
     "web": "expo start --web",
     "test": "jest --config ./jest.config.js"

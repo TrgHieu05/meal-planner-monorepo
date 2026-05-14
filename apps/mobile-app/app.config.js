@@ -4,13 +4,20 @@ const path = require('path');
 const { expo } = require('./app.json');
 
 const GOOGLE_SIGNIN_PLUGIN = '@react-native-google-signin/google-signin';
+const appVariant = normalizeAppVariant(process.env.APP_VARIANT);
 
-applyRepoEnvDefaults();
+applyRepoEnvDefaults(appVariant);
 
 const apiBaseUrl = normalizeOptionalString(process.env.EXPO_PUBLIC_API_BASE_URL);
 const googleWebClientId = normalizeOptionalString(
   process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
 );
+
+assertRequiredPublicEnv({
+  apiBaseUrl,
+  appVariant,
+  googleWebClientId,
+});
 
 module.exports = {
   ...expo,
@@ -39,7 +46,11 @@ function appendUniquePlugin(plugins, pluginName) {
   return [...normalizedPlugins, pluginName];
 }
 
-function applyRepoEnvDefaults() {
+function applyRepoEnvDefaults(appVariant) {
+  if (!shouldLoadRepoEnvDefaults(appVariant)) {
+    return;
+  }
+
   const repoRoot = path.resolve(__dirname, '../..');
   const mergedEnv = {
     ...readEnvFile(path.join(repoRoot, '.env')),
@@ -51,6 +62,66 @@ function applyRepoEnvDefaults() {
       process.env[key] = value;
     }
   }
+}
+
+function shouldLoadRepoEnvDefaults(appVariant) {
+  return !appVariant && !isTruthy(process.env.CI) && !isTruthy(process.env.EAS_BUILD);
+}
+
+function assertRequiredPublicEnv({ apiBaseUrl, appVariant, googleWebClientId }) {
+  if (!shouldRequireInjectedPublicEnv(appVariant)) {
+    return;
+  }
+
+  const missingVariables = [];
+
+  if (!apiBaseUrl) {
+    missingVariables.push('EXPO_PUBLIC_API_BASE_URL');
+  }
+
+  if (!googleWebClientId) {
+    missingVariables.push('EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID');
+  }
+
+  if (missingVariables.length === 0) {
+    return;
+  }
+
+  throw new Error(
+    `Missing required Expo public env for ${appVariant ?? 'this build'}: ${missingVariables.join(', ')}. Configure them in the selected EAS environment or pass them explicitly before app.config.js is evaluated.`,
+  );
+}
+
+function shouldRequireInjectedPublicEnv(appVariant) {
+  return isTruthy(process.env.CI) || isTruthy(process.env.EAS_BUILD) || appVariant === 'preview' || appVariant === 'production';
+}
+
+function normalizeAppVariant(value) {
+  const normalizedValue = normalizeOptionalString(value);
+  if (!normalizedValue) {
+    return null;
+  }
+
+  if (
+    normalizedValue !== 'development' &&
+    normalizedValue !== 'preview' &&
+    normalizedValue !== 'production'
+  ) {
+    throw new Error(
+      `Unsupported APP_VARIANT "${normalizedValue}". Expected one of: development, preview, production.`,
+    );
+  }
+
+  return normalizedValue;
+}
+
+function isTruthy(value) {
+  if (typeof value !== 'string') {
+    return false;
+  }
+
+  const normalizedValue = value.trim().toLowerCase();
+  return normalizedValue === '1' || normalizedValue === 'true';
 }
 
 function readEnvFile(filePath) {

@@ -17,12 +17,14 @@ import { MealSearchModule } from './meal-search/meal-search.module';
 import { MenuModule } from './menu/menu.module';
 import { IngredientModule } from './ingredient/ingredient.module';
 import { MediaModule } from './media/media.module';
+import { getEnvFilePaths, isProductionRuntime } from './config/runtime-config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '../../.env',
+      ignoreEnvFile: isProductionRuntime(),
+      envFilePath: getEnvFilePaths(),
     }),
     PrismaModule,
     AuthModule,

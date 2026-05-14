@@ -16,7 +16,7 @@ const GOOGLE_SIGN_IN_ERRORS = {
   unsupportedPlatform:
     'Google Sign-In native hiện chỉ được cấu hình cho Android development build.',
   missingClientId:
-    'Thiếu cấu hình Google Web client ID. Hãy kiểm tra EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID trong file .env ở root dự án rồi rebuild development build.',
+    'Thiếu cấu hình Google Web client ID. Hãy kiểm tra EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID trong environment hiện tại (local, preview hoặc production) rồi rebuild app.',
   requestNotReady:
     'Google Sign-In chưa được cấu hình đúng. Hãy restart app sau khi rebuild development build.',
   cancelled: 'Bạn đã hủy đăng nhập Google.',

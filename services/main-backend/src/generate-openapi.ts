@@ -5,6 +5,7 @@ import * as path from 'node:path';
 import * as fs from 'node:fs';
 import { AppModule } from './app.module';
 import { PrismaService } from './database/prisma.service';
+import { getSwaggerServers } from './config/runtime-config';
 
 async function generate() {
   const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -19,21 +20,20 @@ async function generate() {
     .compile();
 
   const app: INestApplication = moduleFixture.createNestApplication();
+  const port = Number(process.env.PORT ?? 3000);
   app.setGlobalPrefix('api');
   await app.init();
 
-  const config = new DocumentBuilder()
+  const swaggerBuilder = new DocumentBuilder()
     .setTitle('KitchenMind API')
     .setDescription(
       'Tài liệu hướng dẫn và kiểm thử API cho hệ thống Meal Planner\n\n' +
         '## Xác thực\n' +
         'Các endpoint được bảo vệ yêu cầu JWT Bearer token.\n' +
-        'Đăng nhập qua Google (`GET /api/auth/google`) để nhận `accessToken`,\n' +
+        'Mobile app Android gửi Google ID token vào `POST /api/auth/google/exchange` để nhận `accessToken`,\n' +
         'sau đó nhấn **Authorize** và nhập token vào ô `Bearer <token>`.',
     )
     .setVersion('1.0')
-    .addServer('http://localhost:8080', 'Nginx Gateway Local')
-    .addServer('http://localhost:3000', 'Direct Main-Backend Port')
     .addBearerAuth(
       {
         type: 'http',
@@ -46,7 +46,13 @@ async function generate() {
       'JWT',
     )
     .addTag('Authentication', 'Các API liên quan đến xác thực người dùng')
-    .build();
+    ;
+
+  for (const server of getSwaggerServers(port)) {
+    swaggerBuilder.addServer(server.url, server.description);
+  }
+
+  const config = swaggerBuilder.build();
 
   const document = SwaggerModule.createDocument(app, config);
 

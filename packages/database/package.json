@@ -5,8 +5,13 @@
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
+    "db:migrate:dev": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:migrate:status": "prisma migrate status",
+    "db:seed": "pnpm run db:seed:bootstrap",
+    "db:seed:bootstrap": "ts-node-script prisma/seed.ts --mode=bootstrap",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "db:seed": "ts-node-script prisma/seed.ts"
+    "db:seed:help": "ts-node-script prisma/seed.ts --help"
   },
   "prisma": {
     "seed": "ts-node-script prisma/seed.ts"

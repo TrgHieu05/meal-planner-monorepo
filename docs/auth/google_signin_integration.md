@@ -112,6 +112,36 @@ Ghi chú phạm vi:
 - [ ] Manual QA cho user cancel Google popup.
 - [ ] Manual QA cho network timeout và backend `401` hoặc `422`.
 
+### Runbook kiểm thử preview build
+
+Mục này dùng để chuẩn bị đường kiểm thử Google Sign-In trên `preview build`. Việc pass hay fail thực tế của staging vẫn được theo dõi ở `docs/production/deployment-checklist.md` phần smoke test staging.
+
+Điều kiện trước khi chạy:
+
+- EAS environment `preview` đã có `EXPO_PUBLIC_API_BASE_URL` trỏ về API staging.
+- EAS environment `preview` đã có `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` đúng với môi trường staging.
+- Backend staging đã có `GOOGLE_WEB_CLIENT_ID` tương ứng và route `POST /api/auth/google/exchange` hoạt động.
+- Có Android emulator hoặc thiết bị thật để cài APK internal distribution.
+
+Lệnh chuẩn bị build và cài đặt:
+
+- `pnpm build:android:preview`
+- `pnpm install:android:latest`
+
+Lưu ý: lệnh cài đặt ở trên đã được khóa vào `preview` profile để tránh cài nhầm build `development` hoặc `production` gần nhất.
+
+Checklist kiểm thử Google Sign-In trên preview build:
+
+1. Mở preview build và đi tới màn hình login.
+2. Xác nhận nút `Continue with Google` đang enabled.
+3. Nhấn nút Google và xác nhận Android hiện account chooser hoặc consent flow.
+4. Chọn một tài khoản Google hợp lệ cho staging.
+5. Xác nhận app nhận `idToken`, gọi `POST /api/auth/google/exchange`, và điều hướng vào onboarding hoặc màn hình chính tùy trạng thái user.
+6. Kill app rồi mở lại để xác nhận session restore vẫn hợp lệ.
+7. Lặp lại với case hủy popup, case mất mạng, và case backend trả `401` hoặc `422` để ghi lại lỗi UI thực tế.
+
+Khi checklist trên pass với preview build trỏ staging, có thể đánh dấu mục `Đăng nhập Google trên mobile preview build hoạt động` trong smoke test staging.
+
 ## 11. Tài liệu hóa và handoff
 
 - [ ] Cập nhật [Auth v2](../Auth_v2.md) sau khi implementation thay đổi.

@@ -25,6 +25,8 @@ Theo cấu trúc hiện tại, hệ thống gồm các khối chính sau:
 ### 1. Mobile app
 
 - Mobile app được build qua `Expo EAS`.
+- Pull Request sẽ build `preview` để QA review trước khi merge.
+- Merge vào `main` sẽ build và release mobile bằng profile `production`.
 - Mỗi môi trường `staging` và `production` dùng một bộ `EAS environment variables` riêng.
 - Mobile app chỉ gọi tới public API domain, ví dụ:
   - `https://api-staging.example.com`
@@ -33,15 +35,21 @@ Theo cấu trúc hiện tại, hệ thống gồm các khối chính sau:
 ### 2. Backend API
 
 - `services/main-backend` được build từ Dockerfile hiện có và deploy lên `Fly.io`.
+- Có một `Fly.io staging app` cố định để phục vụ preview của Pull Request hiện tại.
 - Runtime production chạy trên `Fly.io`, cấu hình bằng `fly.toml` và điều phối qua `flyctl deploy`.
 - `Fly.io` sẽ chịu trách nhiệm public ingress, TLS và health checks cho backend app.
 - Không dùng `nginx` local trong production trừ khi sau này có nhu cầu reverse proxy tự quản.
 
 ### 3. Database
 
-- Database dùng managed PostgreSQL riêng cho `staging` và `production`.
+- Database dùng `Neon Postgres` với `1 project` và mô hình branch như sau:
+  - `production` branch là branch gốc cho dữ liệu production
+  - mỗi Pull Request vào `main` tạo một `preview/pr-*` branch mới từ `production` với chế độ `schema-only`
+- Preview branch có connection string riêng để workflow review chạy `prisma migrate deploy`, `pnpm prisma:seed:bootstrap`, test và manual checks.
+- Khi Pull Request bị đóng hoặc được merge, preview branch sẽ bị xóa tự động.
+- Không tách môi trường bằng cách tạo hai database logic trong cùng một Neon branch.
 - Prisma migration được chạy trong pipeline deploy, không chạy tay trên máy cá nhân.
-- Không dùng chung database giữa các môi trường.
+- Production chỉ dùng `DATABASE_URL` trỏ vào Neon `production` branch.
 
 ### 4. Media và external services
 
@@ -58,7 +66,7 @@ flowchart LR
   Dev[Developer] --> GitHub[GitHub Repository]
 
   subgraph CI[GitHub Actions CI/CD]
-    PR[Pull Request CI\nInstall - Build - Test]
+    PR[Pull Request CI\nCreate preview DB - Seed - Deploy preview]
     BackendRelease[Backend Release Workflow]
     MobileRelease[Mobile Release Workflow]
   end
@@ -66,6 +74,19 @@ flowchart LR
   GitHub --> PR
   GitHub --> BackendRelease
   GitHub --> MobileRelease
+
+  subgraph ReviewLane[PR review lane]
+    PreviewDb[Create Neon schema-only branch\nfrom production]
+    SeedPreview[Apply migrations +\nrun bootstrap seed]
+    PreviewBackend[Update Fly staging DATABASE_URL\nand deploy staging app]
+    PreviewMobile[Build EAS preview]
+    ReviewChecks[QA review + manual checks]
+    Merge[Approve + merge into main]
+    Cleanup[Delete preview branch\non PR close or merge]
+  end
+
+  PR --> PreviewDb --> SeedPreview --> PreviewBackend --> PreviewMobile --> ReviewChecks --> Merge
+  Merge --> Cleanup
 
   subgraph BackendLane[Backend deployment lane]
     Validate[Pre-deploy validation\nBuild + tests]
@@ -75,21 +96,23 @@ flowchart LR
     FlyApp[Fly.io app\nMachines + edge proxy]
   end
 
+  Merge --> BackendRelease
   BackendRelease --> Validate --> FlyDeploy --> ReleaseCmd --> FlyApp
   FlyConfig --> FlyDeploy
 
   subgraph MobileLane[Mobile release lane]
-    EASBuild[EAS Build\npreview or production]
+    EASBuild[EAS Build\nproduction]
     EASSubmit[EAS Submit\nStore release]
     EASUpdate[EAS Update\nOTA for JS-only changes]
   end
 
+  Merge --> MobileRelease
   MobileRelease --> EASBuild --> EASSubmit
   MobileRelease --> EASUpdate
 
   subgraph Runtime[Production runtime]
     API[Backend API\nNestJS on Fly Machines]
-    DB[(Managed PostgreSQL)]
+    DB[(Neon production branch)]
     Media[Cloudinary]
     Monitor[Sentry]
   end
@@ -140,14 +163,14 @@ flowchart LR
   subgraph Staging
     StagingApp[EAS preview build]
     StagingApi[Fly.io staging app]
-    StagingDb[(Managed Postgres staging)]
+    StagingDb[(Current PR schema-only preview branch)]
     StagingApp --> StagingApi --> StagingDb
   end
 
   subgraph Production
     ProdApp[EAS production build]
     ProdApi[Fly.io production app]
-    ProdDb[(Managed Postgres production)]
+    ProdDb[(Neon production branch)]
     ProdApp --> ProdApi --> ProdDb
   end
 ```
@@ -155,8 +178,9 @@ flowchart LR
 ## Diễn giải nhanh cho các sơ đồ
 
 - `Luồng build, deploy và release` mô tả hai lane độc lập: backend lane dùng `flyctl deploy` + `fly.toml`, còn mobile lane dùng EAS cho build, submit và OTA update.
+- Trong lane review, Neon preview branch `schema-only` được tạo từ `production`, được seed bootstrap, sau đó Fly staging app và mobile preview được cập nhật để QA review trước merge.
 - `Luồng runtime` mô tả đường đi của request thật từ thiết bị người dùng tới DNS/SSL edge, backend API, database, media service và error tracking.
-- `Luồng tách môi trường` nhấn mạnh nguyên tắc không dùng chung app runtime và database giữa `local`, `staging` và `production`.
+- `Luồng tách môi trường` nhấn mạnh nguyên tắc production chỉ dùng `production` branch, còn preview trước merge dùng preview branch tạm được gắn vào staging app cố định.
 
 ## Branch và environment
 
@@ -184,19 +208,20 @@ Hệ quả của việc tách này:
 ### Staging
 
 - là môi trường deploy riêng để QA và smoke test release candidate
-- không phải branch code; thường nhận commit từ `main`
-- dùng database riêng
+- không phải branch code; nó là runtime preview cố định cho Pull Request hiện tại
+- không nên bị đồng nhất với Neon preview branch của Pull Request
 - domain riêng, ví dụ `api-staging.example.com`
 - build mobile nội bộ hoặc preview build qua EAS
-- cho QA và kiểm thử tích hợp trước khi release
+- cho QA và kiểm thử tích hợp trước khi PR được merge
 
 ### Production
 
-- chỉ nhận bản đã qua kiểm thử ở staging và được approve
+- tự động nhận bản đã được approve và merge vào `main`
 - không đồng nghĩa với branch `main`
 - domain chính thức, ví dụ `api.example.com`
+- dùng `production` branch trên Neon làm nguồn dữ liệu thật
 - secrets riêng hoàn toàn với staging
-- chỉ deploy qua pipeline có approval
+- được deploy tự động sau merge
 - chỉ migrate bằng `prisma migrate deploy`
 
 ## Vai trò của từng lớp trong kiến trúc
@@ -214,10 +239,11 @@ Hệ quả của việc tách này:
 - dùng `flyctl deploy` để build và deploy từ Dockerfile hiện có
 - phù hợp khi đội dự án muốn linh hoạt hơn mô hình PaaS dashboard-first nhưng vẫn chưa cần lên hạ tầng kiểu AWS
 
-### Managed PostgreSQL
+### Managed PostgreSQL trên Neon
 
 - giảm gánh nặng backup, failover và patching
-- dễ tách môi trường và kiểm soát connection string
+- dễ tạo `schema-only` preview branch theo từng Pull Request và kiểm soát connection string
+- phù hợp với mô hình `1 project` gồm `production` branch và các preview branch tạm
 - phù hợp với Prisma schema hiện tại
 
 ### Cloudflare
@@ -239,8 +265,9 @@ Hệ quả của việc tách này:
 - Không tự duy trì Nginx production nếu host đã có ingress/SSL tốt.
 - Tách release backend và release mobile thành hai pipeline riêng.
 - Dùng `Fly.io` làm backend runtime mặc định cho `staging` và `production`.
+- Dùng Pull Request preview trên staging app cố định làm QA gate chính trước merge.
 - Dùng `fly.toml` để quản lý app config và health checks cho backend.
-- Ưu tiên `staging` trước, chỉ lên `production` sau khi smoke test pass ở staging.
+- Merge vào `main` là tín hiệu auto release production cho backend và mobile sau khi preview đã được QA pass.
 
 ## Các việc kỹ thuật nên làm trước khi deploy thật
 

@@ -1,0 +1,111 @@
+name: Cleanup Preview DB After PR Closure
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cleanup-pr-preview-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  cleanup-preview-db:
+    name: Cleanup Preview DB
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: staging
+    env:
+      NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+      NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
+      PREVIEW_BRANCH_NAME: preview/pr-${{ github.event.pull_request.number }}
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Validate cleanup prerequisites
+        run: |
+          required_values=(
+            NEON_API_KEY
+            NEON_PROJECT_ID
+            PREVIEW_BRANCH_NAME
+          )
+
+          for name in "${required_values[@]}"; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error::Missing required GitHub variable or secret: ${name}"
+              exit 1
+            fi
+          done
+
+      - name: Lookup preview branch
+        id: lookup_preview_branch
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+
+          async function main() {
+            const projectId = process.env.NEON_PROJECT_ID;
+            const branchName = process.env.PREVIEW_BRANCH_NAME;
+            const apiKey = process.env.NEON_API_KEY;
+
+            const response = await fetch(`https://console.neon.tech/api/v2/projects/${projectId}/branches`, {
+              headers: {
+                accept: 'application/json',
+                authorization: `Bearer ${apiKey}`,
+              },
+            });
+
+            if (!response.ok) {
+              throw new Error(`Failed to list Neon branches (${response.status})`);
+            }
+
+            const payload = await response.json();
+            const branch = Array.isArray(payload?.branches)
+              ? payload.branches.find((item) => item?.name === branchName)
+              : null;
+
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, `branch_found=${branch ? 'true' : 'false'}\n`);
+
+            if (branch?.id) {
+              fs.appendFileSync(process.env.GITHUB_OUTPUT, `branch_id=${branch.id}\n`);
+            }
+          }
+
+          main().catch((error) => {
+            console.error(error);
+            process.exit(1);
+          });
+          NODE
+
+      - name: Delete Neon preview branch
+        if: ${{ steps.lookup_preview_branch.outputs.branch_found == 'true' }}
+        uses: neondatabase/delete-branch-action@v3
+        with:
+          project_id: ${{ env.NEON_PROJECT_ID }}
+          branch: ${{ steps.lookup_preview_branch.outputs.branch_id }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+
+      - name: Skip missing preview branch
+        if: ${{ steps.lookup_preview_branch.outputs.branch_found != 'true' }}
+        run: |
+          echo "No Neon preview branch found for ${PREVIEW_BRANCH_NAME}; nothing to delete." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Confirm cleanup summary
+        run: |
+          if [[ "${{ steps.lookup_preview_branch.outputs.branch_found }}" == "true" ]]; then
+            echo "Deleted Neon preview branch: ${PREVIEW_BRANCH_NAME}" >> "$GITHUB_STEP_SUMMARY"
+          fi

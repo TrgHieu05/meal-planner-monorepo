@@ -2,7 +2,7 @@
 
 ## Mục tiêu
 
-Checklist này dùng cho việc đưa dự án lên `staging` trước, sau đó mới lên `production`.
+Checklist này dùng cho việc dựng preview trên `staging` trước merge, sau đó tự động release lên `production` sau khi PR được approve và merge.
 
 Tài liệu tập trung vào 3 phần:
 
@@ -22,7 +22,7 @@ Checklist dưới đây được sắp theo đúng flow triển khai thực tế
 6. dựng `production`
 7. go-live `production`
 
-Vẫn có thể tạo trước một phần hạ tầng production nếu team muốn, nhưng không nên bỏ qua bước `staging -> smoke test -> approval` trước khi deploy cho người dùng thật.
+Vẫn có thể tạo trước một phần hạ tầng production nếu team muốn, nhưng không nên bỏ qua bước `preview trên staging -> QA pass -> approve + merge` trước khi release cho người dùng thật.
 
 ## Staging cho repo này gồm những gì?
 
@@ -30,8 +30,8 @@ Vẫn có thể tạo trước một phần hạ tầng production nếu team mu
 
 Với repo hiện tại, staging tối thiểu nên gồm:
 
-- 1 backend staging riêng
-- 1 database staging riêng
+- 1 backend staging app cố định
+- 1 Neon preview branch `schema-only` được tạo tạm cho Pull Request đang review
 - 1 bộ env vars và secrets staging riêng
 - 1 domain staging riêng, ví dụ `api-staging.example.com`
 - 1 mobile preview build trỏ đúng vào API staging
@@ -39,9 +39,12 @@ Với repo hiện tại, staging tối thiểu nên gồm:
 
 Nếu thiếu một trong các thành phần trên, hệ thống đó thường mới chỉ là local mở rộng hoặc shared dev setup, chưa nên xem là staging hoàn chỉnh.
 
+Với mô hình một staging app cố định, preview mới nhất sẽ ghi đè preview cũ nếu có nhiều Pull Request chạy preview song song.
+
 ## 1. Quyết định ban đầu và quyền truy cập
 
 - [X] Chọn stack triển khai chính thức theo `service-comparison.md`. **Chốt: Fly.io, Neon, Github Actions, GHCR, Expo EAS, Cloudflare, Sentry, Cloudinary**
+- [x] Chốt mô hình Neon: `1 project` với `production` branch làm gốc và các preview branch tạm cho từng Pull Request.
 - [x] Chốt domain chính thức cho API production.
 - [x] Chốt subdomain cho staging.
 - [X] Tạo tài khoản hoặc project cho Fly.io, Neon, Cloudflare, Expo EAS và Sentry.
@@ -79,42 +82,50 @@ Nếu thiếu một trong các thành phần trên, hệ thống đó thường 
 
 ### Governance
 
-- [ ] Bật branch protection cho `main`.
-- [ ] Yêu cầu Pull Request review trước merge.
-- [ ] Tạo GitHub Environments `staging` và `production`.
-- [ ] Bật required reviewers cho environment `production`.
+- [x] Bật branch protection cho `main`.
+- [x] Yêu cầu Pull Request review trước merge.
+- [x] Tạo GitHub Environments `staging` và `production`.
+- [x] Dùng PR approval + branch protection làm gate chính trước merge cho production release.
 
 ### CI/CD secrets và variables
 
-- [ ] Điền `FLY_API_TOKEN` cho GitHub Actions.
-- [ ] Điền `FLY_APP_NAME_STAGING`.
-- [ ] Điền `FLY_APP_NAME_PRODUCTION`.
-- [ ] Điền `FLY_CONFIG_PATH_STAGING` nếu dùng file config riêng.
-- [ ] Điền `FLY_CONFIG_PATH_PRODUCTION` nếu dùng file config riêng.
-- [ ] Điền `FLY_REGION_STAGING` nếu dùng GitHub variable để cố định region.
-- [ ] Điền `FLY_REGION_PRODUCTION` nếu dùng GitHub variable để cố định region.
-- [ ] Điền `EXPO_TOKEN` cho GitHub Actions.
+- [x] Điền `FLY_API_TOKEN` cho GitHub Actions.
+- [x] Điền `NEON_API_KEY` cho GitHub Actions.
+- [x] Điền `NEON_PROJECT_ID`.
+- [x] Điền `NEON_PRODUCTION_BRANCH_ID`.
+- [x] Điền `FLY_APP_NAME_STAGING`. **meal-planner-stanging**
+- [x] Điền `FLY_APP_NAME_PRODUCTION`. **meal-planner-production**
+- [x] Điền `FLY_CONFIG_PATH_STAGING` nếu dùng file config riêng. **services/main-backend/fly.staging.toml**
+- [x] Điền `FLY_CONFIG_PATH_PRODUCTION` nếu dùng file config riêng. **services/main-backend/fly.production.toml**
+- [ ] Điền `FLY_REGION_STAGING` nếu dùng GitHub variable để cố định region. (sẽ setup trong `fly.toml` cho staging)
+- [ ] Điền `FLY_REGION_PRODUCTION` nếu dùng GitHub variable để cố định region. (sẽ setup trong `fly.toml` cho production)
+- [x] Điền `EXPO_TOKEN` cho GitHub Actions.
 
 ### Workflows
 
-- [ ] Tạo workflow CI cho Pull Request.
-- [ ] Tạo workflow deploy staging backend.
-- [ ] Tạo workflow deploy production backend.
-- [ ] Tạo workflow preview build cho mobile.
-- [ ] Tạo workflow production release cho mobile.
+- [X] Tạo workflow CI cho Pull Request.
+- [x] Tạo workflow preview cho Pull Request: tạo Neon preview branch `schema-only`, apply migration, chạy seed bootstrap; deploy staging backend; build mobile preview. (3 workflows riêng biệt)
+- [x] Tạo workflow cleanup để xóa Neon preview branch khi Pull Request đóng hoặc merge.
+- [x] Tạo workflow deploy production backend khi PR đã merge vào `main`.
+- [x] Tạo workflow build APK mobile production khi PR đã merge vào `main`.
 
 ## 4. Dựng môi trường staging
 
 ### Backend hosting staging
 
-- [ ] Tạo Fly app `main-backend-staging`.
+- [ ] Tạo Fly staging app cố định theo `FLY_APP_NAME_STAGING`.
 - [ ] Chốt `primary_region` cho staging.
 - [ ] Chuẩn bị `fly.toml` hoặc biến thể config riêng cho staging.
 - [ ] Cấu hình `[http_service.checks]` trỏ tới health endpoint của backend.
 
 ### Database staging
 
-- [ ] Tạo PostgreSQL staging.
+- [ ] Tạo hoặc xác nhận Neon project chính cho app.
+- [ ] Xác nhận `production` branch là branch gốc trên Neon.
+- [ ] Tạo preview branch `schema-only` trên Neon từ `production` branch khi Pull Request mở hoặc cập nhật.
+- [ ] Lấy connection string của preview branch từ output hoặc API response của workflow preview.
+- [ ] Chạy `pnpm prisma:migrate:deploy` trên preview branch.
+- [ ] Chạy `pnpm prisma:seed:bootstrap` trên preview branch.
 - [ ] Bật backup và kiểm tra retention policy.
 - [ ] Kiểm tra giới hạn connection có phù hợp với runtime backend.
 
@@ -126,7 +137,7 @@ Nếu thiếu một trong các thành phần trên, hệ thống đó thường 
 
 ### Secrets và env vars staging
 
-- [ ] Điền `DATABASE_URL` cho staging.
+- [ ] Cập nhật secret `DATABASE_URL` trên Fly staging app từ preview branch hiện tại, không dùng một giá trị staging cố định trong repo.
 - [ ] Điền `JWT_SECRET` riêng cho staging.
 - [ ] Điền `JWT_EXPIRES_IN` cho staging.
 - [ ] Điền `GOOGLE_WEB_CLIENT_ID` đúng cho staging.
@@ -140,6 +151,7 @@ Nếu thiếu một trong các thành phần trên, hệ thống đó thường 
 - [ ] Tạo EAS environment `preview`.
 - [ ] Điền `EXPO_PUBLIC_API_BASE_URL` cho preview.
 - [ ] Điền `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` cho preview.
+- [ ] Trigger EAS preview build khi Pull Request được mở hoặc cập nhật.
 
 ## 5. Checklist trước khi deploy staging lần đầu
 
@@ -147,13 +159,14 @@ Nếu thiếu một trong các thành phần trên, hệ thống đó thường 
 - [ ] Unit test backend pass.
 - [ ] E2E backend pass với Postgres.
 - [ ] Mobile test pass.
+- [ ] Workflow preview cho Pull Request đã sẵn sàng.
 - [ ] Fly app staging đã tạo xong.
 - [ ] `fly.toml` staging đã hợp lệ.
 - [ ] Database staging đã tạo xong.
 - [ ] Secrets staging đã điền đủ.
 - [ ] Smoke test script hoặc checklist đã sẵn sàng.
 
-## 6. Smoke test sau khi deploy staging
+## 6. QA review trên preview/staging trước khi merge
 
 - [ ] API có thể truy cập qua domain staging.
 - [ ] Health endpoint trả về `200`.
@@ -162,12 +175,13 @@ Nếu thiếu một trong các thành phần trên, hệ thống đó thường 
 - [ ] Đăng nhập Google trên mobile preview build hoạt động.
 - [ ] Các flow chính hoạt động: auth, profile, menu, template, meal search.
 - [ ] Upload media hoặc đường dẫn Cloudinary hoạt động nếu feature đó đã mở.
+- [ ] Chỉ approve và merge Pull Request sau khi preview environment đã pass.
 
 ## 7. Dựng môi trường production
 
 ### Backend hosting production
 
-- [ ] Tạo Fly app `main-backend-production`.
+- [ ] Tạo Fly production app theo `FLY_APP_NAME_PRODUCTION`.
 - [ ] Chốt `primary_region` cho production.
 - [ ] Chuẩn bị `fly.toml` hoặc biến thể config riêng cho production.
 - [ ] Cấu hình `[http_service.checks]` trỏ tới health endpoint của backend.
@@ -175,7 +189,8 @@ Nếu thiếu một trong các thành phần trên, hệ thống đó thường 
 
 ### Database production
 
-- [ ] Tạo PostgreSQL production.
+- [ ] Tạo hoặc xác nhận Neon `production` branch.
+- [ ] Lấy connection string của `production` branch.
 - [ ] Bật backup và kiểm tra retention policy.
 - [ ] Kiểm tra giới hạn connection có phù hợp với runtime backend.
 
@@ -187,22 +202,22 @@ Nếu thiếu một trong các thành phần trên, hệ thống đó thường 
 
 ### Secrets và env vars production
 
-- [ ] Điền `DATABASE_URL` cho production.
+- [ ] Điền `DATABASE_URL` cho production, trỏ vào Neon `production` branch.
 - [ ] Điền `JWT_SECRET` riêng cho production.
 - [ ] Điền `JWT_EXPIRES_IN` cho production.
 - [ ] Điền `GOOGLE_WEB_CLIENT_ID` đúng cho production.
 - [ ] Rà lại các giá trị `CLOUDINARY_*` dùng cho production.
 
-### Mobile production release
+### Mobile production APK
 
 - [ ] Tạo EAS environment `production`.
 - [ ] Điền `EXPO_PUBLIC_API_BASE_URL` cho production.
 - [ ] Điền `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` cho production.
-- [ ] Kiểm tra quyền Play Console hoặc App Store Connect.
+- [ ] Xác nhận profile `production` của EAS tiếp tục build ra `apk` để phân phối trực tiếp.
 
-## 8. Checklist trước khi go-live production
+## 8. Gate trước khi merge Pull Request vào `main`
 
-- [ ] Staging đã chạy ổn định đủ lâu để QA xác nhận.
+- [ ] Preview/staging đã được QA xác nhận trên đúng build của Pull Request.
 - [ ] Production secrets đã được điền đủ.
 - [ ] Database production đã bật backup.
 - [ ] Production domain và SSL đã sẵn sàng.
@@ -237,7 +252,7 @@ Nếu thiếu một trong các thành phần trên, hệ thống đó thường 
 
 ## 11. Definition of done cho production readiness
 
-- [ ] Có staging hoạt động thực tế ngoài local.
+- [ ] Có preview/staging hoạt động thực tế ngoài local và dùng được để QA trước merge.
 - [ ] Có production backend deploy được bằng pipeline.
 - [ ] Có mobile preview build và production build dùng đúng API domain.
 - [ ] Secrets được tách rõ giữa staging và production.

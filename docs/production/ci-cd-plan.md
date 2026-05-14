@@ -12,8 +12,12 @@ Do repo là monorepo, pipeline vẫn nên dùng chung một nền tảng điều
 ## Nguyên tắc chung
 
 - mọi thay đổi đều đi qua Pull Request
-- chỉ deploy staging từ branch `main`
-- production cần approval thủ công
+- Pull Request mở hoặc cập nhật sẽ tạo một Neon preview branch `schema-only` từ `production`
+- workflow preview sẽ apply migration của PR, chạy `pnpm prisma:seed:bootstrap`, cập nhật `DATABASE_URL` trên Fly staging app cố định và build mobile preview
+- QA review chính diễn ra trên preview environment trước khi merge
+- PR approval và branch protection là gate chính trước khi release production
+- khi PR được merge vào `main`, production backend và mobile production sẽ được release tự động
+- khi PR đóng hoặc merge, Neon preview branch tương ứng sẽ bị xóa tự động
 - database migration chạy trong pipeline deploy, không chạy tay trên máy cá nhân
 - mobile app và backend có thể release lệch nhịp, miễn tương thích API contract
 
@@ -23,11 +27,12 @@ Trong repo này, không nên đồng nhất branch với environment.
 
 - `local` là runtime trên máy từng developer
 - `develop` nếu team dùng chỉ là branch tích hợp code
-- `main` là source branch của release candidate
-- `staging` là environment nhận bản deploy tự động từ `main`
-- `production` là environment nhận cùng commit đó sau approval hoặc release tag
+- `main` là nhánh đích của Pull Request và là trigger cho production release sau merge
+- `preview/pr-*` là Neon branch tạm theo từng Pull Request
+- `staging` là Fly staging app cố định và preview domain cố định, được redeploy cho PR hiện tại
+- `production` là environment nhận bản deploy tự động ngay sau khi PR đã được approve và merge
 
-Vì vậy, `main` không phải production; `main` chỉ là nguồn code để pipeline tạo ra staging trước, rồi mới promote sang production.
+Vì vậy, `main` không phải production trong lúc PR còn mở; nó chỉ trở thành tín hiệu release sau khi PR đã được approve và merge. Neon preview branch không phải source branch của code, mà là database branch tạm để QA review trước merge. Do dùng một Fly staging app cố định, preview mới nhất sẽ ghi đè preview cũ nếu nhiều PR được deploy song song.
 
 ## Fly.io deployment model
 
@@ -37,6 +42,19 @@ Luồng deploy backend mặc định nên bám theo cách Fly.io vận hành:
 - `flyctl deploy --remote-only` dùng Dockerfile hiện có để build và deploy lên Fly.io
 - runtime secrets nằm trên Fly.io, không đặt trong repo
 - có thể dùng `[deploy].release_command` để chạy `prisma migrate deploy` trước khi app nhận traffic
+
+## Neon environment model
+
+Đối với database, pipeline nên bám theo mô hình:
+
+- `1 Neon project` cho app
+- `production` branch là branch gốc và là source of truth cho dữ liệu production
+- mỗi Pull Request tạo một Neon preview branch mới từ `production` với chế độ `schema-only`
+- workflow preview apply migration của PR lên preview branch rồi chạy `pnpm prisma:seed:bootstrap`
+- Fly staging app cập nhật secret `DATABASE_URL` để trỏ vào preview branch của PR hiện tại
+- khi Pull Request bị đóng hoặc được merge, preview branch sẽ bị xóa tự động
+
+Không nên tách môi trường bằng hai database logic trong cùng một branch, vì khi đó CI/CD vẫn phải tự quản lý ranh giới môi trường ở tầng thấp hơn thay vì dùng trực tiếp isolation model của Neon.
 
 ## Workflow đề xuất
 
@@ -51,7 +69,7 @@ Mục tiêu:
 - build backend
 - chạy test backend
 - chạy test mobile app
-- chạy backend e2e với Postgres service container
+- cho fast feedback trước khi workflow preview đầy đủ hoàn tất
 
 Các bước chính:
 
@@ -61,37 +79,55 @@ Các bước chính:
 4. `pnpm build:shared`
 5. `pnpm --filter main-backend run build`
 6. `pnpm --filter main-backend run test`
-7. `pnpm --filter main-backend run test:e2e`
-8. `pnpm --filter mobile-app run test`
+7. `pnpm --filter mobile-app run test`
 
-### 2. `deploy-staging-backend.yml`
+### 2. `pr-preview.yml`
 
-Chạy khi merge vào `main`.
+Chạy khi Pull Request được `opened`, `reopened` hoặc `synchronize`.
 
 Mục tiêu:
 
-- validate backend trước deploy
-- deploy backend staging lên Fly.io
-- chạy smoke test sau deploy
+- tạo Neon preview branch `schema-only` từ `production`
+- apply migration của PR và chạy `pnpm prisma:seed:bootstrap`
+- cập nhật `DATABASE_URL` trên Fly staging app cố định để trỏ vào preview branch
+- redeploy backend staging và build mobile preview
+- cung cấp preview environment để QA review trước merge
 
 Các bước chính:
 
-1. checkout source
-2. setup Node và pnpm
-3. `pnpm install --frozen-lockfile`
-4. chạy build kiểm tra như `pnpm build:backend`
-5. setup `flyctl` bằng GitHub Action của Fly.io
-6. chạy `flyctl deploy --remote-only` với `--app $FLY_APP_NAME_STAGING` hoặc `--config <fly-staging.toml>`
-7. để migration staging chạy qua `release_command` hoặc một step riêng nếu đội muốn tách logs
-8. gọi health check và một số API smoke test
+1. checkout source và setup Node, pnpm, `flyctl`, EAS CLI
+2. gọi Neon API để tạo preview branch `schema-only` từ `production`
+3. lấy `DATABASE_URL` của preview branch và export cho các step tiếp theo
+4. chạy `pnpm prisma:migrate:deploy`
+5. chạy `pnpm prisma:seed:bootstrap`
+6. chạy test/integration checks cần thiết với preview branch
+7. chạy `fly secrets set DATABASE_URL=...` trên app staging cố định
+8. chạy `flyctl deploy --remote-only --app $FLY_APP_NAME_STAGING --config <fly-staging.toml>`
+9. chạy `eas build --platform android --profile preview --non-interactive --json`
+10. comment preview metadata vào Pull Request để QA dùng đúng build và đúng backend preview
 
-### 3. `deploy-production-backend.yml`
+### 3. `cleanup-preview-db-after-pr.yml`
 
-Chạy bằng `workflow_dispatch` hoặc tag release.
+Chạy khi Pull Request bị `closed`, bao gồm cả trường hợp merge.
 
 Mục tiêu:
 
-- deploy backend production có approval
+- xóa Neon preview branch tương ứng với Pull Request
+- bảo đảm môi trường review không bị giữ lại ngoài ý muốn
+
+Các bước chính:
+
+1. lấy thông tin Pull Request number và branch name
+2. gọi `neondatabase/delete-branch-action`
+3. xác nhận preview branch đã bị xóa thành công
+
+### 4. `deploy-production-backend.yml`
+
+Chạy khi Pull Request đã được approve và merge vào `main`.
+
+Mục tiêu:
+
+- deploy backend production tự động
 - áp dụng migration production an toàn
 - ghi nhận release version
 
@@ -104,37 +140,26 @@ Các bước chính:
 5. chạy smoke test production
 6. thông báo kết quả deploy
 
-### 4. `mobile-preview.yml`
+Preview mobile build đã được gộp vào `pr-preview.yml`, nên không cần tách thêm workflow `mobile-preview.yml` riêng.
 
-Chạy khi merge `main` hoặc manual dispatch.
+### 5. `deploy-mobile-production.yml`
 
-Mục tiêu:
-
-- tạo preview/internal build cho QA
-- trỏ mobile vào `staging API`
-
-Các bước chính:
-
-1. setup Node và pnpm
-2. cài Expo/EAS CLI
-3. dùng `EXPO_TOKEN` để authenticate với EAS
-4. chạy `eas build --platform android --profile preview`
-
-### 5. `mobile-production-release.yml`
-
-Chạy bằng manual dispatch hoặc tag release.
+Chạy khi Pull Request đã được approve và merge vào `main`.
 
 Mục tiêu:
 
-- build mobile production
-- submit store build khi sẵn sàng
+- build APK Android production qua EAS
+- công bố metadata và build URL của APK production ngay sau merge
 
 Các bước chính:
 
-1. chọn platform `android` hoặc sau này `ios`
-2. dùng `EXPO_TOKEN` để authenticate với EAS
-3. chạy `eas build --profile production`
-4. tùy chọn chạy `eas submit --profile production`
+1. dùng `GitHub Environment: production` và `EXPO_TOKEN`
+2. validate `apps/mobile-app/eas.json` có profile `build.production`
+3. fail sớm nếu `build.production.android.buildType` không phải `apk`
+4. cài dependencies với `pnpm install --frozen-lockfile`
+5. chạy `eas build --platform android --profile production --non-interactive --json`
+6. upload JSON metadata của build và ghi build URL vào workflow summary
+7. dừng ở bước build APK để phân phối trực tiếp, không submit Google Play
 
 ## Deployment artifact và config
 
@@ -148,8 +173,8 @@ Các bước chính:
 ### Mobile artifact
 
 - artifact build do `EAS` quản lý
-- QA nhận build từ `preview`
-- production phát hành qua Play Console hoặc App Store Connect
+- QA nhận build `preview` gắn với Pull Request hiện tại
+- production phát hành tự động qua profile `production` sau khi PR đã merge
 
 ## Database migration strategy
 
@@ -157,7 +182,7 @@ Các bước chính:
 
 - `prisma migrate dev`
 
-### Dùng cho staging và production
+### Dùng cho preview branch và production
 
 - `prisma migrate deploy`
 
@@ -170,8 +195,13 @@ Flow khuyến nghị:
 
 1. migration được tạo và review ở local/dev
 2. migration file được commit vào repo
-3. pipeline staging chạy `deploy`
-4. sau khi staging pass, pipeline production mới chạy `deploy`
+3. Pull Request mở hoặc cập nhật sẽ tạo Neon preview branch `schema-only` từ `production`
+4. workflow preview chạy `pnpm prisma:migrate:deploy` và `pnpm prisma:seed:bootstrap` trên preview branch đó
+5. workflow preview cập nhật `DATABASE_URL` trên Fly staging app cố định, redeploy backend staging và build mobile preview
+6. QA review trên preview environment trước khi merge
+7. khi Pull Request được approve và merge, workflow cleanup xóa preview branch
+8. merge vào `main` tự động deploy backend production với `DATABASE_URL` trỏ vào Neon `production` branch
+9. merge vào `main` cũng tự động build và release mobile production
 
 ## Smoke test sau deploy
 
@@ -200,9 +230,12 @@ Sau khi deploy backend, pipeline nên kiểm tra tối thiểu:
 ### Secrets dùng cho backend lane
 
 - `FLY_API_TOKEN`
+- `NEON_API_KEY`
 
 ### Variables dùng cho backend lane
 
+- `NEON_PROJECT_ID`
+- `NEON_PRODUCTION_BRANCH_ID` hoặc giá trị tương đương để xác định parent branch cho schema-only preview branch
 - `FLY_APP_NAME_STAGING`
 - `FLY_APP_NAME_PRODUCTION`
 - `FLY_CONFIG_PATH_STAGING` nếu dùng file config riêng

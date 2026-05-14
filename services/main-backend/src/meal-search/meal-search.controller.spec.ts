@@ -97,6 +97,7 @@ describe('MealSearchController', () => {
       id: 1,
       name: 'Omelette',
       meal_image_key: null,
+      meal_image_urls: null,
       description: 'Tasty',
       cuisine_type: { id: 1, name: 'French', description: null },
       difficulty: 'easy',

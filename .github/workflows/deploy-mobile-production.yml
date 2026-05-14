@@ -1,0 +1,172 @@
+name: Build Mobile Production APK
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-mobile-production-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy-mobile-production:
+    name: Build Mobile Production APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    environment:
+      name: production
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      MOBILE_APP_DIR: apps/mobile-app
+      EAS_PLATFORM: android
+      EAS_PROFILE: production
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.30.3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Validate production mobile prerequisites
+        run: |
+          if [[ -z "$EXPO_TOKEN" ]]; then
+            echo "::error::Missing required GitHub secret: EXPO_TOKEN"
+            exit 1
+          fi
+
+          if [[ ! -f "$MOBILE_APP_DIR/eas.json" ]]; then
+            echo "::error::Missing EAS config at $MOBILE_APP_DIR/eas.json"
+            exit 1
+          fi
+
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+
+          const easPath = path.join(process.env.GITHUB_WORKSPACE, process.env.MOBILE_APP_DIR, 'eas.json');
+          const easConfig = JSON.parse(fs.readFileSync(easPath, 'utf8'));
+          const buildProfile = easConfig?.build?.[process.env.EAS_PROFILE];
+
+          if (!buildProfile) {
+            throw new Error(`Missing build.${process.env.EAS_PROFILE} in ${easPath}`);
+          }
+
+          const buildType = buildProfile?.android?.buildType ?? 'aab';
+          const easEnvironment = buildProfile?.environment ?? '';
+
+          if (buildType !== 'apk') {
+            throw new Error(
+              `build.${process.env.EAS_PROFILE}.android.buildType must stay \"apk\" for this workflow. Current value: ${buildType}`,
+            );
+          }
+
+          fs.appendFileSync(process.env.GITHUB_ENV, `ANDROID_BUILD_TYPE=${buildType}\n`);
+          fs.appendFileSync(process.env.GITHUB_ENV, `EAS_ENVIRONMENT=${easEnvironment}\n`);
+          NODE
+
+      - name: Setup Expo and EAS CLI
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Trigger EAS Android production build
+        working-directory: apps/mobile-app
+        run: |
+          eas build \
+            --platform "$EAS_PLATFORM" \
+            --profile "$EAS_PROFILE" \
+            --non-interactive \
+            --json | tee "$GITHUB_WORKSPACE/eas-production-build.json"
+
+      - name: Capture production build metadata
+        id: production_metadata
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+
+          const outputLines = [];
+          const easPath = path.join(process.env.GITHUB_WORKSPACE, 'eas-production-build.json');
+
+          if (fs.existsSync(easPath)) {
+            const raw = JSON.parse(fs.readFileSync(easPath, 'utf8'));
+            const first = Array.isArray(raw) ? raw[0] : raw;
+            const build = Array.isArray(first?.builds) ? first.builds[0] : first;
+
+            if (build?.id) {
+              outputLines.push(`eas_build_id=${build.id}`);
+            }
+
+            const buildUrl = build?.buildDetailsPageUrl
+              ?? build?.url
+              ?? '';
+
+            if (buildUrl) {
+              outputLines.push(`eas_build_url=${buildUrl}`);
+            }
+
+            const artifactUrl = build?.artifacts?.applicationArchiveUrl
+              ?? build?.artifacts?.buildUrl
+              ?? '';
+
+            if (artifactUrl) {
+              outputLines.push(`eas_artifact_url=${artifactUrl}`);
+            }
+
+            if (build?.status) {
+              outputLines.push(`eas_build_status=${build.status}`);
+            }
+          }
+
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `${outputLines.join('\n')}\n`);
+          NODE
+
+      - name: Upload production build metadata artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-mobile-build-${{ github.run_id }}
+          path: eas-production-build.json
+
+      - name: Write production mobile deployment summary
+        env:
+          EAS_ARTIFACT_URL: ${{ steps.production_metadata.outputs.eas_artifact_url }}
+          EAS_BUILD_ID: ${{ steps.production_metadata.outputs.eas_build_id }}
+          EAS_BUILD_STATUS: ${{ steps.production_metadata.outputs.eas_build_status }}
+          EAS_BUILD_URL: ${{ steps.production_metadata.outputs.eas_build_url }}
+        run: |
+          {
+            echo "## Production mobile APK build completed"
+            echo
+            echo "- Platform: ${EAS_PLATFORM}"
+            echo "- Profile: ${EAS_PROFILE}"
+            echo "- EAS environment: ${EAS_ENVIRONMENT:-Unavailable}"
+            echo "- Android artifact type: ${ANDROID_BUILD_TYPE}"
+            echo "- Build status: ${EAS_BUILD_STATUS:-Unavailable}"
+            echo "- EAS build ID: ${EAS_BUILD_ID:-Unavailable}"
+            echo "- EAS build details: ${EAS_BUILD_URL:-Unavailable}"
+            echo "- Download URL: ${EAS_ARTIFACT_URL:-Unavailable}"
+            echo "- Commit: ${GITHUB_SHA}"
+            echo "- Distribution mode: direct APK distribution only"
+          } >> "$GITHUB_STEP_SUMMARY"

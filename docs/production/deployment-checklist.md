@@ -107,7 +107,7 @@ Với mô hình một staging app cố định, preview mới nhất sẽ ghi đ
 - [x] Tạo workflow preview cho Pull Request: tạo Neon preview branch `schema-only`, apply migration, chạy seed bootstrap; deploy staging backend; build mobile preview. (3 workflows riêng biệt)
 - [x] Tạo workflow cleanup để xóa Neon preview branch khi Pull Request đóng hoặc merge.
 - [x] Tạo workflow deploy production backend khi PR đã merge vào `main`.
-- [ ] Tạo workflow build và release mobile production khi PR đã merge vào `main`.
+- [x] Tạo workflow build APK mobile production khi PR đã merge vào `main`.
 
 ## 4. Dựng môi trường staging
 
@@ -208,12 +208,12 @@ Với mô hình một staging app cố định, preview mới nhất sẽ ghi đ
 - [ ] Điền `GOOGLE_WEB_CLIENT_ID` đúng cho production.
 - [ ] Rà lại các giá trị `CLOUDINARY_*` dùng cho production.
 
-### Mobile production release
+### Mobile production APK
 
 - [ ] Tạo EAS environment `production`.
 - [ ] Điền `EXPO_PUBLIC_API_BASE_URL` cho production.
 - [ ] Điền `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` cho production.
-- [ ] Kiểm tra quyền Play Console hoặc App Store Connect.
+- [ ] Xác nhận profile `production` của EAS tiếp tục build ra `apk` để phân phối trực tiếp.
 
 ## 8. Gate trước khi merge Pull Request vào `main`
 

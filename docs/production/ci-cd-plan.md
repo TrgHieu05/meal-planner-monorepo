@@ -142,21 +142,24 @@ Các bước chính:
 
 Preview mobile build đã được gộp vào `pr-preview.yml`, nên không cần tách thêm workflow `mobile-preview.yml` riêng.
 
-### 5. `mobile-production.yml`
+### 5. `deploy-mobile-production.yml`
 
 Chạy khi Pull Request đã được approve và merge vào `main`.
 
 Mục tiêu:
 
-- build mobile production
-- release mobile production ngay sau merge
+- build APK Android production qua EAS
+- công bố metadata và build URL của APK production ngay sau merge
 
 Các bước chính:
 
-1. chọn platform `android` hoặc sau này `ios`
-2. dùng `EXPO_TOKEN` để authenticate với EAS
-3. chạy `eas build --platform android --profile production --non-interactive --json`
-4. chạy `eas submit --profile production --non-interactive`
+1. dùng `GitHub Environment: production` và `EXPO_TOKEN`
+2. validate `apps/mobile-app/eas.json` có profile `build.production`
+3. fail sớm nếu `build.production.android.buildType` không phải `apk`
+4. cài dependencies với `pnpm install --frozen-lockfile`
+5. chạy `eas build --platform android --profile production --non-interactive --json`
+6. upload JSON metadata của build và ghi build URL vào workflow summary
+7. dừng ở bước build APK để phân phối trực tiếp, không submit Google Play
 
 ## Deployment artifact và config
 

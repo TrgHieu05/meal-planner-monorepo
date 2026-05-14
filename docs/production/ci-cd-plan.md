@@ -14,6 +14,7 @@ Do repo là monorepo, pipeline vẫn nên dùng chung một nền tảng điều
 - mọi thay đổi đều đi qua Pull Request
 - Pull Request vào `main` tạo một Neon preview branch tạm từ branch gốc của database
 - kiểm thử tự động và manual review nên chạy trên preview branch trước khi merge
+- commit đã merge vào `main` cần có workflow deploy backend lên `staging`
 - production cần approval thủ công sau khi code đã được merge
 - database migration chạy trong pipeline deploy, không chạy tay trên máy cá nhân
 - mobile app và backend có thể release lệch nhịp, miễn tương thích API contract
@@ -26,9 +27,10 @@ Trong repo này, không nên đồng nhất branch với environment.
 - `develop` nếu team dùng chỉ là branch tích hợp code
 - `main` là nhánh đích của Pull Request và là nguồn code sau khi merge
 - `preview/pr-*` là Neon branch tạm cho review database theo từng Pull Request
+- `staging` là environment runtime nhận bản deploy sau khi code đã được merge vào `main`
 - `production` là environment nhận bản deploy sau khi Pull Request được duyệt, merge và pass approval
 
-Vì vậy, `main` không phải production; `main` chỉ là nhánh nguồn sau merge. Neon preview branch cũng không phải source branch của code, mà là database branch tạm phục vụ review trước merge.
+Vì vậy, `main` không phải production; `main` chỉ là nhánh nguồn sau merge. Neon preview branch cũng không phải source branch của code, mà là database branch tạm phục vụ review trước merge. `staging` lại là environment runtime riêng để chạy bản đã merge.
 
 ## Fly.io deployment model
 
@@ -98,7 +100,25 @@ Các bước chính:
 2. gọi `neondatabase/delete-branch-action`
 3. xác nhận preview branch đã bị xóa thành công
 
-### 3. `deploy-production-backend.yml`
+### 3. `deploy-staging-backend.yml`
+
+Chạy khi code đã được merge vào `main`.
+
+Mục tiêu:
+
+- deploy backend staging lên Fly.io
+- áp dụng migration staging an toàn
+- chạy smoke test trên runtime staging thật
+
+Các bước chính:
+
+1. dùng `GitHub Environment: staging`
+2. checkout source và setup `flyctl`
+3. chạy `flyctl deploy --remote-only` với `--app $FLY_APP_NAME_STAGING` hoặc `--config <fly-staging.toml>`
+4. để migration staging chạy qua `release_command` hoặc step riêng trước khi app nhận traffic
+5. gọi health check và smoke test qua `api-staging`
+
+### 4. `deploy-production-backend.yml`
 
 Chạy sau khi Pull Request đã được duyệt, merge vào `main` và có approval cần thiết.
 
@@ -117,7 +137,7 @@ Các bước chính:
 5. chạy smoke test production
 6. thông báo kết quả deploy
 
-### 4. `mobile-preview.yml`
+### 5. `mobile-preview.yml`
 
 Chạy khi merge `main` hoặc manual dispatch.
 
@@ -133,7 +153,7 @@ Các bước chính:
 3. dùng `EXPO_TOKEN` để authenticate với EAS
 4. chạy `eas build --platform android --profile preview`
 
-### 5. `mobile-production-release.yml`
+### 6. `mobile-production-release.yml`
 
 Chạy bằng manual dispatch hoặc tag release.
 
@@ -186,7 +206,8 @@ Flow khuyến nghị:
 3. Pull Request vào `main` tạo Neon preview branch từ `production`
 4. workflow PR chạy migration, test và manual review trên preview branch đó
 5. khi Pull Request được duyệt và merge, workflow cleanup xóa preview branch
-6. sau approval, pipeline production mới chạy `deploy` với `DATABASE_URL` trỏ vào Neon `production` branch
+6. commit đã merge được deploy lên `staging` để smoke test trên runtime thật
+7. sau approval, pipeline production mới chạy `deploy` với `DATABASE_URL` trỏ vào Neon `production` branch
 
 ## Smoke test sau deploy
 

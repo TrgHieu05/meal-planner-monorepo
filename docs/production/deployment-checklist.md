@@ -87,20 +87,21 @@ Nếu thiếu một trong các thành phần trên, hệ thống đó thường 
 
 ### CI/CD secrets và variables
 
-- [ ] Điền `FLY_API_TOKEN` cho GitHub Actions.
-- [ ] Điền `FLY_APP_NAME_STAGING`.
-- [ ] Điền `FLY_APP_NAME_PRODUCTION`.
-- [ ] Điền `FLY_CONFIG_PATH_STAGING` nếu dùng file config riêng.
-- [ ] Điền `FLY_CONFIG_PATH_PRODUCTION` nếu dùng file config riêng.
-- [ ] Điền `FLY_REGION_STAGING` nếu dùng GitHub variable để cố định region.
-- [ ] Điền `FLY_REGION_PRODUCTION` nếu dùng GitHub variable để cố định region.
-- [ ] Điền `EXPO_TOKEN` cho GitHub Actions.
+- [x] Điền `FLY_API_TOKEN` cho GitHub Actions.
+- [x] Điền `FLY_APP_NAME_STAGING`. **meal-planner-stanging**
+- [x] Điền `FLY_APP_NAME_PRODUCTION`. **meal-planner-production**
+- [x] Điền `FLY_CONFIG_PATH_STAGING` nếu dùng file config riêng. **services/main-backend/fly.staging.toml**
+- [x] Điền `FLY_CONFIG_PATH_PRODUCTION` nếu dùng file config riêng. **services/main-backend/fly.production.toml**
+- [ ] Điền `FLY_REGION_STAGING` nếu dùng GitHub variable để cố định region. (sẽ setup trong `fly.toml` cho staging)
+- [ ] Điền `FLY_REGION_PRODUCTION` nếu dùng GitHub variable để cố định region. (sẽ setup trong `fly.toml` cho production)
+- [x] Điền `EXPO_TOKEN` cho GitHub Actions.
 
 ### Workflows
 
 - [ ] Tạo workflow CI cho Pull Request.
 - [ ] Tạo workflow tạo Neon preview branch cho Pull Request.
 - [ ] Tạo workflow cleanup để xóa Neon preview branch khi Pull Request đóng hoặc merge.
+- [ ] Tạo workflow deploy staging backend.
 - [ ] Tạo workflow deploy production backend.
 - [ ] Tạo workflow preview build cho mobile.
 - [ ] Tạo workflow production release cho mobile.
@@ -152,6 +153,7 @@ Nếu thiếu một trong các thành phần trên, hệ thống đó thường 
 - [ ] Unit test backend pass.
 - [ ] E2E backend pass với Postgres.
 - [ ] Mobile test pass.
+- [ ] Workflow deploy staging backend đã sẵn sàng.
 - [ ] Fly app staging đã tạo xong.
 - [ ] `fly.toml` staging đã hợp lệ.
 - [ ] Database staging đã tạo xong.

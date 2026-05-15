@@ -2,7 +2,7 @@ app = "kitchen-mind-staging"
 primary_region = "sin"
 
 [build]
-	dockerfile = "infrastructure/docker/main-backend.Dockerfile"
+	dockerfile = "../../infrastructure/docker/main-backend.Dockerfile"
 
 [env]
 	NODE_ENV = "production"

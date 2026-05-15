@@ -68,6 +68,28 @@ jobs:
 
           echo "PRODUCTION_HEALTHCHECK_URL=https://${FLY_APP_NAME_PRODUCTION}.fly.dev/health" >> "$GITHUB_ENV"
 
+      - name: Ensure Fly production app exists
+        run: |
+          if flyctl status -a "$FLY_APP_NAME_PRODUCTION" >/dev/null 2>&1; then
+            echo "Fly app already exists: $FLY_APP_NAME_PRODUCTION"
+            exit 0
+          fi
+
+          echo "Fly app not found. Creating: $FLY_APP_NAME_PRODUCTION"
+          if flyctl apps create "$FLY_APP_NAME_PRODUCTION" >/dev/null; then
+            echo "Fly app created: $FLY_APP_NAME_PRODUCTION"
+            exit 0
+          fi
+
+          # Handle create race conditions: re-check before failing.
+          if flyctl status -a "$FLY_APP_NAME_PRODUCTION" >/dev/null 2>&1; then
+            echo "Fly app became available after create attempt: $FLY_APP_NAME_PRODUCTION"
+            exit 0
+          fi
+
+          echo "::error::Failed to create Fly production app: $FLY_APP_NAME_PRODUCTION"
+          exit 1
+
       - name: Deploy backend to Fly production
         run: |
           flyctl deploy \

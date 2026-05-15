@@ -93,8 +93,8 @@ Với mô hình một staging app cố định, preview mới nhất sẽ ghi đ
 - [x] Điền `NEON_API_KEY` cho GitHub Actions.
 - [x] Điền `NEON_PROJECT_ID`.
 - [x] Điền `NEON_PRODUCTION_BRANCH_ID`.
-- [x] Điền `FLY_APP_NAME_STAGING`. **meal-planner-stanging**
-- [x] Điền `FLY_APP_NAME_PRODUCTION`. **meal-planner-production**
+- [x] Điền `FLY_APP_NAME_STAGING`. **kitchen-mind-staging**
+- [x] Điền `FLY_APP_NAME_PRODUCTION`. **kitchen-mind-production**
 - [x] Điền `FLY_CONFIG_PATH_STAGING` nếu dùng file config riêng. **services/main-backend/fly.staging.toml**
 - [x] Điền `FLY_CONFIG_PATH_PRODUCTION` nếu dùng file config riêng. **services/main-backend/fly.production.toml**
 - [ ] Điền `FLY_REGION_STAGING` nếu dùng GitHub variable để cố định region. (sẽ setup trong `fly.toml` cho staging)
@@ -114,15 +114,15 @@ Với mô hình một staging app cố định, preview mới nhất sẽ ghi đ
 ### Backend hosting staging
 
 - [ ] Tạo Fly staging app cố định theo `FLY_APP_NAME_STAGING`.
-- [ ] Chốt `primary_region` cho staging.
-- [ ] Chuẩn bị `fly.toml` hoặc biến thể config riêng cho staging.
-- [ ] Cấu hình `[http_service.checks]` trỏ tới health endpoint của backend.
+- [x] Chốt `primary_region` cho staging.
+- [x] Chuẩn bị `fly.toml` hoặc biến thể config riêng cho staging.
+- [x] Cấu hình `[http_service.checks]` trỏ tới health endpoint của backend.
 
 ### Database staging
 
-- [ ] Tạo hoặc xác nhận Neon project chính cho app.
-- [ ] Xác nhận `production` branch là branch gốc trên Neon.
-- [ ] Tạo preview branch `schema-only` trên Neon từ `production` branch khi Pull Request mở hoặc cập nhật.
+- [x] Tạo hoặc xác nhận Neon project chính cho app.
+- [x] Xác nhận `production` branch là branch gốc trên Neon.
+- [x] Tạo preview branch `schema-only` trên Neon từ `production` branch khi Pull Request mở hoặc cập nhật.
 - [ ] Lấy connection string của preview branch từ output hoặc API response của workflow preview.
 - [ ] Chạy `pnpm prisma:migrate:deploy` trên preview branch.
 - [ ] Chạy `pnpm prisma:seed:bootstrap` trên preview branch.
@@ -138,12 +138,12 @@ Với mô hình một staging app cố định, preview mới nhất sẽ ghi đ
 ### Secrets và env vars staging
 
 - [ ] Cập nhật secret `DATABASE_URL` trên Fly staging app từ preview branch hiện tại, không dùng một giá trị staging cố định trong repo.
-- [ ] Điền `JWT_SECRET` riêng cho staging.
-- [ ] Điền `JWT_EXPIRES_IN` cho staging.
-- [ ] Điền `GOOGLE_WEB_CLIENT_ID` đúng cho staging.
-- [ ] Điền `CLOUDINARY_CLOUD_NAME`.
-- [ ] Điền `CLOUDINARY_API_KEY`.
-- [ ] Điền `CLOUDINARY_API_SECRET`.
+- [x] Điền `JWT_SECRET` riêng cho staging.
+- [x] Điền `JWT_EXPIRES_IN` cho staging.
+- [x] Điền `GOOGLE_WEB_CLIENT_ID` đúng cho staging.
+- [x] Điền `CLOUDINARY_CLOUD_NAME`.
+- [x] Điền `CLOUDINARY_API_KEY`.
+- [x] Điền `CLOUDINARY_API_SECRET`.
 
 ### Mobile preview build
 

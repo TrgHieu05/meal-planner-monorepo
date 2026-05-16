@@ -33,10 +33,10 @@ jobs:
       PREVIEW_BRANCH_NAME: preview/pr-${{ github.event.pull_request.number }}
 
     outputs:
-      branch_id: ${{ steps.create_neon_branch.outputs.branch_id }}
-      branch_name: ${{ env.PREVIEW_BRANCH_NAME }}
-      database_url: ${{ steps.create_neon_branch.outputs.db_url }}
-      database_url_pooled: ${{ steps.create_neon_branch.outputs.db_url_pooled }}
+      branch_id: ${{ steps.export_preview_outputs.outputs.branch_id }}
+      branch_name: ${{ steps.export_preview_outputs.outputs.branch_name }}
+      database_url: ${{ steps.export_preview_outputs.outputs.database_url }}
+      database_url_pooled: ${{ steps.export_preview_outputs.outputs.database_url_pooled }}
 
     defaults:
       run:
@@ -138,6 +138,34 @@ jobs:
           echo "::add-mask::${{ steps.create_neon_branch.outputs.db_url }}"
           echo "::add-mask::${{ steps.create_neon_branch.outputs.db_url_pooled }}"
 
+      - name: Export preview outputs
+        id: export_preview_outputs
+        env:
+          PREVIEW_BRANCH_ID: ${{ steps.create_neon_branch.outputs.branch_id }}
+          PREVIEW_BRANCH_NAME_VALUE: ${{ env.PREVIEW_BRANCH_NAME }}
+          PREVIEW_DATABASE_URL: ${{ steps.create_neon_branch.outputs.db_url }}
+          PREVIEW_DATABASE_URL_POOLED: ${{ steps.create_neon_branch.outputs.db_url_pooled }}
+        run: |
+          required_values=(
+            PREVIEW_BRANCH_ID
+            PREVIEW_BRANCH_NAME_VALUE
+            PREVIEW_DATABASE_URL
+          )
+
+          for name in "${required_values[@]}"; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error::Missing expected Neon output: ${name}"
+              exit 1
+            fi
+          done
+
+          {
+            echo "branch_id=${PREVIEW_BRANCH_ID}"
+            echo "branch_name=${PREVIEW_BRANCH_NAME_VALUE}"
+            echo "database_url=${PREVIEW_DATABASE_URL}"
+            echo "database_url_pooled=${PREVIEW_DATABASE_URL_POOLED}"
+          } >> "$GITHUB_OUTPUT"
+
   test:
     name: Test
     runs-on: ubuntu-latest
@@ -151,7 +179,6 @@ jobs:
       GOOGLE_WEB_CLIENT_ID: web-client-id
       JWT_SECRET: test-secret
       JWT_EXPIRES_IN: 7d
-      DATABASE_URL: ${{ needs.create-neon-preview-branch.outputs.database_url }}
 
     steps:
       - name: Checkout source
@@ -168,8 +195,17 @@ jobs:
           node-version: 20
           cache: 'pnpm'
 
-      - name: Mask preview database URL
-        run: echo "::add-mask::${DATABASE_URL}"
+      - name: Inject preview DATABASE_URL from create job
+        env:
+          PREVIEW_DATABASE_URL: ${{ needs.create-neon-preview-branch.outputs.database_url }}
+        run: |
+          if [[ -z "$PREVIEW_DATABASE_URL" ]]; then
+            echo "::error::Missing DATABASE_URL output from create-neon-preview-branch job."
+            exit 1
+          fi
+
+          echo "::add-mask::$PREVIEW_DATABASE_URL"
+          echo "DATABASE_URL=$PREVIEW_DATABASE_URL" >> "$GITHUB_ENV"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -208,7 +244,6 @@ jobs:
       FLY_APP_NAME_STAGING: ${{ vars.FLY_APP_NAME_STAGING }}
       FLY_CONFIG_PATH_STAGING: ${{ vars.FLY_CONFIG_PATH_STAGING }}
       PREVIEW_BRANCH_NAME: ${{ needs.create-neon-preview-branch.outputs.branch_name }}
-      DATABASE_URL: ${{ needs.create-neon-preview-branch.outputs.database_url }}
 
     defaults:
       run:
@@ -230,7 +265,18 @@ jobs:
           cache: pnpm
 
       - name: Validate preview build prerequisites
+        env:
+          PREVIEW_DATABASE_URL: ${{ needs.create-neon-preview-branch.outputs.database_url }}
         run: |
+          if [[ -z "$PREVIEW_DATABASE_URL" ]]; then
+            echo "::error::Missing DATABASE_URL output from create-neon-preview-branch job."
+            exit 1
+          fi
+
+          echo "::add-mask::$PREVIEW_DATABASE_URL"
+          export DATABASE_URL="$PREVIEW_DATABASE_URL"
+          echo "DATABASE_URL=$PREVIEW_DATABASE_URL" >> "$GITHUB_ENV"
+
           required_values=(
             EXPO_TOKEN
             FLY_API_TOKEN

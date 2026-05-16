@@ -9,12 +9,12 @@
     "db:migrate:deploy": "prisma migrate deploy",
     "db:migrate:status": "prisma migrate status",
     "db:seed": "pnpm run db:seed:bootstrap",
-    "db:seed:bootstrap": "ts-node-script prisma/seed.ts --mode=bootstrap",
+    "db:seed:bootstrap": "tsx prisma/seed.ts --mode=bootstrap",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "db:seed:help": "ts-node-script prisma/seed.ts --help"
+    "db:seed:help": "tsx prisma/seed.ts --help"
   },
   "prisma": {
-    "seed": "ts-node-script prisma/seed.ts"
+    "seed": "tsx prisma/seed.ts"
   },
   "keywords": [],
   "author": "",
@@ -31,6 +31,7 @@
     "@types/node": "^20.0.0",
     "@types/pg": "^8.15.4",
     "ts-node": "^10.9.2",
+    "tsx": "^4.22.0",
     "typescript": "^5.0.0"
   }
 }

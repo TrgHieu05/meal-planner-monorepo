@@ -1149,7 +1149,7 @@ function parseSeedCliOptions() {
 }
 
 function printSeedUsage() {
-  console.log('Usage: ts-node-script prisma/seed.ts [--mode=bootstrap]');
+  console.log('Usage: tsx prisma/seed.ts [--mode=bootstrap]');
   console.log('');
   console.log('Modes:');
   console.log('  bootstrap   Seeds the production-grade catalog bootstrap data.');

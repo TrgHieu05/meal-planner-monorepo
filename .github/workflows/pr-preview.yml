@@ -106,9 +106,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Generate Prisma client
-        run: pnpm run prisma:generate
-
       - name: Create Neon schema-only preview branch
         id: create_neon_branch
         uses: neondatabase/create-branch-action@v6
@@ -128,20 +125,23 @@ jobs:
           echo "::add-mask::${{ steps.create_neon_branch.outputs.db_url }}"
           echo "::add-mask::${{ steps.create_neon_branch.outputs.db_url_pooled }}"
 
+      - name: Inject preview DATABASE_URL from Neon branch
+        run: |
+          echo "DATABASE_URL=${{ steps.create_neon_branch.outputs.db_url }}" >> "$GITHUB_ENV"
+
+      - name: Generate Prisma client
+        run: pnpm run prisma:generate
+
       - name: Apply preview migrations
         run: pnpm run prisma:migrate:deploy
-        env:
-          DATABASE_URL: ${{ steps.create_neon_branch.outputs.db_url }}
 
       - name: Seed preview bootstrap data
         run: pnpm run prisma:seed:bootstrap
-        env:
-          DATABASE_URL: ${{ steps.create_neon_branch.outputs.db_url }}
 
       - name: Point Fly staging app to preview database
         run: |
           flyctl secrets set \
-            DATABASE_URL="${{ steps.create_neon_branch.outputs.db_url }}" \
+            DATABASE_URL="$DATABASE_URL" \
             --app "$FLY_APP_NAME_STAGING"
 
       - name: Deploy backend to Fly staging

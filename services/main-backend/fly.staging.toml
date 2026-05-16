@@ -1,27 +1,37 @@
-app = "kitchen-mind-staging"
-primary_region = "sin"
+# fly.toml app configuration file generated for kitchen-mind-staging on 2026-05-16T04:41:09Z
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'kitchen-mind-staging'
+primary_region = 'sin'
 
 [build]
-	dockerfile = "../../infrastructure/docker/main-backend.Dockerfile"
-
-[env]
-	NODE_ENV = "production"
-	PORT = "3000"
+  dockerfile = '../../infrastructure/docker/main-backend.Dockerfile'
 
 [deploy]
-	# Run Prisma migrations before this release starts receiving traffic.
-	release_command = "node /app/node_modules/prisma/build/index.js migrate deploy --schema /app/packages/database/prisma/schema.prisma"
+  release_command = 'node /app/node_modules/prisma/build/index.js migrate deploy --schema /app/packages/database/prisma/schema.prisma'
+
+[env]
+  NODE_ENV = 'production'
+  PORT = '3000'
 
 [http_service]
-	internal_port = 3000
-	force_https = true
-	auto_stop_machines = "stop"
-	auto_start_machines = true
-	min_machines_running = 0
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
 
-[[http_service.checks]]
-	interval = "15s"
-	timeout = "5s"
-	grace_period = "30s"
-	method = "GET"
-	path = "/health"
+  [[http_service.checks]]
+    interval = '15s'
+    timeout = '5s'
+    grace_period = '30s'
+    method = 'GET'
+    path = '/health'
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1
+  memory_mb = 1024

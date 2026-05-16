@@ -114,7 +114,7 @@ jobs:
         run: pnpm --filter main-backend exec jest --config ./test/jest-e2e.json --runInBand --ci
 
       - name: Run mobile tests
-        run: pnpm --filter mobile-app run test -- --runInBand
+        run: pnpm --filter mobile-app exec jest --config ./jest.config.js --runInBand --ci
 
       - name: Delete Neon CI preview branch
         if: ${{ always() && steps.create_neon_branch.outcome == 'success' }}

@@ -820,6 +820,10 @@ function inferCuisine(meal: Pick<MealSeedRow, 'name' | 'ingredients'>): string {
   return 'Vietnamese';
 }
 
+function buildSeedMealImageKey(mealId: number): string {
+  return `meals/${mealId}/cover`;
+}
+
 const mealsDataNormalized: Array<
   Omit<MealSeedRow, 'cuisine'> & { cuisine: string }
 > = mealsData.map((m) => ({
@@ -1075,6 +1079,32 @@ async function main() {
     const mealMap = new Map<string, number>(
       mealRows.rows.map((r) => [r.name, r.id]),
     );
+
+    console.log('Backfilling Meal Image Keys...');
+    const mealImageMealIds: number[] = [];
+    const mealImageKeys: string[] = [];
+
+    for (const meal of mealsDataNormalized) {
+      const mealId = mealMap.get(meal.name);
+      if (!mealId) {
+        continue;
+      }
+
+      mealImageMealIds.push(mealId);
+      mealImageKeys.push(buildSeedMealImageKey(mealId));
+    }
+
+    if (mealImageMealIds.length > 0) {
+      await client.query(
+        `UPDATE meals AS m
+         SET meal_image_key = t.meal_image_key,
+             updated_at = NOW()
+         FROM UNNEST($1::int[], $2::text[]) AS t(meal_id, meal_image_key)
+         WHERE m.id = t.meal_id
+           AND (m.meal_image_key IS NULL OR m.meal_image_key = '')`,
+        [mealImageMealIds, mealImageKeys],
+      );
+    }
 
     console.log('Seeding Meal Ingredients...');
     const miMealIds: number[] = [];

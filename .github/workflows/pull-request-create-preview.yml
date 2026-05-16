@@ -32,12 +32,6 @@ jobs:
       NEON_ROLE_NAME: neondb_owner
       PREVIEW_BRANCH_NAME: preview/pr-${{ github.event.pull_request.number }}
 
-    outputs:
-      branch_id: ${{ steps.export_preview_outputs.outputs.branch_id }}
-      branch_name: ${{ steps.export_preview_outputs.outputs.branch_name }}
-      database_url: ${{ steps.export_preview_outputs.outputs.database_url }}
-      database_url_pooled: ${{ steps.export_preview_outputs.outputs.database_url_pooled }}
-
     defaults:
       run:
         shell: bash
@@ -138,8 +132,7 @@ jobs:
           echo "::add-mask::${{ steps.create_neon_branch.outputs.db_url }}"
           echo "::add-mask::${{ steps.create_neon_branch.outputs.db_url_pooled }}"
 
-      - name: Export preview outputs
-        id: export_preview_outputs
+      - name: Write preview runtime config file
         env:
           PREVIEW_BRANCH_ID: ${{ steps.create_neon_branch.outputs.branch_id }}
           PREVIEW_BRANCH_NAME_VALUE: ${{ env.PREVIEW_BRANCH_NAME }}
@@ -159,12 +152,21 @@ jobs:
             fi
           done
 
+          config_file="preview-runtime-config.env"
           {
-            echo "branch_id=${PREVIEW_BRANCH_ID}"
-            echo "branch_name=${PREVIEW_BRANCH_NAME_VALUE}"
-            echo "database_url=${PREVIEW_DATABASE_URL}"
-            echo "database_url_pooled=${PREVIEW_DATABASE_URL_POOLED}"
-          } >> "$GITHUB_OUTPUT"
+            echo "DATABASE_URL=${PREVIEW_DATABASE_URL}"
+            echo "DATABASE_URL_POOLED=${PREVIEW_DATABASE_URL_POOLED}"
+            echo "PREVIEW_BRANCH_NAME=${PREVIEW_BRANCH_NAME_VALUE}"
+            echo "NEON_BRANCH_ID=${PREVIEW_BRANCH_ID}"
+          } > "$config_file"
+
+      - name: Upload preview runtime config artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-runtime-config
+          path: preview-runtime-config.env
+          if-no-files-found: error
+          retention-days: 1
 
   test:
     name: Test
@@ -195,17 +197,44 @@ jobs:
           node-version: 20
           cache: 'pnpm'
 
-      - name: Inject preview DATABASE_URL from create job
-        env:
-          PREVIEW_DATABASE_URL: ${{ needs.create-neon-preview-branch.outputs.database_url }}
+      - name: Download preview runtime config artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: preview-runtime-config
+          path: preview-runtime
+
+      - name: Load preview runtime config
         run: |
-          if [[ -z "$PREVIEW_DATABASE_URL" ]]; then
-            echo "::error::Missing DATABASE_URL output from create-neon-preview-branch job."
+          config_file="preview-runtime/preview-runtime-config.env"
+
+          if [[ ! -f "$config_file" ]]; then
+            echo "::error::Preview runtime config artifact is missing."
             exit 1
           fi
 
-          echo "::add-mask::$PREVIEW_DATABASE_URL"
-          echo "DATABASE_URL=$PREVIEW_DATABASE_URL" >> "$GITHUB_ENV"
+          while IFS= read -r line; do
+            if [[ -z "$line" ]]; then
+              continue
+            fi
+
+            if [[ ! "$line" =~ ^[A-Z0-9_]+= ]]; then
+              continue
+            fi
+
+            echo "$line" >> "$GITHUB_ENV"
+
+            key="${line%%=*}"
+            value="${line#*=}"
+            if [[ "$key" == "DATABASE_URL" || "$key" == "DATABASE_URL_POOLED" ]]; then
+              echo "::add-mask::$value"
+            fi
+          done < "$config_file"
+
+          database_url="$(grep -E '^DATABASE_URL=' "$config_file" | head -n 1 | cut -d= -f2-)"
+          if [[ -z "$database_url" ]]; then
+            echo "::error::DATABASE_URL is missing in preview runtime config artifact."
+            exit 1
+          fi
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -243,7 +272,6 @@ jobs:
       FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
       FLY_APP_NAME_STAGING: ${{ vars.FLY_APP_NAME_STAGING }}
       FLY_CONFIG_PATH_STAGING: ${{ vars.FLY_CONFIG_PATH_STAGING }}
-      PREVIEW_BRANCH_NAME: ${{ needs.create-neon-preview-branch.outputs.branch_name }}
 
     defaults:
       run:
@@ -264,19 +292,41 @@ jobs:
           node-version: 20
           cache: pnpm
 
-      - name: Validate preview build prerequisites
-        env:
-          PREVIEW_DATABASE_URL: ${{ needs.create-neon-preview-branch.outputs.database_url }}
+      - name: Download preview runtime config artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: preview-runtime-config
+          path: preview-runtime
+
+      - name: Load preview runtime config
         run: |
-          if [[ -z "$PREVIEW_DATABASE_URL" ]]; then
-            echo "::error::Missing DATABASE_URL output from create-neon-preview-branch job."
+          config_file="preview-runtime/preview-runtime-config.env"
+
+          if [[ ! -f "$config_file" ]]; then
+            echo "::error::Preview runtime config artifact is missing."
             exit 1
           fi
 
-          echo "::add-mask::$PREVIEW_DATABASE_URL"
-          export DATABASE_URL="$PREVIEW_DATABASE_URL"
-          echo "DATABASE_URL=$PREVIEW_DATABASE_URL" >> "$GITHUB_ENV"
+          while IFS= read -r line; do
+            if [[ -z "$line" ]]; then
+              continue
+            fi
 
+            if [[ ! "$line" =~ ^[A-Z0-9_]+= ]]; then
+              continue
+            fi
+
+            echo "$line" >> "$GITHUB_ENV"
+
+            key="${line%%=*}"
+            value="${line#*=}"
+            if [[ "$key" == "DATABASE_URL" || "$key" == "DATABASE_URL_POOLED" ]]; then
+              echo "::add-mask::$value"
+            fi
+          done < "$config_file"
+
+      - name: Validate preview build prerequisites
+        run: |
           required_values=(
             EXPO_TOKEN
             FLY_API_TOKEN
@@ -442,7 +492,7 @@ jobs:
           EAS_BUILD_ID: ${{ steps.preview_metadata.outputs.eas_build_id }}
           EAS_BUILD_URL: ${{ steps.preview_metadata.outputs.eas_build_url }}
           FLY_APP_NAME_STAGING: ${{ env.FLY_APP_NAME_STAGING }}
-          NEON_BRANCH_ID: ${{ needs.create-neon-preview-branch.outputs.branch_id }}
+          NEON_BRANCH_ID: ${{ env.NEON_BRANCH_ID }}
           PREVIEW_BRANCH_NAME: ${{ steps.preview_metadata.outputs.preview_branch_name }}
           STAGING_HEALTH_URL: ${{ steps.preview_metadata.outputs.staging_health_url }}
         with:

@@ -433,24 +433,61 @@ jobs:
 
           const outputLines = [];
           const easPath = path.join(process.env.GITHUB_WORKSPACE, 'eas-preview-build.json');
+          let buildId = '';
+          let buildUrl = '';
 
           if (fs.existsSync(easPath)) {
-            const raw = JSON.parse(fs.readFileSync(easPath, 'utf8'));
-            const first = Array.isArray(raw) ? raw[0] : raw;
+            const fileContent = fs.readFileSync(easPath, 'utf8').trim();
+            const parseCandidates = [fileContent];
+
+            const firstArrayStart = fileContent.indexOf('[');
+            const lastArrayEnd = fileContent.lastIndexOf(']');
+            if (firstArrayStart !== -1 && lastArrayEnd > firstArrayStart) {
+              parseCandidates.push(fileContent.slice(firstArrayStart, lastArrayEnd + 1));
+            }
+
+            const firstObjectStart = fileContent.indexOf('{');
+            const lastObjectEnd = fileContent.lastIndexOf('}');
+            if (firstObjectStart !== -1 && lastObjectEnd > firstObjectStart) {
+              parseCandidates.push(fileContent.slice(firstObjectStart, lastObjectEnd + 1));
+            }
+
+            let parsed = null;
+            for (const candidate of parseCandidates) {
+              if (!candidate) {
+                continue;
+              }
+
+              try {
+                parsed = JSON.parse(candidate);
+                break;
+              } catch {
+                // Try the next candidate shape.
+              }
+            }
+
+            const first = Array.isArray(parsed) ? parsed[0] : parsed;
             const build = Array.isArray(first?.builds) ? first.builds[0] : first;
 
-            if (build?.id) {
-              outputLines.push(`eas_build_id=${build.id}`);
-            }
+            buildId = typeof build?.id === 'string' ? build.id.trim() : '';
+            buildUrl = typeof (build?.buildDetailsPageUrl ?? build?.artifacts?.buildUrl ?? build?.url) === 'string'
+              ? (build.buildDetailsPageUrl ?? build.artifacts?.buildUrl ?? build.url).trim()
+              : '';
 
-            const buildUrl = build?.buildDetailsPageUrl
-              ?? build?.artifacts?.buildUrl
-              ?? build?.url
-              ?? '';
-
-            if (buildUrl) {
-              outputLines.push(`eas_build_url=${buildUrl}`);
+            if (!buildId) {
+              const idMatch = fileContent.match(/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i);
+              if (idMatch?.[0]) {
+                buildId = idMatch[0];
+              }
             }
+          }
+
+          if (buildId) {
+            outputLines.push(`eas_build_id=${buildId}`);
+          }
+
+          if (buildUrl) {
+            outputLines.push(`eas_build_url=${buildUrl}`);
           }
 
           outputLines.push(`staging_health_url=${process.env.STAGING_HEALTHCHECK_URL}`);
@@ -480,17 +517,23 @@ jobs:
         with:
           script: |
             const marker = process.env.COMMENT_MARKER;
-            const buildText = process.env.EAS_BUILD_URL
-              ? `[${process.env.EAS_BUILD_ID || 'Open build'}](${process.env.EAS_BUILD_URL})`
-              : (process.env.EAS_BUILD_ID || 'Unavailable');
+            const buildId = process.env.EAS_BUILD_ID?.trim();
+            const buildUrl = process.env.EAS_BUILD_URL?.trim();
+
+            let buildText = 'Unavailable';
+            if (buildUrl) {
+              buildText = `[Click here to install the preview version](${buildUrl})`;
+            } else if (buildId && buildId !== 'Unavailable') {
+              buildText = `[Click here to install the preview version](https://expo.dev/builds/${buildId})`;
+            }
 
             const body = `${marker}
-            Preview review environment is ready for this pull request.
+            Preview (Staging) environment is ready for this pull request.
 
-            - Neon branch: \`${process.env.PREVIEW_BRANCH_NAME}\`
-            - Fly staging app: \`${process.env.FLY_APP_NAME_STAGING}\`
-            - Health endpoint: ${process.env.STAGING_HEALTH_URL}
-            - EAS Android preview build: ${buildText}
+            - **Neon branch:** \`${process.env.PREVIEW_BRANCH_NAME}\`
+            - **Fly staging app:** \`${process.env.FLY_APP_NAME_STAGING}\`
+            - **Health endpoint:** ${process.env.STAGING_HEALTH_URL}
+            - **EAS Android preview build:** ${buildText}
 
             Note: this repository uses one fixed staging app, so the newest PR preview overwrites the previous one.`;
 

@@ -108,10 +108,10 @@ jobs:
         run: pnpm --filter main-backend run build
 
       - name: Run backend unit tests
-        run: pnpm --filter main-backend run test -- --runInBand
+        run: pnpm --filter main-backend exec jest --runInBand --ci
 
       - name: Run backend e2e tests
-        run: pnpm --filter main-backend run test:e2e -- --runInBand
+        run: pnpm --filter main-backend exec jest --config ./test/jest-e2e.json --runInBand --ci
 
       - name: Run mobile tests
         run: pnpm --filter mobile-app run test -- --runInBand

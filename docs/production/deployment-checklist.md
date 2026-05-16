@@ -131,9 +131,9 @@ Với mô hình một staging app cố định, preview mới nhất sẽ ghi đ
 
 ### DNS và SSL staging
 
-- [ ] Trỏ `api-staging` về backend staging.
-- [ ] Xác nhận SSL hoạt động bình thường.
-- [ ] Cấu hình proxy hoặc DNS mode phù hợp trên Cloudflare.
+- [x] Trỏ `api-staging` về backend staging.
+- [x] Xác nhận SSL hoạt động bình thường.
+- [x] Cấu hình proxy hoặc DNS mode phù hợp trên Cloudflare.
 
 ### Secrets và env vars staging
 
@@ -147,10 +147,10 @@ Với mô hình một staging app cố định, preview mới nhất sẽ ghi đ
 
 ### Mobile preview build
 
-- [ ] Tạo EAS project nếu chưa có.
-- [ ] Tạo EAS environment `preview`.
-- [ ] Điền `EXPO_PUBLIC_API_BASE_URL` cho preview.
-- [ ] Điền `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` cho preview.
+- [x] Tạo EAS project nếu chưa có.
+- [x] Tạo EAS environment `preview`.
+- [x] Điền `EXPO_PUBLIC_API_BASE_URL` cho preview.
+- [x] Điền `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` cho preview.
 - [ ] Trigger EAS preview build khi Pull Request được mở hoặc cập nhật.
 
 ## 5. Checklist trước khi deploy staging lần đầu
@@ -168,8 +168,8 @@ Với mô hình một staging app cố định, preview mới nhất sẽ ghi đ
 
 ## 6. QA review trên preview/staging trước khi merge
 
-- [ ] API có thể truy cập qua domain staging.
-- [ ] Health endpoint trả về `200`.
+- [x] API có thể truy cập qua domain staging.
+- [x] Health endpoint trả về `200`.
 - [ ] Swagger hoặc route public cơ bản không lỗi bootstrap.
 - [ ] Backend kết nối được database.
 - [ ] Đăng nhập Google trên mobile preview build hoạt động.

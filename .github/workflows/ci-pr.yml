@@ -101,12 +101,6 @@ jobs:
       - name: Generate Prisma client
         run: pnpm run prisma:generate
 
-      - name: Apply CI preview migrations
-        run: pnpm run prisma:migrate:deploy
-
-      - name: Seed CI preview bootstrap data
-        run: pnpm run prisma:seed:bootstrap
-
       - name: Build shared package
         run: pnpm run build:shared
 

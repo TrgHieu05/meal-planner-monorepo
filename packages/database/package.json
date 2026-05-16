@@ -22,13 +22,15 @@
   "packageManager": "pnpm@10.30.3",
   "dependencies": {
     "@prisma/client": "^7.4.2",
+    "@prisma/config": "7.4.2",
+    "dotenv": "17.3.1",
     "pg": "^8.20.0",
     "prisma": "^7.4.2"
   },
   "devDependencies": {
+    "@types/node": "^20.0.0",
     "@types/pg": "^8.15.4",
     "ts-node": "^10.9.2",
-    "typescript": "^5.0.0",
-    "@types/node": "^20.0.0"
+    "typescript": "^5.0.0"
   }
 }

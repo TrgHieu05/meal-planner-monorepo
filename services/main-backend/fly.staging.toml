@@ -10,7 +10,7 @@ primary_region = "sin"
 
 [deploy]
 	# Run Prisma migrations before this release starts receiving traffic.
-	release_command = "node /app/node_modules/prisma/build/index.js migrate deploy --schema /app/packages/database/prisma/schema.prisma"
+	release_command = "/bin/sh -lc 'cd /app/packages/database && node ./node_modules/prisma/build/index.js migrate deploy --schema prisma/schema.prisma'"
 
 [http_service]
 	internal_port = 3000
@@ -24,4 +24,4 @@ primary_region = "sin"
 	timeout = "5s"
 	grace_period = "30s"
 	method = "GET"
-	path = "/health"
+	path = "/api/health"

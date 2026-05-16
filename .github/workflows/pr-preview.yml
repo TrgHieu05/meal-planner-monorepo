@@ -87,7 +87,7 @@ jobs:
             exit 1
           fi
 
-          echo "STAGING_HEALTHCHECK_URL=https://${FLY_APP_NAME_STAGING}.fly.dev/health" >> "$GITHUB_ENV"
+          echo "STAGING_HEALTHCHECK_URL=https://${FLY_APP_NAME_STAGING}.fly.dev/api/health" >> "$GITHUB_ENV"
 
       - name: Setup Flyctl
         uses: superfly/flyctl-actions/setup-flyctl@1.5

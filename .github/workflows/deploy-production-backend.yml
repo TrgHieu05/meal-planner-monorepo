@@ -66,7 +66,7 @@ jobs:
             exit 1
           fi
 
-          echo "PRODUCTION_HEALTHCHECK_URL=https://${FLY_APP_NAME_PRODUCTION}.fly.dev/health" >> "$GITHUB_ENV"
+          echo "PRODUCTION_HEALTHCHECK_URL=https://${FLY_APP_NAME_PRODUCTION}.fly.dev/api/health" >> "$GITHUB_ENV"
 
       - name: Ensure Fly production app exists
         run: |

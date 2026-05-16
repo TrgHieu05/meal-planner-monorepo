@@ -418,7 +418,6 @@ jobs:
           eas build \
             --platform android \
             --profile preview \
-            --environment preview \
             --non-interactive \
             --json \
             --no-wait | tee "$GITHUB_WORKSPACE/eas-preview-build.json"

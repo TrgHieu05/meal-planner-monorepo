@@ -157,6 +157,8 @@ jobs:
       - name: Create Neon schema-only preview branch
         id: create_neon_branch
         uses: neondatabase/create-branch-action@v6
+        env:
+          NODE_OPTIONS: --no-deprecation
         with:
           project_id: ${{ vars.NEON_PROJECT_ID }}
           branch_name: ${{ env.PREVIEW_BRANCH_NAME }}

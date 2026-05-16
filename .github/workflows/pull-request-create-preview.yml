@@ -1,4 +1,4 @@
-name: Pull Request Preview
+name: Pull Request Create Preview
 
 on:
   pull_request:
@@ -16,22 +16,15 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: pr-preview-${{ github.event.pull_request.number || github.ref }}
+  group: pull-request-create-preview-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  preview:
-    if: ${{ github.event.pull_request.draft == false }}
-    name: Preview
+  create-neon-preview-branch:
+    name: Create Neon Preview Branch
     runs-on: ubuntu-latest
-    timeout-minutes: 45
-    environment:
-      name: staging
+    timeout-minutes: 15
     env:
-      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-      FLY_APP_NAME_STAGING: ${{ vars.FLY_APP_NAME_STAGING }}
-      FLY_CONFIG_PATH_STAGING: ${{ vars.FLY_CONFIG_PATH_STAGING }}
       NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
       NEON_DATABASE_NAME: neondb
       NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
@@ -39,35 +32,29 @@ jobs:
       NEON_ROLE_NAME: neondb_owner
       PREVIEW_BRANCH_NAME: preview/pr-${{ github.event.pull_request.number }}
 
+    outputs:
+      branch_id: ${{ steps.create_neon_branch.outputs.branch_id }}
+      branch_name: ${{ env.PREVIEW_BRANCH_NAME }}
+      database_url: ${{ steps.create_neon_branch.outputs.db_url }}
+      database_url_pooled: ${{ steps.create_neon_branch.outputs.db_url_pooled }}
+
     defaults:
       run:
         shell: bash
 
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.30.3
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: pnpm
 
-      - name: Validate preview prerequisites
+      - name: Validate Neon preview prerequisites
         run: |
           required_values=(
-            EXPO_TOKEN
-            FLY_API_TOKEN
-            FLY_APP_NAME_STAGING
-            FLY_CONFIG_PATH_STAGING
             NEON_API_KEY
             NEON_PROJECT_ID
             NEON_PRODUCTION_BRANCH_ID
+            PREVIEW_BRANCH_NAME
           )
 
           for name in "${required_values[@]}"; do
@@ -77,34 +64,10 @@ jobs:
             fi
           done
 
-          if [[ ! -f "${FLY_CONFIG_PATH_STAGING}" ]]; then
-            echo "::error::Fly staging config file not found at ${FLY_CONFIG_PATH_STAGING}"
-            exit 1
-          fi
-
-          if [[ ! -s "${FLY_CONFIG_PATH_STAGING}" ]]; then
-            echo "::error::Fly staging config file is empty at ${FLY_CONFIG_PATH_STAGING}. Complete this file before using pr-preview.yml."
-            exit 1
-          fi
-
-          echo "STAGING_HEALTHCHECK_URL=https://${FLY_APP_NAME_STAGING}.fly.dev/api/health" >> "$GITHUB_ENV"
-
-      - name: Setup Flyctl
-        uses: superfly/flyctl-actions/setup-flyctl@1.5
-
-      - name: Setup Expo and EAS CLI
-        uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
-
       - name: Compute preview branch expiration
         id: preview_expiration
         run: |
           echo "expires_at=$(date -u --date '+7 days' +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_OUTPUT"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
 
       - name: Lookup existing Neon preview branch
         id: lookup_preview_branch
@@ -160,24 +123,156 @@ jobs:
         env:
           NODE_OPTIONS: --no-deprecation
         with:
-          project_id: ${{ vars.NEON_PROJECT_ID }}
+          project_id: ${{ env.NEON_PROJECT_ID }}
           branch_name: ${{ env.PREVIEW_BRANCH_NAME }}
-          parent_branch: ${{ vars.NEON_PRODUCTION_BRANCH_ID }}
+          parent_branch: ${{ env.NEON_PRODUCTION_BRANCH_ID }}
           branch_type: schema-only
           database: ${{ env.NEON_DATABASE_NAME }}
           role: ${{ env.NEON_ROLE_NAME }}
           prisma: true
           expires_at: ${{ steps.preview_expiration.outputs.expires_at }}
-          api_key: ${{ secrets.NEON_API_KEY }}
+          api_key: ${{ env.NEON_API_KEY }}
 
       - name: Mask preview database URLs
         run: |
           echo "::add-mask::${{ steps.create_neon_branch.outputs.db_url }}"
           echo "::add-mask::${{ steps.create_neon_branch.outputs.db_url_pooled }}"
 
-      - name: Inject preview DATABASE_URL from Neon branch
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs:
+      - create-neon-preview-branch
+    env:
+      NODE_ENV: test
+      EXPO_PUBLIC_API_BASE_URL: https://api-staging.example.com
+      EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: web-client-id
+      GOOGLE_WEB_CLIENT_ID: web-client-id
+      JWT_SECRET: test-secret
+      JWT_EXPIRES_IN: 7d
+      DATABASE_URL: ${{ needs.create-neon-preview-branch.outputs.database_url }}
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.30.3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Mask preview database URL
+        run: echo "::add-mask::${DATABASE_URL}"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm run prisma:generate
+
+      - name: Build shared package
+        run: pnpm run build:shared
+
+      - name: Build backend
+        run: pnpm --filter main-backend run build
+
+      - name: Run backend unit tests
+        run: pnpm --filter main-backend exec jest --runInBand --ci
+
+      - name: Run backend e2e tests
+        run: pnpm --filter main-backend exec jest --config ./test/jest-e2e.json --runInBand --ci
+
+      - name: Run mobile tests
+        run: pnpm --filter mobile-app exec jest --config ./jest.config.js --runInBand --ci
+
+  build-preview:
+    if: ${{ github.event.pull_request.draft == false }}
+    name: Build Preview
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs:
+      - create-neon-preview-branch
+      - test
+    environment:
+      name: staging
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      FLY_APP_NAME_STAGING: ${{ vars.FLY_APP_NAME_STAGING }}
+      FLY_CONFIG_PATH_STAGING: ${{ vars.FLY_CONFIG_PATH_STAGING }}
+      PREVIEW_BRANCH_NAME: ${{ needs.create-neon-preview-branch.outputs.branch_name }}
+      DATABASE_URL: ${{ needs.create-neon-preview-branch.outputs.database_url }}
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.30.3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Validate preview build prerequisites
         run: |
-          echo "DATABASE_URL=${{ steps.create_neon_branch.outputs.db_url }}" >> "$GITHUB_ENV"
+          required_values=(
+            EXPO_TOKEN
+            FLY_API_TOKEN
+            FLY_APP_NAME_STAGING
+            FLY_CONFIG_PATH_STAGING
+            DATABASE_URL
+            PREVIEW_BRANCH_NAME
+          )
+
+          for name in "${required_values[@]}"; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error::Missing required GitHub variable or secret: ${name}"
+              exit 1
+            fi
+          done
+
+          if [[ ! -f "${FLY_CONFIG_PATH_STAGING}" ]]; then
+            echo "::error::Fly staging config file not found at ${FLY_CONFIG_PATH_STAGING}"
+            exit 1
+          fi
+
+          if [[ ! -s "${FLY_CONFIG_PATH_STAGING}" ]]; then
+            echo "::error::Fly staging config file is empty at ${FLY_CONFIG_PATH_STAGING}. Complete this file before using pull-request-create-preview.yml."
+            exit 1
+          fi
+
+          echo "STAGING_HEALTHCHECK_URL=https://${FLY_APP_NAME_STAGING}.fly.dev/api/health" >> "$GITHUB_ENV"
+
+      - name: Mask preview database URL
+        run: echo "::add-mask::${DATABASE_URL}"
+
+      - name: Setup Flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@1.5
+
+      - name: Setup Expo and EAS CLI
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Generate Prisma client
         run: pnpm run prisma:generate
@@ -216,12 +311,35 @@ jobs:
             sleep 10
           done
 
+      - name: Pull EAS preview environment variables for Expo config
+        working-directory: apps/mobile-app
+        run: |
+          rm -f .env.local
+          eas env:pull --environment preview --non-interactive
+
+          required_values=(
+            EXPO_PUBLIC_API_BASE_URL
+            EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID
+          )
+
+          for name in "${required_values[@]}"; do
+            value="$(grep -E "^${name}=" .env.local | head -n 1 | cut -d= -f2-)"
+            if [[ -z "$value" ]]; then
+              echo "::error::Missing ${name} in EAS preview environment. Add it in Expo dashboard (Environment: preview)."
+              exit 1
+            fi
+
+            echo "::add-mask::$value"
+            echo "${name}=${value}" >> "$GITHUB_ENV"
+          done
+
       - name: Trigger Expo Android preview build
         working-directory: apps/mobile-app
         run: |
           eas build \
             --platform android \
             --profile preview \
+            --environment preview \
             --non-interactive \
             --json \
             --no-wait | tee "$GITHUB_WORKSPACE/eas-preview-build.json"
@@ -278,7 +396,7 @@ jobs:
           EAS_BUILD_ID: ${{ steps.preview_metadata.outputs.eas_build_id }}
           EAS_BUILD_URL: ${{ steps.preview_metadata.outputs.eas_build_url }}
           FLY_APP_NAME_STAGING: ${{ env.FLY_APP_NAME_STAGING }}
-          NEON_BRANCH_ID: ${{ steps.create_neon_branch.outputs.branch_id }}
+          NEON_BRANCH_ID: ${{ needs.create-neon-preview-branch.outputs.branch_id }}
           PREVIEW_BRANCH_NAME: ${{ steps.preview_metadata.outputs.preview_branch_name }}
           STAGING_HEALTH_URL: ${{ steps.preview_metadata.outputs.staging_health_url }}
         with:
@@ -292,7 +410,6 @@ jobs:
             Preview review environment is ready for this pull request.
 
             - Neon branch: \`${process.env.PREVIEW_BRANCH_NAME}\`
-            - Neon branch id: \`${process.env.NEON_BRANCH_ID}\`
             - Fly staging app: \`${process.env.FLY_APP_NAME_STAGING}\`
             - Health endpoint: ${process.env.STAGING_HEALTH_URL}
             - EAS Android preview build: ${buildText}

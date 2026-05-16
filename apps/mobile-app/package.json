@@ -8,6 +8,7 @@
     "build:android": "eas build --profile development --platform android",
     "build:android:preview": "eas build --profile preview --platform android",
     "install:android:latest": "eas build:run -p android -e preview --latest",
+    "eas-build-post-install": "pnpm --dir ../.. --filter @meal/shared run build",
     "ios": "expo run:ios",
     "web": "expo start --web",
     "test": "node ./scripts/run-jest.cjs --config ./jest.config.js"

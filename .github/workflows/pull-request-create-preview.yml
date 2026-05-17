@@ -195,7 +195,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Download preview runtime config artifact
         uses: actions/download-artifact@v4
@@ -265,6 +265,11 @@ jobs:
     needs:
       - create-neon-preview-branch
       - test
+    outputs:
+      eas_build_id: ${{ steps.preview_metadata.outputs.eas_build_id }}
+      eas_build_url: ${{ steps.preview_metadata.outputs.eas_build_url }}
+      preview_branch_name: ${{ steps.preview_metadata.outputs.preview_branch_name }}
+      staging_health_url: ${{ steps.preview_metadata.outputs.staging_health_url }}
     environment:
       name: staging
     env:
@@ -504,41 +509,81 @@ jobs:
             staging-health.json
             eas-preview-build.json
 
+  comment-preview:
+    if: ${{ always() && github.event.pull_request.draft == false }}
+    name: Comment Preview Metadata
+    runs-on: ubuntu-latest
+    needs:
+      - create-neon-preview-branch
+      - test
+      - build-preview
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    env:
+      COMMENT_MARKER: <!-- pr-review-preview -->
+      BUILD_PREVIEW_RESULT: ${{ needs.build-preview.result }}
+      EAS_BUILD_ID: ${{ needs.build-preview.outputs.eas_build_id }}
+      EAS_BUILD_URL: ${{ needs.build-preview.outputs.eas_build_url }}
+      FLY_APP_NAME_STAGING: ${{ vars.FLY_APP_NAME_STAGING }}
+      PREVIEW_BRANCH_NAME: ${{ needs.build-preview.outputs.preview_branch_name || format('preview/pr-{0}', github.event.pull_request.number) }}
+      STAGING_HEALTH_URL: ${{ needs.build-preview.outputs.staging_health_url || format('https://{0}.fly.dev/api/health', vars.FLY_APP_NAME_STAGING) }}
+      TEST_RESULT: ${{ needs.test.result }}
+      BRANCH_RESULT: ${{ needs.create-neon-preview-branch.result }}
+      WORKFLOW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
       - name: Comment preview metadata on PR
         uses: actions/github-script@v7
-        env:
-          COMMENT_MARKER: <!-- pr-review-preview -->
-          EAS_BUILD_ID: ${{ steps.preview_metadata.outputs.eas_build_id }}
-          EAS_BUILD_URL: ${{ steps.preview_metadata.outputs.eas_build_url }}
-          FLY_APP_NAME_STAGING: ${{ env.FLY_APP_NAME_STAGING }}
-          NEON_BRANCH_ID: ${{ env.NEON_BRANCH_ID }}
-          PREVIEW_BRANCH_NAME: ${{ steps.preview_metadata.outputs.preview_branch_name }}
-          STAGING_HEALTH_URL: ${{ steps.preview_metadata.outputs.staging_health_url }}
         with:
           script: |
             const marker = process.env.COMMENT_MARKER;
             const buildId = process.env.EAS_BUILD_ID?.trim();
             const buildUrl = process.env.EAS_BUILD_URL?.trim();
+            const buildPreviewResult = process.env.BUILD_PREVIEW_RESULT?.trim() || 'unknown';
+            const testResult = process.env.TEST_RESULT?.trim() || 'unknown';
+            const branchResult = process.env.BRANCH_RESULT?.trim() || 'unknown';
 
             let buildText = 'Unavailable';
             if (buildUrl) {
               buildText = `[Click here to install the preview version](${buildUrl})`;
-            } else if (buildId && buildId !== 'Unavailable') {
+            } else if (buildId) {
               buildText = `[Click here to install the preview version](https://expo.dev/builds/${buildId})`;
             }
 
-            const body = `${marker}
-            Preview (Staging) environment is ready for this pull request.
+            const previewReady = buildPreviewResult === 'success';
+            const intro = previewReady
+              ? 'Preview (Staging) environment is ready for this pull request.'
+              : 'Preview (Staging) workflow finished, but the preview comment had to be generated from the final status because the build job did not complete successfully.';
 
-            - **Neon branch:** \`${process.env.PREVIEW_BRANCH_NAME}\`
-            - **Fly staging app:** \`${process.env.FLY_APP_NAME_STAGING}\`
-            - **Health endpoint:** ${process.env.STAGING_HEALTH_URL}
-            - **EAS Android preview build:** ${buildText}
+            const statusLine = previewReady
+              ? '- **Preview job result:** success'
+              : `- **Preview job result:** ${buildPreviewResult}`;
 
-            Note: this repository uses one fixed staging app, so the newest PR preview overwrites the previous one.`;
+            const body = [
+              marker,
+              intro,
+              '',
+              `- **Neon branch:** \`${process.env.PREVIEW_BRANCH_NAME}\``,
+              `- **Fly staging app:** \`${process.env.FLY_APP_NAME_STAGING || 'Unavailable'}\``,
+              `- **Health endpoint:** ${process.env.STAGING_HEALTH_URL || 'Unavailable'}`,
+              `- **EAS Android preview build:** ${buildText}`,
+              statusLine,
+              `- **Neon branch job:** ${branchResult}`,
+              `- **Test job:** ${testResult}`,
+              `- **Workflow run:** ${process.env.WORKFLOW_RUN_URL}`,
+              '',
+              'Note: this repository uses one fixed staging app, so the newest PR preview overwrites the previous one.',
+            ].join('\n');
 
             const { owner, repo } = context.repo;
-            const issue_number = context.issue.number;
+            const issue_number = context.payload.pull_request?.number ?? context.issue.number;
+
+            if (!issue_number) {
+              core.setFailed('Missing pull request number in workflow context.');
+              return;
+            }
+
             const comments = await github.paginate(github.rest.issues.listComments, {
               owner,
               repo,
@@ -557,11 +602,12 @@ jobs:
                 comment_id: existing.id,
                 body,
               });
-            } else {
-              await github.rest.issues.createComment({
-                owner,
-                repo,
-                issue_number,
-                body,
-              });
+              return;
             }
+
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number,
+              body,
+            });

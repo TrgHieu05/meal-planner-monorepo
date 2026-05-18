@@ -22,6 +22,7 @@ concurrency:
 jobs:
   create-neon-preview-branch:
     name: Create Neon Preview Branch
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'enhancement') }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -171,6 +172,7 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'enhancement') }}
     timeout-minutes: 30
     needs:
       - create-neon-preview-branch
@@ -258,7 +260,7 @@ jobs:
         run: pnpm --filter mobile-app exec jest --config ./jest.config.js --runInBand --ci
 
   build-preview:
-    if: ${{ github.event.pull_request.draft == false }}
+    if: ${{ github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'enhancement')}} 
     name: Build Preview
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -510,7 +512,7 @@ jobs:
             eas-preview-build.json
 
   comment-preview:
-    if: ${{ always() && github.event.pull_request.draft == false }}
+    if: ${{ always() && github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'enhancement') }}
     name: Comment Preview Metadata
     runs-on: ubuntu-latest
     needs:

@@ -1,0 +1,27 @@
+app = "kitchen-mind-production"
+primary_region = "sin"
+
+[build]
+	dockerfile = "../../infrastructure/docker/main-backend.Dockerfile"
+
+[env]
+	NODE_ENV = "production"
+	PORT = "3000"
+
+[deploy]
+	# Run Prisma migrations before this release starts receiving traffic.
+	release_command = "/bin/sh -lc 'cd /app/packages/database && node ./node_modules/prisma/build/index.js migrate deploy --schema prisma/schema.prisma'"
+
+[http_service]
+	internal_port = 3000
+	force_https = true
+	auto_stop_machines = "stop"
+	auto_start_machines = true
+	min_machines_running = 0
+
+[[http_service.checks]]
+	interval = "15s"
+	timeout = "5s"
+	grace_period = "30s"
+	method = "GET"
+	path = "/api/health"

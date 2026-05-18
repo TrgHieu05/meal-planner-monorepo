@@ -187,6 +187,8 @@ jobs:
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -385,6 +387,109 @@ jobs:
 
       - name: Generate Prisma client
         run: pnpm run prisma:generate
+
+      - name: Fetch PR base commit for migration baseline
+        env:
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if git cat-file -e "${PR_BASE_SHA}^{commit}" 2>/dev/null; then
+            exit 0
+          fi
+
+          if ! git fetch --no-tags --depth=1 origin "${PR_BASE_SHA}" 2>/dev/null; then
+            git fetch --no-tags --depth=1 origin "${PR_BASE_REF}"
+          fi
+
+          if ! git cat-file -e "${PR_BASE_SHA}^{commit}" 2>/dev/null; then
+            echo "::error::PR base commit ${PR_BASE_SHA} is unavailable after fetching ${PR_BASE_REF}."
+            exit 1
+          fi
+
+      - name: Baseline inherited preview migrations
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          node <<'NODE'
+          const { execFileSync } = require('child_process');
+          const { Client } = require('pg');
+
+          async function main() {
+            const baseSha = process.env.PR_BASE_SHA;
+            if (!baseSha) {
+              throw new Error('Missing PR base SHA for migration baseline step.');
+            }
+
+            let treeOutput = '';
+            try {
+              treeOutput = execFileSync(
+                'git',
+                ['ls-tree', '--name-only', `${baseSha}:packages/database/prisma/migrations`],
+                { encoding: 'utf8' },
+              );
+            } catch (error) {
+              throw new Error(`Failed to inspect base branch migrations at ${baseSha}: ${error.message}`);
+            }
+
+            const inheritedMigrations = treeOutput
+              .split(/\r?\n/)
+              .map((value) => value.trim())
+              .filter((value) => /^\d{14}_.+/.test(value));
+
+            if (inheritedMigrations.length === 0) {
+              console.log('No inherited Prisma migrations found on the PR base branch.');
+              return;
+            }
+
+            const client = new Client({ connectionString: process.env.DATABASE_URL });
+            await client.connect();
+
+            let appliedMigrations = new Set();
+            try {
+              const result = await client.query('SELECT migration_name FROM "_prisma_migrations"');
+              appliedMigrations = new Set(
+                result.rows
+                  .map((row) => row?.migration_name)
+                  .filter((value) => typeof value === 'string' && value.length > 0),
+              );
+            } catch (error) {
+              if (error?.code !== '42P01') {
+                throw error;
+              }
+            } finally {
+              await client.end();
+            }
+
+            const missingInheritedMigrations = inheritedMigrations.filter(
+              (migrationName) => !appliedMigrations.has(migrationName),
+            );
+
+            if (missingInheritedMigrations.length === 0) {
+              console.log('Preview branch already has inherited Prisma migration history.');
+              return;
+            }
+
+            console.log(
+              `Marking ${missingInheritedMigrations.length} inherited Prisma migration(s) as applied before deploy.`,
+            );
+
+            for (const migrationName of missingInheritedMigrations) {
+              execFileSync(
+                'pnpm',
+                ['--filter', '@meal/database', 'exec', 'prisma', 'migrate', 'resolve', '--applied', migrationName],
+                {
+                  stdio: 'inherit',
+                  env: process.env,
+                },
+              );
+            }
+          }
+
+          main().catch((error) => {
+            console.error(error);
+            process.exit(1);
+          });
+          NODE
 
       - name: Apply preview migrations
         run: pnpm run prisma:migrate:deploy

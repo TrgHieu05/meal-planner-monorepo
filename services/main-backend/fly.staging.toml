@@ -8,10 +8,6 @@ primary_region = "sin"
 	NODE_ENV = "production"
 	PORT = "3000"
 
-[deploy]
-	# Run Prisma migrations before this release starts receiving traffic.
-	release_command = "/bin/sh -lc 'cd /app/packages/database && node ./node_modules/prisma/build/index.js migrate deploy --schema prisma/schema.prisma'"
-
 [http_service]
 	internal_port = 3000
 	force_https = true

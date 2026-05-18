@@ -263,13 +263,14 @@ jobs:
     if: ${{ github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'enhancement')}} 
     name: Build Preview
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 90
     needs:
       - create-neon-preview-branch
       - test
     outputs:
       eas_build_id: ${{ steps.preview_metadata.outputs.eas_build_id }}
       eas_build_url: ${{ steps.preview_metadata.outputs.eas_build_url }}
+      eas_artifact_url: ${{ steps.preview_metadata.outputs.eas_artifact_url }}
       preview_branch_name: ${{ steps.preview_metadata.outputs.preview_branch_name }}
       staging_health_url: ${{ steps.preview_metadata.outputs.staging_health_url }}
     environment:
@@ -419,7 +420,7 @@ jobs:
             sleep 10
           done
 
-      - name: Trigger Expo Android preview build
+      - name: Build Expo Android preview and wait for completion
         working-directory: apps/mobile-app
         run: |
           eas build \
@@ -427,7 +428,7 @@ jobs:
             --profile preview \
             --non-interactive \
             --json \
-            --no-wait | tee "$GITHUB_WORKSPACE/eas-preview-build.json"
+            --wait | tee "$GITHUB_WORKSPACE/eas-preview-build.json"
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
@@ -442,6 +443,7 @@ jobs:
           const easPath = path.join(process.env.GITHUB_WORKSPACE, 'eas-preview-build.json');
           let buildId = '';
           let buildUrl = '';
+          let artifactUrl = '';
 
           if (fs.existsSync(easPath)) {
             const fileContent = fs.readFileSync(easPath, 'utf8').trim();
@@ -480,6 +482,9 @@ jobs:
             buildUrl = typeof (build?.buildDetailsPageUrl ?? build?.artifacts?.buildUrl ?? build?.url) === 'string'
               ? (build.buildDetailsPageUrl ?? build.artifacts?.buildUrl ?? build.url).trim()
               : '';
+            artifactUrl = typeof (build?.artifacts?.applicationArchiveUrl ?? build?.artifacts?.buildUrl) === 'string'
+              ? (build.artifacts?.applicationArchiveUrl ?? build.artifacts?.buildUrl).trim()
+              : '';
 
             if (!buildId) {
               const idMatch = fileContent.match(/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i);
@@ -497,11 +502,40 @@ jobs:
             outputLines.push(`eas_build_url=${buildUrl}`);
           }
 
+          if (artifactUrl) {
+            outputLines.push(`eas_artifact_url=${artifactUrl}`);
+          }
+
           outputLines.push(`staging_health_url=${process.env.STAGING_HEALTHCHECK_URL}`);
           outputLines.push(`preview_branch_name=${process.env.PREVIEW_BRANCH_NAME}`);
 
           fs.appendFileSync(process.env.GITHUB_OUTPUT, `${outputLines.join('\n')}\n`);
           NODE
+
+      - name: Download preview APK to runner
+        env:
+          EAS_ARTIFACT_URL: ${{ steps.preview_metadata.outputs.eas_artifact_url }}
+        run: |
+          if [[ -z "$EAS_ARTIFACT_URL" ]]; then
+            echo "::error::Missing EAS artifact URL for preview APK download."
+            exit 1
+          fi
+
+          mkdir -p preview-build
+          curl --fail --silent --show-error --location "$EAS_ARTIFACT_URL" --output preview-build/app-preview.apk
+
+          if [[ ! -s preview-build/app-preview.apk ]]; then
+            echo "::error::Preview APK download failed or produced an empty file."
+            exit 1
+          fi
+
+      - name: Upload preview APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-preview-${{ github.event.pull_request.number }}-apk
+          path: preview-build/app-preview.apk
+          if-no-files-found: error
+          retention-days: 1
 
       - name: Upload preview metadata artifacts
         uses: actions/upload-artifact@v4
@@ -511,6 +545,71 @@ jobs:
             staging-health.json
             eas-preview-build.json
 
+  distribute_firebase:
+    if: ${{ github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'enhancement') }}
+    name: distribute-firebase
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs:
+      - build-preview
+    environment:
+      name: staging
+    env:
+      FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
+      FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+      FIREBASE_TESTER_GROUP: internal-tester
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Validate Firebase distribution prerequisites
+        run: |
+          required_values=(
+            FIREBASE_APP_ID
+            FIREBASE_TOKEN
+            FIREBASE_TESTER_GROUP
+          )
+
+          for name in "${required_values[@]}"; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error::Missing required GitHub secret or value: ${name}"
+              exit 1
+            fi
+          done
+
+      - name: Download preview APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: pr-preview-${{ github.event.pull_request.number }}-apk
+          path: preview-build
+
+      - name: Distribute preview APK to Firebase App Distribution
+        env:
+          EAS_BUILD_ID: ${{ needs.build-preview.outputs.eas_build_id }}
+          PREVIEW_BRANCH_NAME: ${{ needs.build-preview.outputs.preview_branch_name }}
+        run: |
+          apk_path="preview-build/app-preview.apk"
+
+          if [[ ! -f "$apk_path" ]]; then
+            echo "::error::Preview APK artifact is missing at $apk_path"
+            exit 1
+          fi
+
+          release_notes="PR #${{ github.event.pull_request.number }} preview (${PREVIEW_BRANCH_NAME:-unknown}) - EAS build ${EAS_BUILD_ID:-unknown} - commit ${GITHUB_SHA}"
+
+          npx firebase-tools appdistribution:distribute "$apk_path" \
+            --app "$FIREBASE_APP_ID" \
+            --groups "$FIREBASE_TESTER_GROUP" \
+            --release-notes "$release_notes" \
+            --token "$FIREBASE_TOKEN"
+
   comment-preview:
     if: ${{ always() && github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'enhancement') }}
     name: Comment Preview Metadata
@@ -519,6 +618,7 @@ jobs:
       - create-neon-preview-branch
       - test
       - build-preview
+      - distribute_firebase
     permissions:
       contents: read
       issues: write
@@ -526,8 +626,9 @@ jobs:
     env:
       COMMENT_MARKER: <!-- pr-review-preview -->
       BUILD_PREVIEW_RESULT: ${{ needs.build-preview.result }}
+      DISTRIBUTE_FIREBASE_RESULT: ${{ needs.distribute_firebase.result }}
       EAS_BUILD_ID: ${{ needs.build-preview.outputs.eas_build_id }}
-      EAS_BUILD_URL: ${{ needs.build-preview.outputs.eas_build_url }}
+      FIREBASE_TESTER_GROUP: internal_tester
       FLY_APP_NAME_STAGING: ${{ vars.FLY_APP_NAME_STAGING }}
       PREVIEW_BRANCH_NAME: ${{ needs.build-preview.outputs.preview_branch_name || format('preview/pr-{0}', github.event.pull_request.number) }}
       STAGING_HEALTH_URL: ${{ needs.build-preview.outputs.staging_health_url || format('https://{0}.fly.dev/api/health', vars.FLY_APP_NAME_STAGING) }}
@@ -541,26 +642,25 @@ jobs:
           script: |
             const marker = process.env.COMMENT_MARKER;
             const buildId = process.env.EAS_BUILD_ID?.trim();
-            const buildUrl = process.env.EAS_BUILD_URL?.trim();
             const buildPreviewResult = process.env.BUILD_PREVIEW_RESULT?.trim() || 'unknown';
+            const distributeFirebaseResult = process.env.DISTRIBUTE_FIREBASE_RESULT?.trim() || 'unknown';
             const testResult = process.env.TEST_RESULT?.trim() || 'unknown';
             const branchResult = process.env.BRANCH_RESULT?.trim() || 'unknown';
 
-            let buildText = 'Unavailable';
-            if (buildUrl) {
-              buildText = `[Click here to install the preview version](${buildUrl})`;
-            } else if (buildId) {
-              buildText = `[Click here to install the preview version](https://expo.dev/builds/${buildId})`;
-            }
-
-            const previewReady = buildPreviewResult === 'success';
+            const previewReady = buildPreviewResult === 'success' && distributeFirebaseResult === 'success';
             const intro = previewReady
-              ? 'Preview (Staging) environment is ready for this pull request.'
-              : 'Preview (Staging) workflow finished, but the preview comment had to be generated from the final status because the build job did not complete successfully.';
+              ? 'Preview (Staging) environment is ready for this pull request and the preview APK has been distributed to Firebase App Distribution.'
+              : 'Preview (Staging) workflow finished, but the preview APK was not fully distributed to Firebase App Distribution.';
 
-            const statusLine = previewReady
-              ? '- **Preview job result:** success'
-              : `- **Preview job result:** ${buildPreviewResult}`;
+            const statusLine = `- **Build preview job:** ${buildPreviewResult}`;
+
+            const easBuildLine = buildId
+              ? `- **EAS Android preview build ID:** \`${buildId}\``
+              : '- **EAS Android preview build ID:** Unavailable';
+
+            const firebaseDistributionLine = distributeFirebaseResult === 'success'
+              ? `- **Firebase App Distribution:** distributed successfully to tester group \`${process.env.FIREBASE_TESTER_GROUP}\``
+              : `- **Firebase App Distribution:** ${distributeFirebaseResult}`;
 
             const body = [
               marker,
@@ -569,8 +669,10 @@ jobs:
               `- **Neon branch:** \`${process.env.PREVIEW_BRANCH_NAME}\``,
               `- **Fly staging app:** \`${process.env.FLY_APP_NAME_STAGING || 'Unavailable'}\``,
               `- **Health endpoint:** ${process.env.STAGING_HEALTH_URL || 'Unavailable'}`,
-              `- **EAS Android preview build:** ${buildText}`,
+              easBuildLine,
+              firebaseDistributionLine,
               statusLine,
+              `- **distribute-firebase job:** ${distributeFirebaseResult}`,
               `- **Neon branch job:** ${branchResult}`,
               `- **Test job:** ${testResult}`,
               `- **Workflow run:** ${process.env.WORKFLOW_RUN_URL}`,

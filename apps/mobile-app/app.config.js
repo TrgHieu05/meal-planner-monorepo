@@ -26,6 +26,7 @@ const baseExpoConfig = {
     },
     predictiveBackGestureEnabled: false,
     package: 'com.trghieu05.KitchenMind',
+    googleServicesFile: "./google-services.json"
   },
   web: {
     favicon: './assets/images/favicon.png',

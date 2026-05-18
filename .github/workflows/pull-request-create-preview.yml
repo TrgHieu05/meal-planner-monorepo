@@ -400,19 +400,6 @@ jobs:
             DATABASE_URL="$DATABASE_URL" \
             --app "$FLY_APP_NAME_STAGING"
 
-      - name: Create preview Fly config without release command
-        run: |
-          preview_fly_config="$RUNNER_TEMP/fly.preview.toml"
-          cp "$FLY_CONFIG_PATH_STAGING" "$preview_fly_config"
-          sed -i '/^[[:space:]]*release_command[[:space:]]*=.*/s/^/# Preview workflow disables release_command: /' "$preview_fly_config"
-
-          if grep -Eq '^[[:space:]]*release_command[[:space:]]*=' "$preview_fly_config"; then
-            echo "::error::Failed to disable release_command in preview Fly config."
-            exit 1
-          fi
-
-          echo "FLY_PREVIEW_CONFIG_PATH=$preview_fly_config" >> "$GITHUB_ENV"
-
       - name: Deploy backend to Fly staging
         run: |
           flyctl deploy \

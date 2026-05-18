@@ -405,7 +405,7 @@ jobs:
           flyctl deploy \
             --remote-only \
             --app "$FLY_APP_NAME_STAGING" \
-            --config "$FLY_PREVIEW_CONFIG_PATH"
+            --config "$FLY_CONFIG_PATH_STAGING"
 
       - name: Smoke check staging health endpoint
         run: |

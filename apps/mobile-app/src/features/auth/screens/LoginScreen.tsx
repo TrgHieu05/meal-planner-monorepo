@@ -4,7 +4,6 @@ import { View, SizableText, Label, YStack, XStack } from 'tamagui'
 import { Lock, LogIn } from '@tamagui/lucide-icons-2'
 import { Link, useLocalSearchParams, useRouter } from 'expo-router'
 import GoogleIcon from '@assets/svg/google-icon.svg'
-import FacebookIcon from '@assets/svg/facebook-icon.svg'
 import { Alert, Button, InputText, Divider } from '@components'
 import { useSession } from '@/providers/AuthProvider'
 import { useGoogleIdTokenSignIn } from '@features/auth/hooks/useGoogleIdTokenSignIn'
@@ -108,7 +107,7 @@ export default function LoginScreen() {
                     </XStack>
                 </YStack>
 
-                <Button color="primary" size="large" onPress={handleEmailPasswordLogin}>
+                <Button color="primary" size="large" w="100%" onPress={handleEmailPasswordLogin}>
                     <Button.Text>Login with Email</Button.Text>
                     <Button.Icon icon={LogIn} />
                 </Button>
@@ -126,14 +125,6 @@ export default function LoginScreen() {
                             {isGoogleSigningIn ? 'Signing in with Google...' : 'Continue with Google'}
                         </Button.Text>
                     </Button>
-
-                    <XStack w="100%" ai="center" jc="center">
-                        <Link href="/login-with-facebook-placeholder">
-                            <XStack p="$space.md" br="$radius.pill" bg="$surface" ai="center" jc="center">
-                                <FacebookIcon width={24} height={24} />
-                            </XStack>
-                        </Link>
-                    </XStack>
                 </YStack>
 
 

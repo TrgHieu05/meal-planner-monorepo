@@ -138,6 +138,8 @@ jobs:
       MOBILE_APP_DIR: apps/mobile-app
       EAS_PLATFORM: android
       EAS_PROFILE: production
+      EXPO_PUBLIC_API_BASE_URL: ${{ vars.EXPO_PUBLIC_API_BASE_URL }}
+      EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: ${{ vars.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID }}
 
     defaults:
       run:
@@ -160,10 +162,18 @@ jobs:
 
       - name: Validate production mobile prerequisites
         run: |
-          if [[ -z "$EXPO_TOKEN" ]]; then
-            echo "::error::Missing required GitHub secret: EXPO_TOKEN"
-            exit 1
-          fi
+          required_values=(
+            EXPO_TOKEN
+            EXPO_PUBLIC_API_BASE_URL
+            EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID
+          )
+
+          for name in "${required_values[@]}"; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error::Missing required GitHub variable or secret: ${name}"
+              exit 1
+            fi
+          done
 
           if [[ ! -f "$MOBILE_APP_DIR/eas.json" ]]; then
             echo "::error::Missing EAS config at $MOBILE_APP_DIR/eas.json"

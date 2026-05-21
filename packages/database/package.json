@@ -7,6 +7,8 @@
   "scripts": {
     "db:migrate:dev": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
+    "db:migrate:release": "node ./run-production-migrations.js",
+    "db:migrate:release:plan": "node ./run-production-migrations.js --plan-only",
     "db:migrate:status": "prisma migrate status",
     "db:seed": "pnpm run db:seed:bootstrap",
     "db:seed:bootstrap": "tsx prisma/seed.ts --mode=bootstrap",

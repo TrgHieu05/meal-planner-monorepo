@@ -8,31 +8,43 @@ const workspaceRoot = path.resolve(packageRoot, '..', '..');
 const schemaPath = path.join(packageRoot, 'prisma', 'schema.prisma');
 const prismaCliPath = resolvePrismaCliPath();
 const isPlanOnly = process.argv.includes('--plan-only');
+const initialMigrationName = '20260310163258_initial_schema';
+const initialEnumNames = ['ProviderEnum', 'ActivityLevel', 'Difficulty', 'MealTime'];
+const initialTableNames = [
+  'users',
+  'user_providers',
+  'profiles',
+  'metrics',
+  'ingredients',
+  'allergies',
+  'favorite_ingredients',
+  'meals',
+  'meal_ingredients',
+  'menus',
+  'menu_items',
+  'diet_types',
+  'goals',
+  'cuisine_types',
+  'meal_templates',
+  'meal_template_days',
+  'meal_template_day_items',
+];
 
 const migrationDefinitions = [
   {
-    name: '20260310163258_initial_schema',
+    name: initialMigrationName,
     isPresent: async (client) => {
-      const [providerEnumExists, usersExists, userProvidersExists, profilesExists, mealsExists] = await Promise.all([
-        enumExists(client, 'ProviderEnum'),
-        tableExists(client, 'users'),
-        tableExists(client, 'user_providers'),
-        tableExists(client, 'profiles'),
-        tableExists(client, 'meals'),
-      ]);
-
-      return providerEnumExists && usersExists && userProvidersExists && profilesExists && mealsExists;
+      const presence = await getInitialSchemaPresence(client);
+      return presence.allEnumsExist && presence.allTablesExist;
     },
   },
   {
     name: '20260315153334_v2_bigint_to_int',
     isPresent: async (client) => {
-      const [ingredientsIdType, mealsIdType, menuItemsIdType, profilesDietTypeType] = await Promise.all([
-        columnType(client, 'ingredients', 'id'),
-        columnType(client, 'meals', 'id'),
-        columnType(client, 'menu_items', 'id'),
-        columnType(client, 'profiles', 'diet_type'),
-      ]);
+      const ingredientsIdType = await columnType(client, 'ingredients', 'id');
+      const mealsIdType = await columnType(client, 'meals', 'id');
+      const menuItemsIdType = await columnType(client, 'menu_items', 'id');
+      const profilesDietTypeType = await columnType(client, 'profiles', 'diet_type');
 
       return (
         ingredientsIdType === 'integer' &&
@@ -45,10 +57,8 @@ const migrationDefinitions = [
   {
     name: '20260414123000_menu_unique_constraints',
     isPresent: async (client) => {
-      const [menuDateIndexExists, menuItemUniqueIndexExists] = await Promise.all([
-        indexExists(client, 'menus_user_id_date_key'),
-        indexExists(client, 'menu_items_menu_id_meal_id_meal_time_key'),
-      ]);
+      const menuDateIndexExists = await indexExists(client, 'menus_user_id_date_key');
+      const menuItemUniqueIndexExists = await indexExists(client, 'menu_items_menu_id_meal_id_meal_time_key');
 
       return menuDateIndexExists && menuItemUniqueIndexExists;
     },
@@ -110,7 +120,7 @@ async function baselineLegacySchemaIfNeeded(client) {
 
   for (const migration of migrationDefinitions) {
     const state = migrationStates.get(migration.name) ?? 'missing';
-    const markerExists = await migration.isPresent(client);
+    let markerExists = await migration.isPresent(client);
 
     if (state === 'applied') {
       continue;
@@ -127,6 +137,21 @@ async function baselineLegacySchemaIfNeeded(client) {
     }
 
     if (state === 'failed') {
+      if (migration.name === initialMigrationName) {
+        const recoveryAction = await recoverFailedInitialMigration(client);
+
+        if (recoveryAction === 'applied') {
+          migrationStates = await loadMigrationStates(client);
+          continue;
+        }
+
+        if (recoveryAction === 'rolled_back') {
+          return;
+        }
+
+        markerExists = await migration.isPresent(client);
+      }
+
       if (!markerExists) {
         throw new Error(
           `Migration ${migration.name} is recorded as failed, but the schema marker for that migration is not present. Resolve this migration manually before retrying production deployment.`,
@@ -153,6 +178,36 @@ async function baselineLegacySchemaIfNeeded(client) {
 
     canInferPrefix = false;
   }
+}
+
+async function recoverFailedInitialMigration(client) {
+  const presence = await getInitialSchemaPresence(client);
+
+  if (presence.allEnumsExist && presence.allTablesExist) {
+    console.log(`[migrate-release] Marking failed migration as applied: ${initialMigrationName}`);
+    runPrisma(['migrate', 'resolve', '--applied', initialMigrationName, '--schema', schemaPath]);
+    return 'applied';
+  }
+
+  if (presence.existingTableCount === 0) {
+    if (presence.existingEnumCount > 0) {
+      console.log(
+        `[migrate-release] Found stray enum types without any initial schema tables for ${initialMigrationName}. Dropping enums and rerunning the migration from scratch.`,
+      );
+      await dropEnumTypes(client, presence.presentEnums);
+    } else {
+      console.log(
+        `[migrate-release] Failed migration ${initialMigrationName} left no initial schema markers. Marking it as rolled back so Prisma can retry it cleanly.`,
+      );
+    }
+
+    runPrisma(['migrate', 'resolve', '--rolled-back', initialMigrationName, '--schema', schemaPath]);
+    return 'rolled_back';
+  }
+
+  throw new Error(
+    `Failed migration ${initialMigrationName} left a partial database state. Present enums: ${presence.presentEnums.join(', ') || 'none'}. Present initial tables: ${presence.presentTables.join(', ') || 'none'}. Resolve this production schema manually before retrying deployment.`,
+  );
 }
 
 async function ensureNoFailedMigrationsRemain(client) {
@@ -234,6 +289,42 @@ function ensureFileExists(filePath, label) {
   if (!fs.existsSync(filePath)) {
     throw new Error(`${label} not found at ${filePath}.`);
   }
+}
+
+async function getInitialSchemaPresence(client) {
+  const presentEnums = [];
+  const presentTables = [];
+
+  for (const enumName of initialEnumNames) {
+    if (await enumExists(client, enumName)) {
+      presentEnums.push(enumName);
+    }
+  }
+
+  for (const tableName of initialTableNames) {
+    if (await tableExists(client, tableName)) {
+      presentTables.push(tableName);
+    }
+  }
+
+  return {
+    presentEnums,
+    presentTables,
+    existingEnumCount: presentEnums.length,
+    existingTableCount: presentTables.length,
+    allEnumsExist: presentEnums.length === initialEnumNames.length,
+    allTablesExist: presentTables.length === initialTableNames.length,
+  };
+}
+
+async function dropEnumTypes(client, enumNames) {
+  for (const enumName of enumNames) {
+    await client.query(`DROP TYPE IF EXISTS ${quoteIdentifier(enumName)}`);
+  }
+}
+
+function quoteIdentifier(identifier) {
+  return `"${identifier.replace(/"/gu, '""')}"`;
 }
 
 async function tableExists(client, tableName) {

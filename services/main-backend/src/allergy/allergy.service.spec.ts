@@ -91,12 +91,19 @@ describe('AllergyService', () => {
       prisma.user.findUnique.mockResolvedValue({ id: userId });
       prisma.ingredient.findMany.mockResolvedValue([{ id: 1 }, { id: 2 }]);
       prisma.favoriteIngredient.findMany.mockResolvedValue([
-        { ingredientId: 2 },
+        { ingredient: { id: 2, name: 'Milk' } },
       ]);
 
       await expect(
         service.updateAllergy(userId, { ingredientIds: [1, 2] }),
-      ).rejects.toThrow(ConflictException);
+      ).rejects.toMatchObject({
+        response: {
+          statusCode: 409,
+          code: 'INGREDIENT_LIST_CONFLICT',
+          conflictWith: 'favoriteIngredients',
+          items: [{ id: 2, name: 'Milk' }],
+        },
+      });
     });
 
     it('should update allergies and return latest allergy list', async () => {

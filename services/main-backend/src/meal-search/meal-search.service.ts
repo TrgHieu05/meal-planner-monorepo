@@ -1,24 +1,87 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
+import { Difficulty, Prisma } from '@meal/database';
 import { PrismaService } from '../database/prisma.service';
-import { MealSearchResultItem } from '@meal/shared';
-
-type DifficultyDB = '1' | '2' | '3' | '4' | '5';
+import { MealDetailResponse, MealSearchResultItem } from '@meal/shared';
+import { MediaService } from '../media/media.service';
 
 @Injectable()
 export class MealSearchService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mediaService: MediaService,
+  ) {}
+
+  async getMealById(id: number): Promise<MealDetailResponse> {
+    const meal = await this.prisma.meal.findUnique({
+      where: { id },
+      include: {
+        cuisineType: true,
+        ingredients: {
+          include: {
+            ingredient: { select: { id: true, name: true } },
+          },
+        },
+      },
+    });
+
+    if (!meal) {
+      throw new NotFoundException('Meal not found.');
+    }
+
+    const difficulty = fromDbDifficulty(meal.difficulty);
+    if (!difficulty) {
+      throw new InternalServerErrorException('Invalid difficulty stored for meal');
+    }
+
+    return {
+      id: meal.id,
+      name: meal.name,
+      meal_image_key: meal.mealImageKey,
+      meal_image_urls: this.mediaService.buildImageUrls('meal', meal.mealImageKey),
+      description: meal.description,
+      cuisine_type: {
+        id: meal.cuisineType.id,
+        name: meal.cuisineType.name,
+        description: meal.cuisineType.description,
+      },
+      difficulty,
+      cook_time_min: meal.cookTimeMins,
+      total_calories: meal.totalCalories,
+      total_protein: meal.totalProtein,
+      total_fat: meal.totalFat,
+      total_fiber: meal.totalFiber,
+      ingredients: meal.ingredients.map((mi) => ({
+        id: mi.ingredient.id,
+        name: mi.ingredient.name,
+        quantity: mi.quantity,
+      })),
+    };
+  }
 
   async search(params: {
     queryText: string;
     excludeIngredients: string[];
     difficulty?: 'easy' | 'medium' | 'hard';
-    cookingTimeMaxMins?: number;
-  }): Promise<{ list: MealSearchResultItem[] }> {
+    cookTimeMinMins?: number;
+    cookTimeMaxMins?: number;
+    page: number;
+    pageSize: number;
+  }): Promise<{
+    list: MealSearchResultItem[];
+    page: number;
+    pageSize: number;
+    total: number;
+    hasMore: boolean;
+  }> {
     const normalizedQuery = normalizeText(params.queryText);
     const queryTokens = tokenize(normalizedQuery);
     const exclude = normalizeNames(params.excludeIngredients);
 
-    const where: Record<string, unknown> = {};
+    const where: Prisma.MealWhereInput = {};
 
     if (exclude.length > 0) {
       where['NOT'] = [
@@ -26,7 +89,12 @@ export class MealSearchService {
           ingredients: {
             some: {
               ingredient: {
-                name: { in: exclude },
+                OR: exclude.map((name) => ({
+                  name: {
+                    contains: name,
+                    mode: 'insensitive' as const,
+                  },
+                })),
               },
             },
           },
@@ -34,13 +102,72 @@ export class MealSearchService {
       ];
     }
 
-    if (params.cookingTimeMaxMins != null) {
-      where['cookTimeMins'] = { lte: params.cookingTimeMaxMins };
+    if (params.cookTimeMinMins != null || params.cookTimeMaxMins != null) {
+      where['cookTimeMins'] = {
+        ...(params.cookTimeMinMins != null ? { gte: params.cookTimeMinMins } : {}),
+        ...(params.cookTimeMaxMins != null ? { lte: params.cookTimeMaxMins } : {}),
+      };
     }
 
     if (params.difficulty) {
       where['difficulty'] = {
         in: toDbDifficultySet(params.difficulty),
+      };
+    }
+
+    const page = params.page;
+    const pageSize = params.pageSize;
+    const offset = (page - 1) * pageSize;
+
+    if (normalizedQuery.length === 0) {
+      const total = await this.prisma.meal.count({ where });
+      const meals = await this.prisma.meal.findMany({
+        where,
+        orderBy: { name: 'asc' },
+        skip: offset,
+        take: pageSize,
+        select: {
+          id: true,
+          name: true,
+          mealImageKey: true,
+          difficulty: true,
+          cookTimeMins: true,
+          totalCalories: true,
+          totalProtein: true,
+          totalFat: true,
+          totalFiber: true,
+        },
+      });
+
+      const list: MealSearchResultItem[] = meals.map((meal) => {
+        const difficulty = fromDbDifficulty(meal.difficulty);
+        if (!difficulty) {
+          throw new InternalServerErrorException(
+            'Invalid difficulty stored for meal',
+          );
+        }
+
+        return {
+          id: meal.id,
+          name: meal.name,
+          meal_image_key: meal.mealImageKey,
+          meal_image_urls: this.mediaService.buildImageUrls('meal', meal.mealImageKey),
+          difficulty,
+          cook_time_min: meal.cookTimeMins,
+          total_calories: meal.totalCalories,
+          total_protein: meal.totalProtein,
+          total_fat: meal.totalFat,
+          total_fiber: meal.totalFiber,
+          score: 0,
+        };
+      });
+
+      return {
+        list,
+        page,
+        pageSize,
+        total,
+        hasMore: page * pageSize < total,
       };
     }
 
@@ -70,7 +197,7 @@ export class MealSearchService {
         const matchToken = queryTokens.filter((t) => searchTokens.has(t)).length;
         const score = matchFullName * 3 + matchToken * 2;
 
-        const difficulty = fromDbDifficulty(meal.difficulty as DifficultyDB);
+        const difficulty = fromDbDifficulty(meal.difficulty);
         if (!difficulty) {
           throw new InternalServerErrorException(
             'Invalid difficulty stored for meal',
@@ -80,8 +207,14 @@ export class MealSearchService {
         return {
           id: meal.id,
           name: meal.name,
+          meal_image_key: meal.mealImageKey,
+          meal_image_urls: this.mediaService.buildImageUrls('meal', meal.mealImageKey),
           difficulty,
           cook_time_min: meal.cookTimeMins,
+          total_calories: meal.totalCalories,
+          total_protein: meal.totalProtein,
+          total_fat: meal.totalFat,
+          total_fiber: meal.totalFiber,
           score,
         };
       })
@@ -99,7 +232,15 @@ export class MealSearchService {
       return a.name.localeCompare(b.name);
     });
 
-    return { list: results.slice(0, 10) };
+    const total = results.length;
+    const list = results.slice(offset, offset + pageSize);
+    return {
+      list,
+      page,
+      pageSize,
+      total,
+      hasMore: page * pageSize < total,
+    };
   }
 }
 
@@ -124,22 +265,22 @@ function tokenize(text: string) {
   return Array.from(new Set(text.split(' ').filter(Boolean)));
 }
 
-function toDbDifficultySet(level: 'easy' | 'medium' | 'hard'): DifficultyDB[] {
+function toDbDifficultySet(level: 'easy' | 'medium' | 'hard'): Difficulty[] {
   switch (level) {
     case 'easy':
-      return ['1', '2'];
+      return [Difficulty.LEVEL_1, Difficulty.LEVEL_2];
     case 'medium':
-      return ['3'];
+      return [Difficulty.LEVEL_3];
     case 'hard':
-      return ['4', '5'];
+      return [Difficulty.LEVEL_4, Difficulty.LEVEL_5];
   }
 }
 
 function fromDbDifficulty(
-  d: DifficultyDB,
+  d: Difficulty,
 ): MealSearchResultItem['difficulty'] | null {
-  if (d === '1' || d === '2') return 'easy';
-  if (d === '3') return 'medium';
-  if (d === '4' || d === '5') return 'hard';
+  if (d === Difficulty.LEVEL_1 || d === Difficulty.LEVEL_2) return 'easy';
+  if (d === Difficulty.LEVEL_3) return 'medium';
+  if (d === Difficulty.LEVEL_4 || d === Difficulty.LEVEL_5) return 'hard';
   return null;
 }

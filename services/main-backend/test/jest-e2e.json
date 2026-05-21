@@ -3,6 +3,12 @@
   "rootDir": ".",
   "testEnvironment": "node",
   "testRegex": ".e2e-spec.ts$",
+  "moduleNameMapper": {
+    "^@meal/shared$": "<rootDir>/../../../packages/shared/index.ts",
+    "^@meal/shared/(.*)$": "<rootDir>/../../../packages/shared/$1",
+    "^@meal/database$": "<rootDir>/../../../packages/database/index.js",
+    "^@meal/database/(.*)$": "<rootDir>/../../../packages/database/$1"
+  },
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   }

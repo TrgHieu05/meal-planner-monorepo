@@ -12,13 +12,19 @@ import { OptionsModule } from './options/options.module';
 import { ProfileModule } from './profile/profile.module';
 import { UserModule } from './user/user.module';
 import { JwtAuthOptInGuard } from './auth/jwt-auth.guard';
+import { MealTemplateModule } from './meal-template/meal-template.module';
 import { MealSearchModule } from './meal-search/meal-search.module';
+import { MenuModule } from './menu/menu.module';
+import { IngredientModule } from './ingredient/ingredient.module';
+import { MediaModule } from './media/media.module';
+import { getEnvFilePaths, isProductionRuntime } from './config/runtime-config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '../../.env',
+      ignoreEnvFile: isProductionRuntime(),
+      envFilePath: getEnvFilePaths(),
     }),
     PrismaModule,
     AuthModule,
@@ -28,7 +34,11 @@ import { MealSearchModule } from './meal-search/meal-search.module';
     UserModule,
     MetricModule,
     ProfileModule,
+    IngredientModule,
+    MealTemplateModule,
     MealSearchModule,
+    MenuModule,
+    MediaModule,
   ],
   controllers: [AppController],
   providers: [

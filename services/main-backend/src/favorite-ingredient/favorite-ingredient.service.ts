@@ -10,6 +10,7 @@ import {
   FavoriteIngredientUpdate,
 } from '@meal/shared/types/favorite-ingredient';
 import { Uuid } from '@meal/shared/types/common';
+import { createIngredientConflictException } from '../ingredient/ingredient-conflict.exception';
 
 @Injectable()
 export class FavoriteIngredientService {
@@ -138,15 +139,23 @@ export class FavoriteIngredientService {
         userId,
         ingredientId: { in: ingredientIds },
       },
-      select: { ingredientId: true },
+      select: {
+        ingredient: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     });
     if (conflicts.length > 0) {
-      const conflictIds = conflicts
-        .map((item) => item.ingredientId)
-        .sort((a, b) => a - b);
-      throw new ConflictException(
-        `Favorite ingredient update conflicts with allergies: ${conflictIds.join(', ')}.`,
-      );
+      const items = conflicts
+        .map((item) => item.ingredient)
+        .sort((left, right) => left.id - right.id);
+      throw createIngredientConflictException({
+        conflictWith: 'allergies',
+        items,
+      });
     }
   }
 }

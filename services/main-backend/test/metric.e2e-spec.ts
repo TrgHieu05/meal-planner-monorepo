@@ -91,7 +91,6 @@ describe('Metric API (e2e)', () => {
   it('POST /api/v1/metrics should return 201 for valid payload', async () => {
     metricService.createMetric.mockResolvedValue({
       id: 2,
-      userId,
       heightCm: 170,
       weightKg: 65,
       bmi: 22.49,

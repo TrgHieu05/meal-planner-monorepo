@@ -1,0 +1,719 @@
+name: Pull Request Create Preview
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: pull-request-create-preview-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  create-neon-preview-branch:
+    name: Create Neon Preview Branch
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'enhancement') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+      NEON_DATABASE_NAME: neondb
+      NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
+      NEON_PRODUCTION_BRANCH_ID: ${{ vars.NEON_PRODUCTION_BRANCH_ID }}
+      NEON_ROLE_NAME: neondb_owner
+      PREVIEW_BRANCH_NAME: preview/pr-${{ github.event.pull_request.number }}
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Validate Neon preview prerequisites
+        run: |
+          required_values=(
+            NEON_API_KEY
+            NEON_PROJECT_ID
+            NEON_PRODUCTION_BRANCH_ID
+            PREVIEW_BRANCH_NAME
+          )
+
+          for name in "${required_values[@]}"; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error::Missing required GitHub variable or secret: ${name}"
+              exit 1
+            fi
+          done
+
+      - name: Compute preview branch expiration
+        id: preview_expiration
+        run: |
+          echo "expires_at=$(date -u --date '+7 days' +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_OUTPUT"
+
+      - name: Lookup existing Neon preview branch
+        id: lookup_preview_branch
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+
+          async function main() {
+            const projectId = process.env.NEON_PROJECT_ID;
+            const branchName = process.env.PREVIEW_BRANCH_NAME;
+            const apiKey = process.env.NEON_API_KEY;
+
+            const response = await fetch(`https://console.neon.tech/api/v2/projects/${projectId}/branches`, {
+              headers: {
+                accept: 'application/json',
+                authorization: `Bearer ${apiKey}`,
+              },
+            });
+
+            if (!response.ok) {
+              throw new Error(`Failed to list Neon branches (${response.status})`);
+            }
+
+            const payload = await response.json();
+            const branch = Array.isArray(payload?.branches)
+              ? payload.branches.find((item) => item?.name === branchName)
+              : null;
+
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, `branch_found=${branch ? 'true' : 'false'}\n`);
+
+            if (branch?.id) {
+              fs.appendFileSync(process.env.GITHUB_OUTPUT, `branch_id=${branch.id}\n`);
+            }
+          }
+
+          main().catch((error) => {
+            console.error(error);
+            process.exit(1);
+          });
+          NODE
+
+      - name: Delete existing Neon preview branch before re-create
+        if: ${{ steps.lookup_preview_branch.outputs.branch_found == 'true' }}
+        uses: neondatabase/delete-branch-action@v3
+        with:
+          project_id: ${{ env.NEON_PROJECT_ID }}
+          branch: ${{ steps.lookup_preview_branch.outputs.branch_id }}
+          api_key: ${{ env.NEON_API_KEY }}
+
+      - name: Create Neon schema-only preview branch
+        id: create_neon_branch
+        uses: neondatabase/create-branch-action@v6
+        env:
+          NODE_OPTIONS: --no-deprecation
+        with:
+          project_id: ${{ env.NEON_PROJECT_ID }}
+          branch_name: ${{ env.PREVIEW_BRANCH_NAME }}
+          parent_branch: ${{ env.NEON_PRODUCTION_BRANCH_ID }}
+          branch_type: schema-only
+          database: ${{ env.NEON_DATABASE_NAME }}
+          role: ${{ env.NEON_ROLE_NAME }}
+          prisma: true
+          expires_at: ${{ steps.preview_expiration.outputs.expires_at }}
+          api_key: ${{ env.NEON_API_KEY }}
+
+      - name: Mask preview database URLs
+        run: |
+          echo "::add-mask::${{ steps.create_neon_branch.outputs.db_url }}"
+          echo "::add-mask::${{ steps.create_neon_branch.outputs.db_url_pooled }}"
+
+      - name: Write preview runtime config file
+        env:
+          PREVIEW_BRANCH_ID: ${{ steps.create_neon_branch.outputs.branch_id }}
+          PREVIEW_BRANCH_NAME_VALUE: ${{ env.PREVIEW_BRANCH_NAME }}
+          PREVIEW_DATABASE_URL: ${{ steps.create_neon_branch.outputs.db_url }}
+          PREVIEW_DATABASE_URL_POOLED: ${{ steps.create_neon_branch.outputs.db_url_pooled }}
+        run: |
+          required_values=(
+            PREVIEW_BRANCH_ID
+            PREVIEW_BRANCH_NAME_VALUE
+            PREVIEW_DATABASE_URL
+          )
+
+          for name in "${required_values[@]}"; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error::Missing expected Neon output: ${name}"
+              exit 1
+            fi
+          done
+
+          config_file="preview-runtime-config.env"
+          {
+            echo "DATABASE_URL=${PREVIEW_DATABASE_URL}"
+            echo "DATABASE_URL_POOLED=${PREVIEW_DATABASE_URL_POOLED}"
+            echo "PREVIEW_BRANCH_NAME=${PREVIEW_BRANCH_NAME_VALUE}"
+            echo "NEON_BRANCH_ID=${PREVIEW_BRANCH_ID}"
+          } > "$config_file"
+
+      - name: Upload preview runtime config artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-runtime-config
+          path: preview-runtime-config.env
+          if-no-files-found: error
+          retention-days: 1
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'enhancement') }}
+    timeout-minutes: 30
+    needs:
+      - create-neon-preview-branch
+    env:
+      NODE_ENV: test
+      EXPO_PUBLIC_API_BASE_URL: https://api-staging.example.com
+      EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: web-client-id
+      GOOGLE_WEB_CLIENT_ID: web-client-id
+      JWT_SECRET: test-secret
+      JWT_EXPIRES_IN: 7d
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.30.3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - name: Download preview runtime config artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: preview-runtime-config
+          path: preview-runtime
+
+      - name: Load preview runtime config
+        run: |
+          config_file="preview-runtime/preview-runtime-config.env"
+
+          if [[ ! -f "$config_file" ]]; then
+            echo "::error::Preview runtime config artifact is missing."
+            exit 1
+          fi
+
+          while IFS= read -r line; do
+            if [[ -z "$line" ]]; then
+              continue
+            fi
+
+            if [[ ! "$line" =~ ^[A-Z0-9_]+= ]]; then
+              continue
+            fi
+
+            echo "$line" >> "$GITHUB_ENV"
+
+            key="${line%%=*}"
+            value="${line#*=}"
+            if [[ "$key" == "DATABASE_URL" || "$key" == "DATABASE_URL_POOLED" ]]; then
+              echo "::add-mask::$value"
+            fi
+          done < "$config_file"
+
+          database_url="$(grep -E '^DATABASE_URL=' "$config_file" | head -n 1 | cut -d= -f2-)"
+          if [[ -z "$database_url" ]]; then
+            echo "::error::DATABASE_URL is missing in preview runtime config artifact."
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm run prisma:generate
+
+      - name: Build shared package
+        run: pnpm run build:shared
+
+      - name: Build backend
+        run: pnpm --filter main-backend run build
+
+      - name: Run backend unit tests
+        run: pnpm --filter main-backend exec jest --runInBand --ci
+
+      - name: Run backend e2e tests
+        run: pnpm --filter main-backend exec jest --config ./test/jest-e2e.json --runInBand --ci
+
+      - name: Run mobile tests
+        run: pnpm --filter mobile-app exec jest --config ./jest.config.js --runInBand --ci
+
+  build-preview:
+    if: ${{ github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'enhancement')}} 
+    name: Build Preview
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    needs:
+      - create-neon-preview-branch
+      - test
+    outputs:
+      eas_build_id: ${{ steps.preview_metadata.outputs.eas_build_id }}
+      eas_build_url: ${{ steps.preview_metadata.outputs.eas_build_url }}
+      eas_artifact_url: ${{ steps.preview_metadata.outputs.eas_artifact_url }}
+      preview_branch_name: ${{ steps.preview_metadata.outputs.preview_branch_name }}
+      staging_health_url: ${{ steps.preview_metadata.outputs.staging_health_url }}
+    environment:
+      name: staging
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      FLY_APP_NAME_STAGING: ${{ vars.FLY_APP_NAME_STAGING }}
+      FLY_CONFIG_PATH_STAGING: ${{ vars.FLY_CONFIG_PATH_STAGING }}
+      EXPO_PUBLIC_API_BASE_URL: ${{ vars.EXPO_PUBLIC_API_BASE_URL }}
+      EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: ${{ vars.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID }}
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.30.3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Download preview runtime config artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: preview-runtime-config
+          path: preview-runtime
+
+      - name: Load preview runtime config
+        run: |
+          config_file="preview-runtime/preview-runtime-config.env"
+
+          if [[ ! -f "$config_file" ]]; then
+            echo "::error::Preview runtime config artifact is missing."
+            exit 1
+          fi
+
+          while IFS= read -r line; do
+            if [[ -z "$line" ]]; then
+              continue
+            fi
+
+            if [[ ! "$line" =~ ^[A-Z0-9_]+= ]]; then
+              continue
+            fi
+
+            echo "$line" >> "$GITHUB_ENV"
+
+            key="${line%%=*}"
+            value="${line#*=}"
+            if [[ "$key" == "DATABASE_URL" || "$key" == "DATABASE_URL_POOLED" ]]; then
+              echo "::add-mask::$value"
+            fi
+          done < "$config_file"
+
+      - name: Validate preview build prerequisites
+        run: |
+          required_values=(
+            EXPO_TOKEN
+            FLY_API_TOKEN
+            FLY_APP_NAME_STAGING
+            FLY_CONFIG_PATH_STAGING
+            DATABASE_URL
+            PREVIEW_BRANCH_NAME
+            EXPO_PUBLIC_API_BASE_URL
+            EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID
+          )
+
+          for name in "${required_values[@]}"; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error::Missing required GitHub variable or secret: ${name}"
+              exit 1
+            fi
+          done
+
+          if [[ ! -f "${FLY_CONFIG_PATH_STAGING}" ]]; then
+            echo "::error::Fly staging config file not found at ${FLY_CONFIG_PATH_STAGING}"
+            exit 1
+          fi
+
+          if [[ ! -s "${FLY_CONFIG_PATH_STAGING}" ]]; then
+            echo "::error::Fly staging config file is empty at ${FLY_CONFIG_PATH_STAGING}. Complete this file before using pull-request-create-preview.yml."
+            exit 1
+          fi
+
+          echo "STAGING_HEALTHCHECK_URL=https://${FLY_APP_NAME_STAGING}.fly.dev/api/health" >> "$GITHUB_ENV"
+
+      - name: Mask preview database URL
+        run: echo "::add-mask::${DATABASE_URL}"
+
+      - name: Setup Flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@1.5
+
+      - name: Setup Expo and EAS CLI
+        uses: expo/expo-github-action@v8
+        with:
+          expo-version: latest
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm run prisma:generate
+
+      - name: Sync preview schema
+        run: pnpm --filter @meal/database exec prisma db push --accept-data-loss
+
+      - name: Seed preview bootstrap data
+        run: pnpm run prisma:seed:bootstrap
+
+      - name: Point Fly staging app to preview database
+        run: |
+          flyctl secrets set \
+            DATABASE_URL="$DATABASE_URL" \
+            --app "$FLY_APP_NAME_STAGING"
+
+      - name: Deploy backend to Fly staging
+        run: |
+          flyctl deploy \
+            --remote-only \
+            --app "$FLY_APP_NAME_STAGING" \
+            --config "$FLY_CONFIG_PATH_STAGING"
+
+      - name: Smoke check staging health endpoint
+        run: |
+          for attempt in {1..12}; do
+            if curl --fail --silent --show-error "$STAGING_HEALTHCHECK_URL" | tee staging-health.json >/dev/null; then
+              exit 0
+            fi
+
+            if [[ "$attempt" == "12" ]]; then
+              echo "::error::Staging health check failed at $STAGING_HEALTHCHECK_URL"
+              exit 1
+            fi
+
+            sleep 10
+          done
+
+      - name: Build Expo Android preview and wait for completion
+        working-directory: apps/mobile-app
+        run: |
+          eas build \
+            --platform android \
+            --profile preview \
+            --non-interactive \
+            --json \
+            --wait | tee "$GITHUB_WORKSPACE/eas-preview-build.json"
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Capture preview metadata
+        id: preview_metadata
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+
+          const outputLines = [];
+          const easPath = path.join(process.env.GITHUB_WORKSPACE, 'eas-preview-build.json');
+          let buildId = '';
+          let buildUrl = '';
+          let artifactUrl = '';
+
+          if (fs.existsSync(easPath)) {
+            const fileContent = fs.readFileSync(easPath, 'utf8').trim();
+            const parseCandidates = [fileContent];
+
+            const firstArrayStart = fileContent.indexOf('[');
+            const lastArrayEnd = fileContent.lastIndexOf(']');
+            if (firstArrayStart !== -1 && lastArrayEnd > firstArrayStart) {
+              parseCandidates.push(fileContent.slice(firstArrayStart, lastArrayEnd + 1));
+            }
+
+            const firstObjectStart = fileContent.indexOf('{');
+            const lastObjectEnd = fileContent.lastIndexOf('}');
+            if (firstObjectStart !== -1 && lastObjectEnd > firstObjectStart) {
+              parseCandidates.push(fileContent.slice(firstObjectStart, lastObjectEnd + 1));
+            }
+
+            let parsed = null;
+            for (const candidate of parseCandidates) {
+              if (!candidate) {
+                continue;
+              }
+
+              try {
+                parsed = JSON.parse(candidate);
+                break;
+              } catch {
+                // Try the next candidate shape.
+              }
+            }
+
+            const first = Array.isArray(parsed) ? parsed[0] : parsed;
+            const build = Array.isArray(first?.builds) ? first.builds[0] : first;
+
+            buildId = typeof build?.id === 'string' ? build.id.trim() : '';
+            buildUrl = typeof (build?.buildDetailsPageUrl ?? build?.artifacts?.buildUrl ?? build?.url) === 'string'
+              ? (build.buildDetailsPageUrl ?? build.artifacts?.buildUrl ?? build.url).trim()
+              : '';
+            artifactUrl = typeof (build?.artifacts?.applicationArchiveUrl ?? build?.artifacts?.buildUrl) === 'string'
+              ? (build.artifacts?.applicationArchiveUrl ?? build.artifacts?.buildUrl).trim()
+              : '';
+
+            if (!buildId) {
+              const idMatch = fileContent.match(/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i);
+              if (idMatch?.[0]) {
+                buildId = idMatch[0];
+              }
+            }
+          }
+
+          if (buildId) {
+            outputLines.push(`eas_build_id=${buildId}`);
+          }
+
+          if (buildUrl) {
+            outputLines.push(`eas_build_url=${buildUrl}`);
+          }
+
+          if (artifactUrl) {
+            outputLines.push(`eas_artifact_url=${artifactUrl}`);
+          }
+
+          outputLines.push(`staging_health_url=${process.env.STAGING_HEALTHCHECK_URL}`);
+          outputLines.push(`preview_branch_name=${process.env.PREVIEW_BRANCH_NAME}`);
+
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `${outputLines.join('\n')}\n`);
+          NODE
+
+      - name: Download preview APK to runner
+        env:
+          EAS_ARTIFACT_URL: ${{ steps.preview_metadata.outputs.eas_artifact_url }}
+        run: |
+          if [[ -z "$EAS_ARTIFACT_URL" ]]; then
+            echo "::error::Missing EAS artifact URL for preview APK download."
+            exit 1
+          fi
+
+          mkdir -p preview-build
+          curl --fail --silent --show-error --location "$EAS_ARTIFACT_URL" --output preview-build/app-preview.apk
+
+          if [[ ! -s preview-build/app-preview.apk ]]; then
+            echo "::error::Preview APK download failed or produced an empty file."
+            exit 1
+          fi
+
+      - name: Upload preview APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-preview-${{ github.event.pull_request.number }}-apk
+          path: preview-build/app-preview.apk
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Upload preview metadata artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-preview-${{ github.event.pull_request.number }}-metadata
+          path: |
+            staging-health.json
+            eas-preview-build.json
+
+  distribute_firebase:
+    if: ${{ github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'enhancement') }}
+    name: distribute-firebase
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs:
+      - build-preview
+    environment:
+      name: staging
+    env:
+      FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
+      FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+      FIREBASE_TESTER_GROUP: internal-tester
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Validate Firebase distribution prerequisites
+        run: |
+          required_values=(
+            FIREBASE_APP_ID
+            FIREBASE_TOKEN
+            FIREBASE_TESTER_GROUP
+          )
+
+          for name in "${required_values[@]}"; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error::Missing required GitHub secret or value: ${name}"
+              exit 1
+            fi
+          done
+
+      - name: Download preview APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: pr-preview-${{ github.event.pull_request.number }}-apk
+          path: preview-build
+
+      - name: Distribute preview APK to Firebase App Distribution
+        env:
+          EAS_BUILD_ID: ${{ needs.build-preview.outputs.eas_build_id }}
+          PREVIEW_BRANCH_NAME: ${{ needs.build-preview.outputs.preview_branch_name }}
+        run: |
+          apk_path="preview-build/app-preview.apk"
+
+          if [[ ! -f "$apk_path" ]]; then
+            echo "::error::Preview APK artifact is missing at $apk_path"
+            exit 1
+          fi
+
+          release_notes="PR #${{ github.event.pull_request.number }} preview (${PREVIEW_BRANCH_NAME:-unknown}) - EAS build ${EAS_BUILD_ID:-unknown} - commit ${GITHUB_SHA}"
+
+          npx firebase-tools appdistribution:distribute "$apk_path" \
+            --app "$FIREBASE_APP_ID" \
+            --groups "$FIREBASE_TESTER_GROUP" \
+            --release-notes "$release_notes" \
+            --token "$FIREBASE_TOKEN"
+
+  comment-preview:
+    if: ${{ always() && github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'enhancement') }}
+    name: Comment Preview Metadata
+    runs-on: ubuntu-latest
+    needs:
+      - create-neon-preview-branch
+      - test
+      - build-preview
+      - distribute_firebase
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    env:
+      COMMENT_MARKER: <!-- pr-review-preview -->
+      BUILD_PREVIEW_RESULT: ${{ needs.build-preview.result }}
+      DISTRIBUTE_FIREBASE_RESULT: ${{ needs.distribute_firebase.result }}
+      EAS_BUILD_ID: ${{ needs.build-preview.outputs.eas_build_id }}
+      FIREBASE_TESTER_GROUP: internal_tester
+      FLY_APP_NAME_STAGING: ${{ vars.FLY_APP_NAME_STAGING }}
+      PREVIEW_BRANCH_NAME: ${{ needs.build-preview.outputs.preview_branch_name || format('preview/pr-{0}', github.event.pull_request.number) }}
+      STAGING_HEALTH_URL: ${{ needs.build-preview.outputs.staging_health_url || format('https://{0}.fly.dev/api/health', vars.FLY_APP_NAME_STAGING) }}
+      TEST_RESULT: ${{ needs.test.result }}
+      BRANCH_RESULT: ${{ needs.create-neon-preview-branch.result }}
+      WORKFLOW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - name: Comment preview metadata on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const marker = process.env.COMMENT_MARKER;
+            const buildId = process.env.EAS_BUILD_ID?.trim();
+            const buildPreviewResult = process.env.BUILD_PREVIEW_RESULT?.trim() || 'unknown';
+            const distributeFirebaseResult = process.env.DISTRIBUTE_FIREBASE_RESULT?.trim() || 'unknown';
+            const testResult = process.env.TEST_RESULT?.trim() || 'unknown';
+            const branchResult = process.env.BRANCH_RESULT?.trim() || 'unknown';
+
+            const previewReady = buildPreviewResult === 'success' && distributeFirebaseResult === 'success';
+            const intro = previewReady
+              ? 'Preview (Staging) environment is ready for this pull request and the preview APK has been distributed to Firebase App Distribution.'
+              : 'Preview (Staging) workflow finished, but the preview APK was not fully distributed to Firebase App Distribution.';
+
+            const statusLine = `- **Build preview job:** ${buildPreviewResult}`;
+
+            const easBuildLine = buildId
+              ? `- **EAS Android preview build ID:** \`${buildId}\``
+              : '- **EAS Android preview build ID:** Unavailable';
+
+            const firebaseDistributionLine = distributeFirebaseResult === 'success'
+              ? `- **Firebase App Distribution:** distributed successfully to tester group \`${process.env.FIREBASE_TESTER_GROUP}\``
+              : `- **Firebase App Distribution:** ${distributeFirebaseResult}`;
+
+            const body = [
+              marker,
+              intro,
+              '',
+              `- **Neon branch:** \`${process.env.PREVIEW_BRANCH_NAME}\``,
+              `- **Fly staging app:** \`${process.env.FLY_APP_NAME_STAGING || 'Unavailable'}\``,
+              `- **Health endpoint:** ${process.env.STAGING_HEALTH_URL || 'Unavailable'}`,
+              easBuildLine,
+              firebaseDistributionLine,
+              statusLine,
+              `- **distribute-firebase job:** ${distributeFirebaseResult}`,
+              `- **Neon branch job:** ${branchResult}`,
+              `- **Test job:** ${testResult}`,
+              `- **Workflow run:** ${process.env.WORKFLOW_RUN_URL}`,
+              '',
+              'Note: this repository uses one fixed staging app, so the newest PR preview overwrites the previous one.',
+            ].join('\n');
+
+            const { owner, repo } = context.repo;
+            const issue_number = context.payload.pull_request?.number ?? context.issue.number;
+
+            if (!issue_number) {
+              core.setFailed('Missing pull request number in workflow context.');
+              return;
+            }
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner,
+              repo,
+              issue_number,
+              per_page: 100,
+            });
+
+            const existing = comments.find((comment) =>
+              comment.user?.type === 'Bot' && comment.body?.includes(marker),
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existing.id,
+                body,
+              });
+              return;
+            }
+
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number,
+              body,
+            });

@@ -1,4 +1,8 @@
-import { INestApplication, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  INestApplication,
+  NotFoundException,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { App } from 'supertest/types';
@@ -10,6 +14,7 @@ import { JwtService } from '@nestjs/jwt';
 describe('Profile API (e2e)', () => {
   let app: INestApplication<App>;
   let profileService: {
+    createProfile: jest.Mock;
     getFullProfile: jest.Mock;
     getProfile: jest.Mock;
     updateProfile: jest.Mock;
@@ -20,6 +25,7 @@ describe('Profile API (e2e)', () => {
 
   beforeEach(async () => {
     profileService = {
+      createProfile: jest.fn(),
       getFullProfile: jest.fn(),
       getProfile: jest.fn(),
       updateProfile: jest.fn(),
@@ -112,6 +118,67 @@ describe('Profile API (e2e)', () => {
       .get('/api/v1/profile')
       .set('Authorization', `Bearer ${token}`)
       .expect(404);
+  });
+
+  it('POST /api/v1/profile should return 201 for valid payload', async () => {
+    profileService.createProfile.mockResolvedValue({
+      dietTypeId: 1,
+      goalId: 2,
+      cuisineTypeId: 3,
+      targetCalories: null,
+      activityLevel: null,
+    });
+
+    await request(app.getHttpServer())
+      .post('/api/v1/profile')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ dietTypeId: 1, goalId: 2, cuisineTypeId: 3 })
+      .expect(201);
+
+    expect(profileService.createProfile).toHaveBeenCalledWith(userId, {
+      dietTypeId: 1,
+      goalId: 2,
+      cuisineTypeId: 3,
+    });
+  });
+
+  it('POST /api/v1/profile should return 401 when token is missing', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/profile')
+      .send({ dietTypeId: 1, goalId: 2, cuisineTypeId: 3 })
+      .expect(401);
+  });
+
+  it('POST /api/v1/profile should return 422 for invalid payload', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/profile')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ activityLevel: 'INVALID' })
+      .expect(422);
+  });
+
+  it('POST /api/v1/profile should return 404 when user or reference is not found', async () => {
+    profileService.createProfile.mockRejectedValue(
+      new NotFoundException('Goal with id 999 was not found.'),
+    );
+
+    await request(app.getHttpServer())
+      .post('/api/v1/profile')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ dietTypeId: 1, goalId: 999, cuisineTypeId: 3 })
+      .expect(404);
+  });
+
+  it('POST /api/v1/profile should return 409 when profile already exists', async () => {
+    profileService.createProfile.mockRejectedValue(
+      new ConflictException('Profile already exists for the current user.'),
+    );
+
+    await request(app.getHttpServer())
+      .post('/api/v1/profile')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ dietTypeId: 1, goalId: 2, cuisineTypeId: 3 })
+      .expect(409);
   });
 
   it('PATCH /api/v1/profile should return 200 for valid payload', async () => {

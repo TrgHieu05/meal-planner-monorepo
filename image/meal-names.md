@@ -1,0 +1,100 @@
+# Meal Names (seed)
+- Grilled Chicken Rice
+- Chicken Fried Rice
+- Chicken Pasta
+- Chicken Sandwich
+- Chicken Salad
+- Chicken Soup
+- Garlic Chicken
+- Cheese Chicken
+- Chicken Burger
+- Chicken Wrap
+- Beef Rice Bowl
+- Beef Fried Rice
+- Beef Pasta
+- Beef Sandwich
+- Beef Salad
+- Beef Soup
+- Beef Steak
+- Butter Beef
+- Beef Burger
+- Beef Wrap
+- Salmon Rice Bowl
+- Salmon Salad
+- Grilled Salmon
+- Salmon Pasta
+- Salmon Sandwich
+- Garlic Shrimp
+- Shrimp Fried Rice
+- Shrimp Pasta
+- Shrimp Salad
+- Shrimp Soup
+- Omelette Cheese
+- Omelette Mushroom
+- Omelette Tomato
+- Egg Sandwich
+- Egg Salad
+- Vegetable Pasta
+- Vegetable Soup
+- Mushroom Soup
+- Vegetable Salad
+- Healthy Veggie Bowl
+- Chicken Curry
+- Beef Curry
+- Shrimp Curry
+- Chicken Stir Fry
+- Beef Stir Fry
+- Shrimp Stir Fry
+- Creamy Pasta
+- Butter Rice
+- Garlic Bread
+- Spinach Chicken Salad
+- Avocado Toast Egg
+- Beef Broccoli Bowl
+- Tuna Pasta Salad
+- Tofu Veggie Stir Fry
+- Quinoa Chicken Bowl
+- Creamy Mushroom Pasta
+- Turkey Sandwich
+- Sweet Potato Beef Hash
+- Shrimp Quinoa Salad
+- Salmon Avocado Rice
+- Lentil Soup
+- Chickpea Salad
+- Duck Fried Rice
+- Mozzarella Pasta
+- Pork Rice Bowl
+- Tofu Curry
+- Spinach Omelette
+- Crab Noodles
+- Apple Yogurt Bowl
+- Banana Oat Pancake
+- Blueberry Yogurt Parfait
+- Chicken Tortilla Wrap
+- Pork Stir Fry
+- Cauliflower Soup
+- Broccoli Quinoa Bowl
+- Turkey Pasta
+- Shrimp Taco
+- Tofu Noodle Soup
+- Chicken Avocado Sandwich
+- Parmesan Chicken Pasta
+- Corn Soup
+- Mango Yogurt Smoothie
+- Beef Taco
+- Lobster Pasta
+- Tempeh Rice Bowl
+- Avocado Shrimp Salad
+- Spinach Pasta
+- Tofu Salad Bowl
+- Chicken Corn Soup
+- Pork Noodles
+- Berry Oat Bowl
+- Salmon Quinoa Bowl
+- Turkey Rice Bowl
+- Mushroom Toast
+- Chickpea Curry
+- Beef Quinoa Salad
+- Duck Pasta
+- Veggie Omelette
+- Tuna Sandwich

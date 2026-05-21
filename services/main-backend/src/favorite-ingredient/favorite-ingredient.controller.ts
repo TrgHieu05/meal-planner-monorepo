@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiBody,
   ApiOperation,
   ApiResponse,
   ApiTags,
@@ -62,13 +63,26 @@ export class FavoriteIngredientController {
   @ApiResponse({ status: 404, description: 'User or ingredient not found.' })
   @ApiResponse({
     status: 409,
-    description: 'Ingredient conflict with allergy list.',
+    description: 'Ingredient conflict with allergy list, including structured conflict metadata.',
   })
   @ApiResponse({
     status: 422,
     description: 'Invalid request payload.',
   })
   @ApiResponse({ status: 500, description: 'Internal server error.' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['ingredientIds'],
+      properties: {
+        ingredientIds: {
+          type: 'array',
+          items: { type: 'integer', format: 'int32' },
+          example: [1, 2, 3],
+        },
+      },
+    },
+  })
   updateFavoriteIngredient(
     @Req() request: AuthenticatedRequest,
     @Body() body: unknown,

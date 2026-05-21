@@ -15,27 +15,33 @@
         ]
       }
     },
-    "/api/auth/google": {
-      "get": {
-        "description": "Chuyển hướng trình duyệt tới trang OAuth2 của Google. Sau khi xác thực thành công, Google sẽ gọi lại callback `/api/auth/google/callback`.",
-        "operationId": "AuthController_googleAuth",
+    "/api/auth/google/exchange": {
+      "post": {
+        "description": "Mobile app gửi `idToken` nhận từ Google Sign-In. Backend xác minh token với Google rồi phát hành `accessToken` nội bộ và trả về user hiện tại.",
+        "operationId": "AuthController_exchangeGoogleIdToken",
         "parameters": [],
-        "responses": {
-          "302": {
-            "description": "Chuyển hướng tới trang đăng nhập Google"
+        "requestBody": {
+          "required": true,
+          "description": "Google ID token nhận từ mobile app sau khi đăng nhập Google thành công",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "idToken"
+                ],
+                "properties": {
+                  "idToken": {
+                    "type": "string",
+                    "minLength": 1,
+                    "example": "eyJhbGciOiJSUzI1NiIsImtpZCI6Ij..."
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
           }
         },
-        "summary": "Bắt đầu quá trình đăng nhập bằng Google",
-        "tags": [
-          "Authentication"
-        ]
-      }
-    },
-    "/api/auth/google/callback": {
-      "get": {
-        "description": "Google gọi endpoint này sau khi xác thực. Hệ thống tìm/tạo user rồi phát hành JWT nội bộ (`accessToken`) dùng để gọi các API được bảo vệ.",
-        "operationId": "AuthController_googleAuthRedirect",
-        "parameters": [],
         "responses": {
           "200": {
             "description": "Đăng nhập thành công, trả về user và accessToken",
@@ -47,7 +53,8 @@
                     "user": {
                       "id": "63914c9d-3f89-4a60-a67d-be0d29b5e623",
                       "email": "quytvo2626@gmail.com",
-                      "userName": "quý võ"
+                      "userName": "quý võ",
+                      "isOnboardingCompleted": false
                     },
                     "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
                   }
@@ -56,13 +63,13 @@
             }
           },
           "401": {
-            "description": "Xác thực Google không thành công"
+            "description": "Google ID token không hợp lệ hoặc không có email đã xác minh"
           },
-          "500": {
-            "description": "Lỗi máy chủ nội bộ"
+          "422": {
+            "description": "Payload không hợp lệ"
           }
         },
-        "summary": "Callback Google OAuth — nhận token",
+        "summary": "Đổi Google ID token lấy JWT nội bộ cho mobile app",
         "tags": [
           "Authentication"
         ]
@@ -82,7 +89,8 @@
                   "example": {
                     "id": "63914c9d-3f89-4a60-a67d-be0d29b5e623",
                     "email": "quytvo2626@gmail.com",
-                    "userName": "quý võ"
+                    "userName": "quý võ",
+                    "isOnboardingCompleted": false
                   }
                 }
               }
@@ -134,6 +142,33 @@
       "patch": {
         "operationId": "AllergyController_updateAllergy",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "ingredientIds"
+                ],
+                "properties": {
+                  "ingredientIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "example": [
+                      1,
+                      2,
+                      3
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Cập nhật allergy thành công"
@@ -145,7 +180,7 @@
             "description": "User or ingredient not found."
           },
           "409": {
-            "description": "Ingredient conflict with favorite list."
+            "description": "Ingredient conflict with favorite list, including structured conflict metadata."
           },
           "422": {
             "description": "Invalid request payload."
@@ -196,6 +231,33 @@
       "patch": {
         "operationId": "FavoriteIngredientController_updateFavoriteIngredient",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "ingredientIds"
+                ],
+                "properties": {
+                  "ingredientIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "example": [
+                      1,
+                      2,
+                      3
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Cập nhật favorite ingredient thành công"
@@ -207,7 +269,7 @@
             "description": "User or ingredient not found."
           },
           "409": {
-            "description": "Ingredient conflict with allergy list."
+            "description": "Ingredient conflict with allergy list, including structured conflict metadata."
           },
           "422": {
             "description": "Invalid request payload."
@@ -260,7 +322,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Trả về diet type theo id"
+            "description": "Trả về diet type theo id của diet type"
           },
           "404": {
             "description": "Diet type not found."
@@ -272,7 +334,7 @@
             "description": "Internal server error."
           }
         },
-        "summary": "Lấy chi tiết diet type theo id",
+        "summary": "Lấy chi tiết diet type theo id của diet type",
         "tags": [
           "Options"
         ]
@@ -311,7 +373,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Trả về goal theo id"
+            "description": "Trả về goal theo id của goal"
           },
           "404": {
             "description": "Goal not found."
@@ -323,7 +385,7 @@
             "description": "Internal server error."
           }
         },
-        "summary": "Lấy chi tiết goal theo id",
+        "summary": "Lấy chi tiết goal theo id của goal",
         "tags": [
           "Options"
         ]
@@ -362,7 +424,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Trả về cuisine type theo id"
+            "description": "Trả về cuisine type theo id của cuisine type"
           },
           "404": {
             "description": "Cuisine type not found."
@@ -374,7 +436,7 @@
             "description": "Internal server error."
           }
         },
-        "summary": "Lấy chi tiết cuisine type theo id",
+        "summary": "Lấy chi tiết cuisine type theo id của cuisine type",
         "tags": [
           "Options"
         ]
@@ -413,6 +475,39 @@
       "patch": {
         "operationId": "UserController_updateCurrentUser",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "Current user update payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "example": "Nguyen Van A"
+                  },
+                  "gender": {
+                    "type": "string",
+                    "enum": [
+                      "M",
+                      "F"
+                    ],
+                    "example": "M"
+                  },
+                  "dateOfBirth": {
+                    "type": "string",
+                    "format": "date",
+                    "nullable": true,
+                    "example": "2001-08-15"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Return updated user information successfully"
@@ -474,6 +569,34 @@
       "post": {
         "operationId": "MetricController_createMetric",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "Metric creation payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "heightCm",
+                  "weightKg"
+                ],
+                "properties": {
+                  "heightCm": {
+                    "type": "number",
+                    "minimum": 0.01,
+                    "example": 172
+                  },
+                  "weightKg": {
+                    "type": "number",
+                    "minimum": 0.01,
+                    "example": 67.5
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
             "description": "Tạo metric thành công"
@@ -499,6 +622,193 @@
         "summary": "Tạo metric mới cho user hiện tại",
         "tags": [
           "Metric"
+        ]
+      }
+    },
+    "/api/v1/profile": {
+      "post": {
+        "operationId": "ProfileController_createProfile",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "Profile creation payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "dietTypeId",
+                  "goalId",
+                  "cuisineTypeId"
+                ],
+                "properties": {
+                  "dietTypeId": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "example": 2
+                  },
+                  "goalId": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "example": 1
+                  },
+                  "cuisineTypeId": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "example": 3
+                  },
+                  "targetCalories": {
+                    "type": "number",
+                    "minimum": 0.01,
+                    "nullable": true,
+                    "example": 2100
+                  },
+                  "activityLevel": {
+                    "type": "string",
+                    "enum": [
+                      "HIGH",
+                      "AVERAGE",
+                      "LOW"
+                    ],
+                    "nullable": true,
+                    "example": "AVERAGE"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Return the created profile info of the user."
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          },
+          "404": {
+            "description": "User or referenced option not found."
+          },
+          "409": {
+            "description": "Profile already exists for the current user."
+          },
+          "422": {
+            "description": "Invalid request payload."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Create profile info for the current user for first-time onboarding",
+        "tags": [
+          "Profile"
+        ]
+      },
+      "get": {
+        "operationId": "ProfileController_getProfile",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Return the profile info of the user."
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          },
+          "404": {
+            "description": "Profile not found."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Get only profile info",
+        "tags": [
+          "Profile"
+        ]
+      },
+      "patch": {
+        "operationId": "ProfileController_updateProfile",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "Profile update payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "dietTypeId": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "example": 2
+                  },
+                  "goalId": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "example": 1
+                  },
+                  "cuisineTypeId": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "example": 3
+                  },
+                  "targetCalories": {
+                    "type": "number",
+                    "minimum": 0.01,
+                    "nullable": true,
+                    "example": 2100
+                  },
+                  "activityLevel": {
+                    "type": "string",
+                    "enum": [
+                      "HIGH",
+                      "AVERAGE",
+                      "LOW"
+                    ],
+                    "nullable": true,
+                    "example": "AVERAGE"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Return the updated profile info of the user."
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          },
+          "404": {
+            "description": "User, profile, or referenced option not found."
+          },
+          "422": {
+            "description": "Invalid request payload."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Update profile info",
+        "tags": [
+          "Profile"
         ]
       }
     },
@@ -531,19 +841,95 @@
         ]
       }
     },
-    "/api/v1/profile": {
+    "/api/v1/ingredients": {
       "get": {
-        "operationId": "ProfileController_getProfile",
-        "parameters": [],
+        "operationId": "IngredientController_getCatalog",
+        "parameters": [
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "enum": [
+                30
+              ],
+              "default": 30
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "egg"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "Return the profile info of the user."
+            "description": "Return ingredient catalog for browse/search."
+          },
+          "422": {
+            "description": "Invalid query parameters."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "summary": "Get ingredient catalog with optional browse and search",
+        "tags": [
+          "Ingredient"
+        ]
+      }
+    },
+    "/api/v1/meal-templates": {
+      "post": {
+        "operationId": "MealTemplateController_createTemplate",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "My Template"
+                  },
+                  "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "example": "Optional description"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Tạo meal template thành công"
+          },
+          "400": {
+            "description": "Invalid payload"
           },
           "401": {
             "description": "Token không hợp lệ hoặc đã hết hạn"
-          },
-          "404": {
-            "description": "Profile not found."
           },
           "500": {
             "description": "Internal server error."
@@ -554,23 +940,937 @@
             "JWT": []
           }
         ],
-        "summary": "Get only profile info",
+        "summary": "Tạo mới Meal Template",
         "tags": [
-          "Profile"
+          "Meal Template"
         ]
       },
-      "patch": {
-        "operationId": "ProfileController_updateProfile",
+      "get": {
+        "operationId": "MealTemplateController_getTemplates",
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Return the updated profile info of the user."
+            "description": "Trả về danh sách meal template"
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Lấy danh sách Meal Template của user",
+        "tags": [
+          "Meal Template"
+        ]
+      }
+    },
+    "/api/v1/meal-templates/{id}": {
+      "get": {
+        "operationId": "MealTemplateController_getTemplateDetail",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Trả về chi tiết meal template"
+          },
+          "400": {
+            "description": "Invalid id"
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          },
+          "403": {
+            "description": "You do not have access to this template."
+          },
+          "404": {
+            "description": "Meal template not found."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Xem chi tiết cấu trúc Meal Template",
+        "tags": [
+          "Meal Template"
+        ]
+      },
+      "patch": {
+        "operationId": "MealTemplateController_updateTemplate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "Updated Template Name"
+                  },
+                  "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "example": "Updated description"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cập nhật meal template thành công"
+          },
+          "400": {
+            "description": "Invalid id or payload"
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          },
+          "403": {
+            "description": "You do not have access to this template."
+          },
+          "404": {
+            "description": "Meal template not found."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Cập nhật thông tin chung của Meal Template",
+        "tags": [
+          "Meal Template"
+        ]
+      },
+      "delete": {
+        "operationId": "MealTemplateController_deleteTemplate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Xóa meal template thành công"
+          },
+          "400": {
+            "description": "Invalid id"
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          },
+          "403": {
+            "description": "You do not have access to this template."
+          },
+          "404": {
+            "description": "Meal template not found."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Xóa Meal Template",
+        "tags": [
+          "Meal Template"
+        ]
+      }
+    },
+    "/api/v1/meal-templates/{id}/apply": {
+      "post": {
+        "operationId": "MealTemplateController_applyTemplate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "startDate"
+                ],
+                "properties": {
+                  "startDate": {
+                    "type": "string",
+                    "example": "2026-05-10"
+                  },
+                  "replaceExistingMeals": {
+                    "type": "boolean",
+                    "example": true,
+                    "default": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Áp dụng meal template thành công"
+          },
+          "400": {
+            "description": "Invalid id or payload"
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          },
+          "403": {
+            "description": "You do not have access to this template."
+          },
+          "404": {
+            "description": "Meal template not found."
+          },
+          "422": {
+            "description": "Template has no days to apply or payload is invalid."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Áp dụng Meal Template vào menu thực tế",
+        "tags": [
+          "Meal Template"
+        ]
+      }
+    },
+    "/api/v1/meal-templates/{id}/days/{dayNumber}": {
+      "put": {
+        "operationId": "MealTemplateController_upsertDay",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dayNumber",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "meals"
+                ],
+                "properties": {
+                  "meals": {
+                    "type": "object",
+                    "properties": {
+                      "BREAKFAST": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "mealId",
+                            "portionSize"
+                          ],
+                          "properties": {
+                            "mealId": {
+                              "type": "integer",
+                              "format": "int32",
+                              "example": 1
+                            },
+                            "portionSize": {
+                              "type": "number",
+                              "example": 1
+                            }
+                          }
+                        }
+                      },
+                      "LUNCH": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "mealId",
+                            "portionSize"
+                          ],
+                          "properties": {
+                            "mealId": {
+                              "type": "integer",
+                              "format": "int32",
+                              "example": 2
+                            },
+                            "portionSize": {
+                              "type": "number",
+                              "example": 1
+                            }
+                          }
+                        }
+                      },
+                      "DINNER": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "mealId",
+                            "portionSize"
+                          ],
+                          "properties": {
+                            "mealId": {
+                              "type": "integer",
+                              "format": "int32",
+                              "example": 3
+                            },
+                            "portionSize": {
+                              "type": "number",
+                              "example": 1
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Upsert ngày thành công"
+          },
+          "400": {
+            "description": "Invalid id or payload"
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          },
+          "403": {
+            "description": "You do not have access to this template."
+          },
+          "404": {
+            "description": "Meal template not found."
+          },
+          "409": {
+            "description": "Duplicate mealId in request."
+          },
+          "422": {
+            "description": "dayNumber must be a positive integer"
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Ghi đè/Upsert toàn bộ các bữa của 1 ngày trong Template",
+        "tags": [
+          "Meal Template"
+        ]
+      },
+      "delete": {
+        "operationId": "MealTemplateController_deleteDay",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dayNumber",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Xóa ngày khỏi template thành công"
+          },
+          "400": {
+            "description": "Invalid id"
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          },
+          "403": {
+            "description": "You do not have access to this template."
+          },
+          "404": {
+            "description": "Template day or template not found."
+          },
+          "422": {
+            "description": "dayNumber must be a positive integer"
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Xóa cả 1 ngày khỏi Template",
+        "tags": [
+          "Meal Template"
+        ]
+      }
+    },
+    "/api/v1/meal-templates/{id}/items": {
+      "post": {
+        "operationId": "MealTemplateController_addItem",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "dayNumber",
+                  "mealId",
+                  "mealTime",
+                  "portionSize"
+                ],
+                "properties": {
+                  "dayNumber": {
+                    "type": "integer",
+                    "format": "int32",
+                    "example": 1
+                  },
+                  "mealId": {
+                    "type": "integer",
+                    "format": "int32",
+                    "example": 1
+                  },
+                  "mealTime": {
+                    "type": "string",
+                    "enum": [
+                      "BREAKFAST",
+                      "LUNCH",
+                      "DINNER"
+                    ],
+                    "example": "BREAKFAST"
+                  },
+                  "portionSize": {
+                    "type": "number",
+                    "example": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Thêm món vào template thành công"
+          },
+          "400": {
+            "description": "Invalid id"
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          },
+          "403": {
+            "description": "You do not have access to this template."
+          },
+          "404": {
+            "description": "Meal template or meal not found."
+          },
+          "409": {
+            "description": "TEMPLATE_ITEM_CONFLICT"
+          },
+          "422": {
+            "description": "Invalid payload"
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Thêm 1 món vào 1 ngày của Template",
+        "tags": [
+          "Meal Template"
+        ]
+      }
+    },
+    "/api/v1/meal-templates/{id}/items/{itemId}": {
+      "patch": {
+        "operationId": "MealTemplateController_updateItem",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "itemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "portionSize"
+                ],
+                "properties": {
+                  "portionSize": {
+                    "type": "number",
+                    "example": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cập nhật món trong template thành công"
+          },
+          "400": {
+            "description": "Invalid id or itemId"
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          },
+          "403": {
+            "description": "You do not have access to this template."
+          },
+          "404": {
+            "description": "Template item not found."
+          },
+          "422": {
+            "description": "Invalid payload"
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Sửa portion size của 1 món trong Template",
+        "tags": [
+          "Meal Template"
+        ]
+      },
+      "delete": {
+        "operationId": "MealTemplateController_deleteItem",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "itemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Xóa món khỏi template thành công"
+          },
+          "400": {
+            "description": "Invalid id or itemId"
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          },
+          "403": {
+            "description": "You do not have access to this template."
+          },
+          "404": {
+            "description": "Template item not found."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Xóa 1 món khỏi Template",
+        "tags": [
+          "Meal Template"
+        ]
+      }
+    },
+    "/api/v1/meals": {
+      "get": {
+        "operationId": "MealSearchController_search",
+        "parameters": [
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 10
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "cookTimeMax",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 120
+            }
+          },
+          {
+            "name": "cookTimeMin",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 120
+            }
+          },
+          {
+            "name": "allergies",
+            "required": false,
+            "in": "query",
+            "description": "Comma-separated ingredient names to exclude from results.",
+            "schema": {
+              "example": "milk,peanut"
+            }
+          },
+          {
+            "name": "difficulty",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "easy",
+                "medium",
+                "hard"
+              ]
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "egg tomato"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Trả về danh sách món ăn phù hợp"
+          },
+          "400": {
+            "description": "Invalid query params."
+          },
+          "401": {
+            "description": "Token không hợp lệ hoặc đã hết hạn"
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Tìm kiếm món ăn theo q (tên món hoặc nguyên liệu). Nếu không truyền q sẽ trả về danh sách theo phân trang, có thể lọc theo difficulty/allergies/cookTimeMin/cookTimeMax",
+        "tags": [
+          "Meals"
+        ]
+      }
+    },
+    "/api/v1/meals/{id}": {
+      "get": {
+        "operationId": "MealSearchController_getMealById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Trả về thông tin món ăn"
+          },
+          "400": {
+            "description": "Invalid id (must be a positive integer)."
           },
           "401": {
             "description": "Token không hợp lệ hoặc đã hết hạn"
           },
           "404": {
-            "description": "User, profile, or referenced option not found."
+            "description": "Meal not found."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Lấy thông tin chi tiết 1 món ăn theo id",
+        "tags": [
+          "Meals"
+        ]
+      }
+    },
+    "/api/v1/menus/day/{date}": {
+      "get": {
+        "operationId": "MenuController_getMenuByDay",
+        "parameters": [
+          {
+            "name": "date",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns menu data for the given day."
+          },
+          "401": {
+            "description": "Invalid or expired token."
+          },
+          "422": {
+            "description": "Invalid date format."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Get daily menu for the current user",
+        "tags": [
+          "Menu"
+        ]
+      },
+      "delete": {
+        "operationId": "MenuController_deleteMenuByDay",
+        "parameters": [
+          {
+            "name": "date",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted successfully, or the day was already empty."
+          },
+          "401": {
+            "description": "Invalid or expired token."
+          },
+          "422": {
+            "description": "Invalid date format."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Delete all menu items for a specific day",
+        "tags": [
+          "Menu"
+        ]
+      }
+    },
+    "/api/v1/menu-items": {
+      "post": {
+        "operationId": "MenuController_createMenuItem",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "Menu item creation payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "date",
+                  "mealId",
+                  "mealTime",
+                  "portionSize"
+                ],
+                "properties": {
+                  "date": {
+                    "type": "string",
+                    "format": "date",
+                    "example": "2026-03-24"
+                  },
+                  "mealId": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "example": 12
+                  },
+                  "mealTime": {
+                    "type": "string",
+                    "enum": [
+                      "BREAKFAST",
+                      "LUNCH",
+                      "DINNER"
+                    ],
+                    "example": "BREAKFAST"
+                  },
+                  "portionSize": {
+                    "type": "number",
+                    "minimum": 0.01,
+                    "example": 1.5
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Menu item created successfully."
+          },
+          "401": {
+            "description": "Invalid or expired token."
+          },
+          "404": {
+            "description": "Meal not found."
+          },
+          "409": {
+            "description": "Duplicate meal in the same day and meal time."
           },
           "422": {
             "description": "Invalid request payload."
@@ -584,9 +1884,119 @@
             "JWT": []
           }
         ],
-        "summary": "Update profile info",
+        "summary": "Create a menu item for a day and meal time",
         "tags": [
-          "Profile"
+          "Menu"
+        ]
+      }
+    },
+    "/api/v1/menu-items/{id}": {
+      "patch": {
+        "operationId": "MenuController_updateMenuItem",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Menu item update payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "portionSize": {
+                    "type": "number",
+                    "minimum": 0.01,
+                    "example": 1.25
+                  },
+                  "eated": {
+                    "type": "boolean",
+                    "example": true
+                  }
+                },
+                "additionalProperties": false,
+                "example": {
+                  "portionSize": 1.25,
+                  "eated": true
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Menu item updated successfully."
+          },
+          "401": {
+            "description": "Invalid or expired token."
+          },
+          "404": {
+            "description": "Menu item not found."
+          },
+          "409": {
+            "description": "Conflict while updating menu item."
+          },
+          "422": {
+            "description": "Invalid path parameter or request payload."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Update a menu item by id",
+        "tags": [
+          "Menu"
+        ]
+      },
+      "delete": {
+        "operationId": "MenuController_deleteMenuItem",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Menu item deleted successfully."
+          },
+          "401": {
+            "description": "Invalid or expired token."
+          },
+          "404": {
+            "description": "Menu item not found."
+          },
+          "422": {
+            "description": "Invalid path parameter."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Delete a menu item by id",
+        "tags": [
+          "Menu"
         ]
       }
     }

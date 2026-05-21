@@ -1,33 +1,45 @@
-import * as dotenv from 'dotenv';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
-
-// Nạp file .env từ thư mục gốc Monorepo ngay lập tức
-dotenv.config({ path: path.resolve(__dirname, '../../../../.env') });
 
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { getAllowedCorsOrigins, getSwaggerServers } from './config/runtime-config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const port = Number(process.env.PORT ?? 3000);
+
+  app.enableCors({
+    origin: (origin, callback) => {
+      const allowedOrigins = getAllowedCorsOrigins();
+
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error(`Origin ${origin} is not allowed by CORS`), false);
+    },
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+  });
 
   // Thiết lập prefix chung cho API
   app.setGlobalPrefix('api');
 
   // ── Swagger / OpenAPI ────────────────────────────────────────────────────
-  const config = new DocumentBuilder()
+  const swaggerBuilder = new DocumentBuilder()
     .setTitle('KitchenMind API')
     .setDescription(
       'Tài liệu hướng dẫn và kiểm thử API cho hệ thống Meal Planner\n\n' +
         '## Xác thực\n' +
         'Các endpoint được bảo vệ yêu cầu JWT Bearer token.\n' +
-        'Đăng nhập qua Google (`GET /api/auth/google`) để nhận `accessToken`,\n' +
+        'Mobile app Android gửi Google ID token vào `POST /api/auth/google/exchange` để nhận `accessToken`,\n' +
         'sau đó nhấn **Authorize** và nhập token vào ô `Bearer <token>`.',
     )
     .setVersion('1.0')
-    .addServer('http://localhost:8080', 'Nginx Gateway Local')
-    .addServer('http://localhost:3000', 'Direct Main-Backend Port')
     .addBearerAuth(
       {
         type: 'http',
@@ -40,7 +52,13 @@ async function bootstrap() {
       'JWT',
     )
     .addTag('Authentication', 'Các API liên quan đến xác thực người dùng')
-    .build();
+    ;
+
+  for (const server of getSwaggerServers(port)) {
+    swaggerBuilder.addServer(server.url, server.description);
+  }
+
+  const config = swaggerBuilder.build();
 
   const document = SwaggerModule.createDocument(app, config);
 
@@ -60,7 +78,6 @@ async function bootstrap() {
     },
   });
 
-  const port = process.env.PORT ?? 3000;
   await app.listen(port);
 }
 bootstrap();

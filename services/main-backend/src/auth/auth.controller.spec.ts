@@ -3,7 +3,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 
 const mockAuthService = {
-  googleLogin: jest.fn(),
+  exchangeGoogleIdToken: jest.fn(),
 };
 
 describe('AuthController', () => {
@@ -24,10 +24,8 @@ describe('AuthController', () => {
     expect(controller).toBeDefined();
   });
 
-  // ── googleAuthRedirect ───────────────────────────────────────────────────
-  describe('googleAuthRedirect()', () => {
-    it('should call authService.googleLogin with the request object', async () => {
-      const mockReq = { user: { email: 'quytvo2626@gmail.com' } };
+  describe('exchangeGoogleIdToken()', () => {
+    it('should call authService.exchangeGoogleIdToken with the provided idToken', async () => {
       const mockResult = {
         message: 'Xác thực Google thành công',
         user: {
@@ -37,24 +35,22 @@ describe('AuthController', () => {
         },
         accessToken: 'jwt-token-here',
       };
-      mockAuthService.googleLogin.mockResolvedValueOnce(mockResult);
+      mockAuthService.exchangeGoogleIdToken.mockResolvedValueOnce(mockResult);
 
-      const result = await controller.googleAuthRedirect(mockReq as any);
+      const result = await controller.exchangeGoogleIdToken({
+        idToken: 'google-id-token',
+      });
 
-      expect(mockAuthService.googleLogin).toHaveBeenCalledTimes(1);
-      expect(mockAuthService.googleLogin).toHaveBeenCalledWith(mockReq);
+      expect(mockAuthService.exchangeGoogleIdToken).toHaveBeenCalledWith(
+        'google-id-token',
+      );
       expect(result).toEqual(mockResult);
     });
 
-    it('should return no-data message when req.user is undefined', async () => {
-      const mockReq = {};
-      mockAuthService.googleLogin.mockResolvedValueOnce({
-        message: 'Không có dữ liệu từ Google',
+    it('should throw when the payload is invalid', async () => {
+      await expect(controller.exchangeGoogleIdToken({})).rejects.toMatchObject({
+        status: 422,
       });
-
-      const result = await controller.googleAuthRedirect(mockReq as any);
-
-      expect(result).toMatchObject({ message: 'Không có dữ liệu từ Google' });
     });
   });
 

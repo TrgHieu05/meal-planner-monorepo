@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1015515609387",
+    "project_id": "kitchen-mind-preview-version",
+    "storage_bucket": "kitchen-mind-preview-version.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1015515609387:android:0eca912609e24dc4352d6e",
+        "android_client_info": {
+          "package_name": "com.trghieu05.KitchenMind"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDHyPyp0xcvViWeBwdD7brCJaEJGKSviKA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

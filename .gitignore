@@ -7,6 +7,18 @@ node_modules/
 .env.*
 !.env.example
 
+# --- Secret Artifacts ---
+.secrets/
+*.pem
+*.key
+*.p8
+*.p12
+*.jks
+*.keystore
+*.mobileprovision
+*service-account*.json
+firebase-adminsdk-*.json
+
 # --- Build Outputs ---
 dist/
 build/
@@ -27,6 +39,7 @@ Thumbs.db
 # --- IDE/Editor ---
 .idea/
 .vscode/
+.agents/
 *.swp
 *.swo
 .trae/

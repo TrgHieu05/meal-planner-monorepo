@@ -24,7 +24,7 @@ RUN pnpm --filter @meal/shared run build
 
 # Generate Prisma Client (nếu có dùng Prisma)
 WORKDIR /app/packages/database
-RUN pnpm prisma generate
+RUN DATABASE_URL="postgresql://placeholder:placeholder@127.0.0.1:5432/placeholder?schema=public" pnpm prisma generate
 
 # Build backend
 WORKDIR /app/services/main-backend

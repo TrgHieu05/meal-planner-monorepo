@@ -1,13 +1,31 @@
+import { NotFoundException } from '@nestjs/common';
+import { Difficulty } from '@meal/database';
 import { MealSearchService } from './meal-search.service';
 import { PrismaService } from '../database/prisma.service';
+import { MediaService } from '../media/media.service';
 
 describe('MealSearchService', () => {
   let service: MealSearchService;
-  let prisma: { meal: { findMany: jest.Mock } };
+  let prisma: { meal: { findMany: jest.Mock; findUnique: jest.Mock; count: jest.Mock } };
+  let mediaService: { buildImageUrls: jest.Mock };
 
   beforeEach(() => {
-    prisma = { meal: { findMany: jest.fn() } };
-    service = new MealSearchService(prisma as unknown as PrismaService);
+    prisma = { meal: { findMany: jest.fn(), findUnique: jest.fn(), count: jest.fn() } };
+    mediaService = {
+      buildImageUrls: jest.fn((_: string, publicId: string | null) =>
+        publicId
+          ? {
+              card: `https://example.com/${publicId}/card`,
+              detail: `https://example.com/${publicId}/detail`,
+              original: `https://example.com/${publicId}/original`,
+            }
+          : null,
+      ),
+    };
+    service = new MealSearchService(
+      prisma as unknown as PrismaService,
+      mediaService as unknown as MediaService,
+    );
   });
 
   it('computes ranking score using normalize + token search', async () => {
@@ -15,8 +33,13 @@ describe('MealSearchService', () => {
       {
         id: 1,
         name: 'Omelette',
-        difficulty: '1',
+        mealImageKey: null,
+        difficulty: Difficulty.LEVEL_1,
         cookTimeMins: 25,
+        totalCalories: 300,
+        totalProtein: 20,
+        totalFat: 10,
+        totalFiber: 2,
         ingredients: [
           { ingredient: { id: 10, name: 'egg' } },
           { ingredient: { id: 11, name: 'tomato' } },
@@ -29,6 +52,8 @@ describe('MealSearchService', () => {
       queryText: 'Tomáto',
       excludeIngredients: [],
       difficulty: 'easy',
+      page: 1,
+      pageSize: 10,
     });
 
     expect(result.list).toHaveLength(1);
@@ -42,8 +67,13 @@ describe('MealSearchService', () => {
     const meals = Array.from({ length: 12 }).map((_, idx) => ({
       id: idx + 1,
       name: idx === 0 ? 'Egg Deluxe' : `Meal${idx + 1}`,
-      difficulty: idx % 3 === 0 ? '2' : idx % 3 === 1 ? '3' : '5',
+      mealImageKey: null,
+      difficulty: idx % 3 === 0 ? Difficulty.LEVEL_2 : idx % 3 === 1 ? Difficulty.LEVEL_3 : Difficulty.LEVEL_5,
       cookTimeMins: 20 + idx,
+      totalCalories: 100 + idx,
+      totalProtein: 10 + idx,
+      totalFat: 5 + idx,
+      totalFiber: 1 + idx,
       ingredients: [
         { ingredient: { id: idx + 100, name: 'egg' } },
         { ingredient: { id: idx + 200, name: `token${idx}` } },
@@ -56,6 +86,8 @@ describe('MealSearchService', () => {
     const result = await service.search({
       queryText: 'egg deluxe',
       excludeIngredients: [],
+      page: 1,
+      pageSize: 10,
     });
 
     expect(result.list).toHaveLength(10);
@@ -63,5 +95,104 @@ describe('MealSearchService', () => {
     expect(result.list[0]?.score).toBeGreaterThanOrEqual(
       result.list[1]?.score ?? 0,
     );
+  });
+
+  it('returns paginated list when queryText is empty', async () => {
+    prisma.meal.count.mockResolvedValue(2);
+    prisma.meal.findMany.mockResolvedValue([
+      {
+        id: 1,
+        name: 'Apple Salad',
+        mealImageKey: null,
+        difficulty: Difficulty.LEVEL_1,
+        cookTimeMins: 5,
+        totalCalories: 200,
+        totalProtein: 10,
+        totalFat: 3,
+        totalFiber: 2,
+      },
+    ]);
+
+    const result = await service.search({
+      queryText: '',
+      excludeIngredients: [],
+      page: 1,
+      pageSize: 1,
+    });
+
+    expect(prisma.meal.count).toHaveBeenCalled();
+    expect(prisma.meal.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        skip: 0,
+        take: 1,
+        orderBy: { name: 'asc' },
+      }),
+    );
+    expect(result).toEqual({
+      list: [
+        {
+          id: 1,
+          name: 'Apple Salad',
+          meal_image_key: null,
+          meal_image_urls: null,
+          difficulty: 'easy',
+          cook_time_min: 5,
+          total_calories: 200,
+          total_protein: 10,
+          total_fat: 3,
+          total_fiber: 2,
+          score: 0,
+        },
+      ],
+      page: 1,
+      pageSize: 1,
+      total: 2,
+      hasMore: true,
+    });
+  });
+
+  it('throws 404 when meal does not exist', async () => {
+    prisma.meal.findUnique.mockResolvedValue(null);
+    await expect(service.getMealById(999)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+  });
+
+  it('maps meal entity to detail response', async () => {
+    prisma.meal.findUnique.mockResolvedValue({
+      id: 1,
+      name: 'Omelette',
+      mealImageKey: 'meals/1/cover',
+      description: 'Tasty',
+      cuisineType: { id: 1, name: 'French', description: null },
+      difficulty: Difficulty.LEVEL_1,
+      cookTimeMins: 25,
+      totalCalories: 300,
+      totalProtein: 20,
+      totalFat: 10,
+      totalFiber: 2,
+      ingredients: [{ ingredient: { id: 10, name: 'egg' }, quantity: 2 }],
+    });
+
+    const result = await service.getMealById(1);
+    expect(result).toEqual({
+      id: 1,
+      name: 'Omelette',
+      meal_image_key: 'meals/1/cover',
+      meal_image_urls: {
+        card: 'https://example.com/meals/1/cover/card',
+        detail: 'https://example.com/meals/1/cover/detail',
+        original: 'https://example.com/meals/1/cover/original',
+      },
+      description: 'Tasty',
+      cuisine_type: { id: 1, name: 'French', description: null },
+      difficulty: 'easy',
+      cook_time_min: 25,
+      total_calories: 300,
+      total_protein: 20,
+      total_fat: 10,
+      total_fiber: 2,
+      ingredients: [{ id: 10, name: 'egg', quantity: 2 }],
+    });
   });
 });

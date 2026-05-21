@@ -13,6 +13,7 @@
       }
     },
     "preview": {
+      "name": "Kitchen Mind Preview Version",
       "environment": "preview",
       "developmentClient": false,
       "distribution": "store",
@@ -25,6 +26,7 @@
       }
     },
     "production": {
+      "name":"Kichen Mind",
       "environment": "production",
       "developmentClient": false,
       "distribution": "store",

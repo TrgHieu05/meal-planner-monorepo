@@ -1,11 +1,16 @@
 const fs = require('fs');
 const path = require('path');
 
+const appVariant = normalizeAppVariant(process.env.APP_VARIANT);
+const IS_PROD = appVariant === 'production';
+const RUN_NUMBER = process.env.GITHUB_RUN_NUMBER || '1';
+const CURRENT_VERSION = process.env.APP_VERSION || "0.1.0";
+
 const baseExpoConfig = {
-  name: 'Kitchen Mind',
+  name: getAppDisplayName(appVariant),
   slug: 'KitchenMind',
   scheme: 'mobile-app-scheme',
-  version: '0.1.0',
+  version: CURRENT_VERSION,
   orientation: 'portrait',
   icon: './assets/images/android-icon-foreground.png',
   userInterfaceStyle: 'light',
@@ -26,7 +31,8 @@ const baseExpoConfig = {
     },
     predictiveBackGestureEnabled: false,
     package: 'com.trghieu05.KitchenMind',
-    googleServicesFile: "./google-services.json"
+    googleServicesFile: "./google-services.json",
+    versionCode: parseInt(RUN_NUMBER),
   },
   web: {
     favicon: './assets/images/favicon.png',
@@ -44,13 +50,13 @@ const baseExpoConfig = {
     router: {},
     eas: {
       projectId: '8f3c2e1e-5e9c-4baa-aff9-017f6b4dc83c',
+      versionName: getVersionName(appVariant, CURRENT_VERSION, RUN_NUMBER)
     },
   },
   owner: 'trghieu05',
 };
 
 const GOOGLE_SIGNIN_PLUGIN = '@react-native-google-signin/google-signin';
-const appVariant = normalizeAppVariant(process.env.APP_VARIANT);
 
 applyRepoEnvDefaults(appVariant);
 
@@ -159,6 +165,30 @@ function normalizeAppVariant(value) {
   }
 
   return normalizedValue;
+}
+
+function getAppDisplayName(appVariant) {
+  if (appVariant === 'production') {
+    return 'Kitchen Mind';
+  }
+
+  if (appVariant === 'development') {
+    return 'Kitchen Mind (Development)';
+  }
+
+  return 'Kitchen Mind (Staging)';
+}
+
+function getVersionName(appVariant, currentVersion, runNumber) {
+  if (appVariant === 'production') {
+    return currentVersion;
+  }
+
+  if (appVariant === 'development') {
+    return `${currentVersion} (development ${runNumber})`;
+  }
+
+  return `${currentVersion} (staging ${runNumber})`;
 }
 
 function isTruthy(value) {

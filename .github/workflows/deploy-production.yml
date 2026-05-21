@@ -1,4 +1,4 @@
-name: Build Mobile Production APK
+name: Deploy Production
 
 on:
   push:
@@ -10,10 +10,123 @@ permissions:
   contents: read
 
 concurrency:
-  group: deploy-mobile-production-${{ github.ref }}
+  group: deploy-production-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
+  deploy-production-backend:
+    name: Deploy Production Backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: production
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      FLY_APP_NAME_PRODUCTION: ${{ vars.FLY_APP_NAME_PRODUCTION }}
+      FLY_CONFIG_PATH_PRODUCTION: ${{ vars.FLY_CONFIG_PATH_PRODUCTION }}
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@1.5
+
+      - name: Validate production prerequisites
+        run: |
+          required_values=(
+            FLY_API_TOKEN
+            FLY_APP_NAME_PRODUCTION
+            FLY_CONFIG_PATH_PRODUCTION
+          )
+
+          for name in "${required_values[@]}"; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error::Missing required GitHub variable or secret: ${name}"
+              exit 1
+            fi
+          done
+
+          if [[ ! -f "${FLY_CONFIG_PATH_PRODUCTION}" ]]; then
+            echo "::error::Fly production config file not found at ${FLY_CONFIG_PATH_PRODUCTION}"
+            exit 1
+          fi
+
+          if [[ ! -s "${FLY_CONFIG_PATH_PRODUCTION}" ]]; then
+            echo "::error::Fly production config file is empty at ${FLY_CONFIG_PATH_PRODUCTION}. Complete this file before using deploy-production.yml."
+            exit 1
+          fi
+
+          if ! grep -Eq 'release_command' "${FLY_CONFIG_PATH_PRODUCTION}"; then
+            echo "::error::${FLY_CONFIG_PATH_PRODUCTION} must define a release_command so Prisma production migrations run before the app receives traffic."
+            exit 1
+          fi
+
+          echo "PRODUCTION_HEALTHCHECK_URL=https://${FLY_APP_NAME_PRODUCTION}.fly.dev/api/health" >> "$GITHUB_ENV"
+
+      - name: Ensure Fly production app exists
+        run: |
+          if flyctl status -a "$FLY_APP_NAME_PRODUCTION" >/dev/null 2>&1; then
+            echo "Fly app already exists: $FLY_APP_NAME_PRODUCTION"
+            exit 0
+          fi
+
+          echo "Fly app not found. Creating: $FLY_APP_NAME_PRODUCTION"
+          if flyctl apps create "$FLY_APP_NAME_PRODUCTION" >/dev/null; then
+            echo "Fly app created: $FLY_APP_NAME_PRODUCTION"
+            exit 0
+          fi
+
+          if flyctl status -a "$FLY_APP_NAME_PRODUCTION" >/dev/null 2>&1; then
+            echo "Fly app became available after create attempt: $FLY_APP_NAME_PRODUCTION"
+            exit 0
+          fi
+
+          echo "::error::Failed to create Fly production app: $FLY_APP_NAME_PRODUCTION"
+          exit 1
+
+      - name: Deploy backend to Fly production
+        run: |
+          flyctl deploy \
+            --remote-only \
+            --app "$FLY_APP_NAME_PRODUCTION" \
+            --config "$FLY_CONFIG_PATH_PRODUCTION"
+
+      - name: Smoke check production health endpoint
+        run: |
+          for attempt in {1..12}; do
+            if curl --fail --silent --show-error "$PRODUCTION_HEALTHCHECK_URL" | tee production-health.json >/dev/null; then
+              exit 0
+            fi
+
+            if [[ "$attempt" == "12" ]]; then
+              echo "::error::Production health check failed at $PRODUCTION_HEALTHCHECK_URL"
+              exit 1
+            fi
+
+            sleep 10
+          done
+
+      - name: Upload production health artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-backend-health-${{ github.run_id }}
+          path: production-health.json
+
+      - name: Write deployment summary
+        run: |
+          {
+            echo "## Production backend deployed"
+            echo
+            echo "- Fly app: ${FLY_APP_NAME_PRODUCTION}"
+            echo "- Health endpoint: ${PRODUCTION_HEALTHCHECK_URL}"
+            echo "- Commit: ${GITHUB_SHA}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
   deploy-mobile-production:
     name: Build Mobile Production APK
     runs-on: ubuntu-latest
@@ -74,7 +187,7 @@ jobs:
 
           if (buildType !== 'apk') {
             throw new Error(
-              `build.${process.env.EAS_PROFILE}.android.buildType must stay \"apk\" for this workflow. Current value: ${buildType}`,
+              `build.${process.env.EAS_PROFILE}.android.buildType must stay "apk" for this workflow. Current value: ${buildType}`,
             );
           }
 
